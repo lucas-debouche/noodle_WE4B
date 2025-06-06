@@ -1,0 +1,9 @@
+<h2>Liste des utilisateurs</h2>
+<ul *ngIf="utilisateurs.length > 0; else noData">
+  <li *ngFor="let u of utilisateurs">
+    {{ u.prenom }} {{ u.nom }} ({{ u.email }})
+  </li>
+</ul>
+<ng-template #noData>
+  <p>Aucun utilisateur trouvé.</p>
+</ng-template>

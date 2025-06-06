@@ -1,0 +1,100 @@
+<div class="login-container">
+  <div class="login-image">
+    <img src="assets/Images/Logo_Noodle_Web.webp" alt="logo" width="200" height="200">
+  </div>
+
+  <div class="login-header">
+    <h1>Connexion</h1>
+  </div>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        placeholder="Entrez votre email"
+        class="form-control"
+        formControlName="email"
+        required
+        autocomplete="email"
+      />
+      <ng-container *ngIf="loginForm.get('email')?.dirty || loginForm.get('email')?.touched">
+        <div *ngIf="loginForm.get('email')?.errors?.['required']" class="text-danger small">❌ Email is required</div>
+        <div *ngIf="loginForm.get('email')?.errors?.['email']" class="text-danger small">❌ Email is not valid</div>
+        <div *ngIf="!loginForm.get('email')?.invalid" class="text-success small">✅ Valid email</div>
+      </ng-container>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="password-input-container">
+        <input
+          id="password"
+          type="password"
+          placeholder="Votre mot de passe"
+          class="form-control"
+          formControlName="password"
+          required
+          autocomplete="current-password"
+        />
+        <span class="toggle-password" id="toggleBtn" (click)="togglePassword()">👁️</span>
+      </div>
+      <ng-container *ngIf="loginForm.get('password')?.dirty || loginForm.get('password')?.touched">
+        <div *ngIf="loginForm.get('password')?.errors?.['minLength']; else minLengthValid" class="text-danger small">
+          ❌ Password must be at least 10 characters
+        </div>
+        <ng-template #minLengthValid>
+          <div class="text-success small">✅ Length OK</div>
+        </ng-template>
+
+        <div *ngIf="loginForm.get('password')?.errors?.['uppercase']; else uppercaseValid" class="text-danger small">
+          ❌ Must have 2 uppercase letters
+        </div>
+        <ng-template #uppercaseValid>
+          <div class="text-success small">✅ Uppercase OK</div>
+        </ng-template>
+
+        <div *ngIf="loginForm.get('password')?.errors?.['number']; else numberValid" class="text-danger small">
+          ❌ Must include a number
+        </div>
+        <ng-template #numberValid>
+          <div class="text-success small">✅ Number OK</div>
+        </ng-template>
+
+        <div *ngIf="loginForm.get('password')?.errors?.['specialChars']; else specialValid" class="text-danger small">
+          ❌ Must include 2 special characters
+        </div>
+        <ng-template #specialValid>
+          <div class="text-success small">✅ Special characters OK</div>
+        </ng-template>
+      </ng-container>
+    </div>
+
+    <button type="submit" class="btn-login">Se connecter</button>
+  </form>
+
+  <div class="forgot-password">
+    <a href="#" (click)="forgotPassword()">Mot de passe oublié ?</a>
+  </div>
+
+  <div class="stats-container">
+    <div class="stat-box animate-stats">
+      <div class="stat-icon">👨‍🎓</div>
+      <div class="stat-count">{{ stats.user }}</div>
+      <div class="stat-label">Utilisateur</div>
+    </div>
+
+    <div class="stat-box animate-stats">
+      <div class="stat-icon">📚</div>
+      <div class="stat-count">{{ stats.ue }}</div>
+      <div class="stat-label">Cours & UE</div>
+    </div>
+
+    <div class="stat-box animate-stats">
+      <div class="stat-icon">📩</div>
+      <div class="stat-count">{{ stats.post }}</div>
+      <div class="stat-label">Post</div>
+    </div>
+  </div>
+</div>
