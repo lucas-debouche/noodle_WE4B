@@ -6,9 +6,12 @@ const Utilisateur = require('../models/utilisateur.model');
 router.get('/', async (req, res) => {
   try {
     const utilisateurs = await Utilisateur.find();
+    if (utilisateurs.length === 0) {
+      return res.status(404).json({ error: 'Aucun utilisateur trouvé.' });
+    }
     res.json(utilisateurs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs.' });
   }
 });
 

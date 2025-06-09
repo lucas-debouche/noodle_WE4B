@@ -5,7 +5,7 @@ import {UtilisateurService} from "../../services/utilisateur.service";
 import {UesService} from "../../ues/ues.service";
 import {PostsService} from "../../posts/posts.service";
 import {Router} from "@angular/router";
-import {AuthService} from "../auth.service";
+import {AuthService} from "../../auth/auth.service";
 
 @Component({
   selector: 'app-login',
@@ -19,6 +19,8 @@ export class LoginComponent implements OnInit{
     password : new FormControl('', [Validators.required, passwordValidator])
   })
   showPassword: boolean = false;
+  errorMessage: string | null = null; // Ajout de la variable d'erreur
+
 
   stats = {
     user: 0,
@@ -53,7 +55,7 @@ export class LoginComponent implements OnInit{
   // Gestion de la soumission du formulaire
   onSubmit() {
     if (this.loginForm.invalid) {
-      console.log('Formulaire invalide');
+      this.errorMessage = 'Formulaire invalide. Veuillez remplir tous les champs correctement.';
     }
     const { email, password} = this.loginForm.value;
     this.authService.login({email, mot_passe: password}).subscribe({
@@ -73,11 +75,12 @@ export class LoginComponent implements OnInit{
           }
 
         } else {
-          console.log('Identifiants incorrects');
+          this.errorMessage = 'Identifiants incorrects. Veuillez réessayer.';
+          console.error('Identifiants incorrects');
         }
       },
       error: (err) => {
-        console.error('Erreur lors de la connexion :', err);
+        this.errorMessage = err.message;
       }
     });
   }

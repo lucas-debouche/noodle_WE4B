@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { catchError, Observable, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -12,8 +12,21 @@ export class AuthService {
 
   // Méthode pour la connexion utilisateur
   login(credentials: { email: string; mot_passe: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, credentials);
+    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+      catchError(this.handleError)
+    );
   }
+
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = 'Une erreur inconnue est survenue.';
+    if (error.status === 401) {
+      errorMessage = 'Utilisateur non trouvé ou identifiants incorrects.';
+    } else if (error.status === 500) {
+      errorMessage = 'Erreur interne du serveur.';
+    }
+    return throwError(() => new Error(errorMessage));
+  }
+
 
   // Méthode pour l'inscription utilisateur
   register(userData: any): Observable<any> {
