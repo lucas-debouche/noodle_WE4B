@@ -25,77 +25,14 @@ Clonez le dépôt GitHub :
 git clone https://github.com/lucas-debouche/noodle_WE4B.git
 ```
 
-Accédez au répertoire cloné :
+Créez 3 terminaux et renommez-les pour faciliter la gestion du projet.
+- Un pour le backend
+- Un pour le frontend
+- Un pour la base de données
+
+Accédez au répertoire cloné sur chaque terminal:
 ```bash
-cd noodle_WE4B
-```
-
-### 2. Configuration du backend
-
-1. Accédez au dossier `backend` :
-   ```bash
-   cd backend
-   ```
-
-2. Installez les dépendances :
-   ```bash
-   npm install
-   ```
-
-3. Configurez les variables d'environnement :
-   - Copiez le fichier `.env.example` et renommez-le en `.env` :
-     ```bash
-     cp .env.example .env
-     ```
-   - Modifiez le fichier `.env` avec les valeurs que je vous fournirai :
-     ```plaintext
-     JWT_SECRET=...
-     ```
-
-4. Démarrez le serveur backend :
-   ```bash
-   npm run start
-   ```
-   Le backend sera accessible à [http://localhost:3000](http://localhost:3000).
-
-### 3. Configuration du frontend
-
-1. Revenez au dossier principal :
-   ```bash
-   cd ../
-   ```
-
-2. Installez les dépendances du frontend :
-   ```bash
-   npm install
-   ```
-
-3. Lancez l'application Angular :
-   ```bash
-   ng serve
-   ```
-   Le frontend sera accessible à [http://localhost:4200](http://localhost:4200).
-
----
-
-## Structure du projet
-
-Voici une vue d'ensemble de l'organisation des fichiers et répertoires :
-
-```
-noodle_WE4B
-├── backend
-│   ├── models          # Modèles de données MongoDB
-│   ├── routes          # Routes API
-│   ├── security        # Gestion des JWT
-│   ├── .env.example    # Exemple de configuration des variables d'environnement
-│   ├── server.js       # Point d'entrée du backend
-│   └── package.json    # Dépendances et scripts backend
-├── src
-│   ├── app             # Composants Angular
-│   └── ...             # Autres fichiers Angular
-├── .gitignore          # Fichiers ignorés par Git
-└── README.md           # Documentation du projet
+  cd noodle_WE4B
 ```
 
 ---
@@ -146,6 +83,73 @@ MongoDB restaurera automatiquement toutes les collections et les documents dans 
    ```bash
    show collections
    ```
+
+## Configuration du backend
+
+1. Accédez au dossier `backend` :
+   ```bash
+   cd backend
+   ```
+
+2. Installez les dépendances :
+   ```bash
+   npm install
+   ```
+
+3. Configurez les variables d'environnement :
+   - Créez un fichier `.env` dans le dossier `backend`
+   - Modifiez le fichier `.env` avec les valeurs que je vous fournirai :
+     ```plaintext
+     JWT_SECRET=...
+     ```
+
+4. Démarrez le serveur backend :
+   ```bash
+   node server.js
+   ```
+   Le backend sera accessible à [http://localhost:3000](http://localhost:3000).
+
+## Configuration du frontend
+
+1. Installez les dépendances du frontend :
+   ```bash
+   npm install
+   ```
+
+2. Lancez l'application Angular :
+   ```bash
+   ng serve
+   ```
+   Le frontend sera accessible à [http://localhost:4200](http://localhost:4200).
+
+---
+
+## Structure du projet
+
+Voici une vue d'ensemble de l'organisation des fichiers et répertoires :
+
+```
+noodle_WE4B
+├── dump                # Dossier contenant la sauvegarde de la base de données
+├── nouveaux_mdp.txt    # Fichier contenant les identifiants et mots de passe pour les tests
+├── package.json         # Dépendances et scripts du projet
+├── .idea              # Configuration de l'IDE (par exemple, IntelliJ IDEA)
+├── .gitignore         # Fichiers et répertoires ignorés par Git
+├── README.md          # Documentation du projet
+├── noodle_WE4b
+   ├── backend
+   │   ├── models          # Modèles de données MongoDB
+   │   ├── routes          # Routes API
+   │   ├── security        # Gestion des JWT
+   │   ├── .env            # Configuration des variables d'environnement
+   │   ├── server.js       # Point d'entrée du backend
+   │   └── package.json    # Dépendances et scripts backend
+   ├── src
+   │   ├── app             # Composants Angular
+   │   └── ...             # Autres fichiers Angular
+   ├── .gitignore          # Fichiers ignorés par Git
+   └── package.json       # Dépendances et scripts du frontend
+```
    
 ---
 
