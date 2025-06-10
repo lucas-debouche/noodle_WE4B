@@ -15,4 +15,15 @@ export class UtilisateurService {
   getUtilisateurs(): Observable<User[]> {
     return this.http.get<User[]>(this.apiUrl);
   }
+
+  // Récupérer l'utilisateur actuel
+  getUtilisateurActuel(): Observable<User> {
+    return this.http.get<User>('http://localhost:3000/api/utilisateur/current');
+  }
+
+  // Mettre à jour un utilisateur
+  updateUtilisateur(formData: FormData): Observable<any> {
+    return this.http.put(`${this.apiUrl}/update`, formData); // Modifiez l'URL si nécessaire
+  }
+
 }

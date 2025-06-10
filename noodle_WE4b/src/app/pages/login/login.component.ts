@@ -56,33 +56,36 @@ export class LoginComponent implements OnInit{
   onSubmit() {
     if (this.loginForm.invalid) {
       this.errorMessage = 'Formulaire invalide. Veuillez remplir tous les champs correctement.';
+      return; // Ajouté pour éviter de continuer si le formulaire est invalide
     }
-    const { email, password} = this.loginForm.value;
-    this.authService.login({email, mot_passe: password}).subscribe({
-      next: (response: any) => {
-        if (response.token) {
-          console.log('Connexion réussie !', response);
-          localStorage.setItem('token', response.token);
 
-          if (response.roles.includes('ROLE_ADMIN')) {
-            // Rediriger vers /dashboard
-            console.log("Redirection vers le dashboard");
-            this.router.navigate(['/dashboard']);
+    const { email, password } = this.loginForm.value; // Récupérer la valeur des champs
+    if (email && password) { // Vérifier que les champs ne sont pas null
+      this.authService.login(email, password).subscribe({
+        next: (response: any) => {
+          if (response.token) {
+            console.log('Connexion réussie !', response);
+            localStorage.setItem('token', response.token);
+
+            if (response.roles.includes('ROLE_ADMIN')) {
+              // Rediriger vers /dashboard
+              console.log("Redirection vers le dashboard");
+              this.router.navigate(['/dashboard']);
+            } else {
+              // Sinon, rediriger vers une autre page (par exemple choix_ue)
+              console.log("Redirection vers choix_ue");
+              this.router.navigate(['/choix-ue']);
+            }
           } else {
-            // Sinon, rediriger vers une autre page (par exemple accueil)
-            console.log("Redirection vers l'accueil");
-            this.router.navigate(['/']);
+            this.errorMessage = 'Identifiants incorrects. Veuillez réessayer.';
+            console.error('Identifiants incorrects');
           }
-
-        } else {
-          this.errorMessage = 'Identifiants incorrects. Veuillez réessayer.';
-          console.error('Identifiants incorrects');
+        },
+        error: (err) => {
+          this.errorMessage = err.message;
         }
-      },
-      error: (err) => {
-        this.errorMessage = err.message;
-      }
-    });
+      });
+    }
   }
 
   // Gestion de l'affichage/masquage du mot de passe

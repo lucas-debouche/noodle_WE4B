@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, Observable, throwError } from 'rxjs';
+import {catchError, Observable, tap, throwError} from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -11,11 +11,16 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   // Méthode pour la connexion utilisateur
-  login(credentials: { email: string; mot_passe: string }): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
-      catchError(this.handleError)
+  login(email: string, mot_passe: string): Observable<any> {
+    return this.http.post<any>('http://localhost:3000/api/auth/login', { email, mot_passe }).pipe(
+      tap(response => {
+        // Stocker le token dans le localStorage
+        localStorage.setItem('authToken', response.token);
+      })
     );
   }
+
+
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Une erreur inconnue est survenue.';
@@ -35,7 +40,7 @@ export class AuthService {
 
   // Méthode pour gérer le token (exemple d'utilisation de stockage local)
   storeToken(token: string): void {
-    localStorage.setItem('token', token);
+    localStorage.setItem('token', token); // Stocke dans localStorage
   }
 
   getToken(): string | null {

@@ -12,7 +12,7 @@
 # Node
 node_modules/
 noodle_WE4b/node_modules/
-noodle_WE4b/backend/node_modules
+noodle_WE4b/backend/node_modules/
 npm-debug.log*
 yarn-error.log*
 
@@ -57,3 +57,9 @@ Thumbs.db
 utilisateur.json
 nouveaux_mdp.txt
 dump/noodle/
+
+# Exceptions pour les fichiers importants
+!src/**/*.component.ts
+!src/**/*.component.html
+!src/**/*.component.css
+!src/**/*.module.ts
