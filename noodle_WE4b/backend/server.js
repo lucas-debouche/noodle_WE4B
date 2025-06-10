@@ -7,6 +7,8 @@ const utilisateurRoutes = require('./routes/utilisateur.routes');
 const ueRoutes = require('./routes/ue.routes');
 const postRoutes = require('./routes/post.routes');
 const authRoutes = require('./routes/auth.routes');
+const adminPanelRoutes = require('./routes/admin_panel.routes');
+
 
 const app = express();
 const PORT = 3000;
@@ -23,6 +25,8 @@ app.use('/api/utilisateur', utilisateurRoutes);
 app.use('/api/ue', ueRoutes);
 app.use('/api/post', postRoutes);
 app.use("/api/auth", authRoutes);
+app.use('/api/admin', adminPanelRoutes);
+
 
 
 app.listen(PORT, () => {

@@ -1,1 +1,21 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --orange-noodle: #f77b55; /* Orange doux */
+  --arriere-plan: #F5D7B8; /* Beige légèrement plus chaud */
+  --background-color: #FFFFFF; /* Blanc pour les cartes */
+  --text-color: #3B5A7A; /* Bleu-gris profond */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background-color: var(--arriere-plan);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
