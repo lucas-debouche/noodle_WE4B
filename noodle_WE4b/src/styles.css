@@ -1,1 +1,21 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --orange-noodle: #f77b55;
+  --arriere-plan: #f5d7b8;
+  --background-color: #ffffff;
+  --text-color: #3b5a7a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--arriere-plan);
+  color: var(--text-color);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+

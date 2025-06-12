@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User } from '../shared/models/user.model';
+import { User } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',
@@ -15,4 +15,15 @@ export class UtilisateurService {
   getUtilisateurs(): Observable<User[]> {
     return this.http.get<User[]>(this.apiUrl);
   }
+
+  // Récupérer l'utilisateur actuel
+  getUtilisateurActuel(): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/current`);
+  }
+
+  // Mettre à jour un utilisateur
+  updateUtilisateur(formData: FormData, nom: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/update_photo/${nom}`, formData); // Modifiez l'URL si nécessaire
+  }
+
 }

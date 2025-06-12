@@ -6,6 +6,7 @@ const ueSchema = new mongoose.Schema({
   image: { type: String, default: null },
   description: { type: String, required: true },
   ects: { type: Number, required: true },
+  participants: [{ type: String }]
 }, {
   timestamps: true,
 });

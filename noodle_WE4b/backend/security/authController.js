@@ -6,12 +6,12 @@ exports.login = async (req, res) => {
   const { email, mot_passe } = req.body;
 
   try {
-    console.log(`Tentative de connexion : Email: ${email}`); // Étape 1 : Voir si la requête passe
+    console.log(`Tentative de connexion : Email: ${email}`);
     console.log("JWT_SECRET : ", process.env.JWT_SECRET);
 
     // Vérifiez si l'utilisateur existe dans la base
     const user = await User.findOne({ email });
-    console.log('Requête User.findOne achevée'); // Étape 2 : Déboguer les erreurs au niveau de la base de données
+    console.log('Requête User.findOne achevée');
 
     if (!user) {
       console.log('Erreur : utilisateur non trouvé');
@@ -22,7 +22,7 @@ exports.login = async (req, res) => {
 
     // Vérifiez si le mot de passe est correct
     const ismot_passeValid = await bcrypt.compare(mot_passe, user.mot_passe);
-    console.log('Validation de mot_passe terminée'); // Étape 3 : Détecter les erreurs dans bcrypt.compare
+    console.log('Validation de mot_passe terminée');
 
     if (!ismot_passeValid) {
       console.log('Erreur : Mot de passe incorrect');
@@ -31,11 +31,15 @@ exports.login = async (req, res) => {
 
     console.log('Mot de passe correct. Création du jeton...');
 
-    // Génération du token
+    // Génération du token avec une propriété lastActivity
     const token = jwt.sign(
-      { userId: user._id, roles: user.role },
+      {
+        userId: user._id,
+        roles: user.role,
+        lastActivity: Math.floor(Date.now() / 1000), // Temps actuel en secondes
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "5h" }
     );
 
     console.log('Token créé avec succès:', token);
@@ -48,7 +52,7 @@ exports.login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erreur majeure dans login:', error.message); // Étape 4 : Attraper les erreurs globales
+    console.error('Erreur majeure dans login:', error.message);
     return res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
 };

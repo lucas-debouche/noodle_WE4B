@@ -1,0 +1,8 @@
+<div class="main-content">
+  <div class="content">
+    <app-ue-box *ngFor="let ue of displayedUes" [ue]="ue"></app-ue-box>
+  </div>
+  <button id="load-more" (click)="displayUes()">
+    {{ toggleButtonTextUe }}
+  </button>
+</div>
