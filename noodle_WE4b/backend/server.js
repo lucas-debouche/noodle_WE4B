@@ -24,7 +24,7 @@ mongoose.connect('mongodb://localhost:27017/noodle')
 app.use('/api/utilisateur', utilisateurRoutes);
 app.use('/api/ue', ueRoutes);
 app.use('/api/post', postRoutes);
-app.use("/api/auth", authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 

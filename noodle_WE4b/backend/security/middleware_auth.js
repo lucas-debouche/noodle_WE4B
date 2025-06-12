@@ -18,6 +18,16 @@ module.exports = (rolesAutorises) => (req, res, next) => {
     console.log('authMiddleware : Token décodé avec succès.', decodedToken);
     req.user = decodedToken;
 
+    // Vérification de l'inactivité
+    const currentTime = Math.floor(Date.now() / 1000); // Temps actuel en secondes
+    if (currentTime - decodedToken.lastActivity > 20 * 60) { // 20 minutes d'inactivité
+      console.log('authMiddleware : Token expiré en raison d\'inactivité.');
+      return res.status(401).json({ error: "Session expirée en raison d'inactivité." });
+    }
+
+    // Mise à jour de l'activité
+    req.user.lastActivity = currentTime;
+
     // Vérifier les rôles autorisés
     if (!rolesAutorises.some((role) => decodedToken.roles.includes(role))) {
       console.log('authMiddleware : Accès refusé, rôle non autorisé.');

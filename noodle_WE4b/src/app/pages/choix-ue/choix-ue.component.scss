@@ -1,19 +1,30 @@
 .main-content {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 20px 72px 20px 20px;
   transition: margin-right 0.3s ease-in-out;
   margin-right: 0;
+  min-height: calc(100vh - 100px - 63px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: auto;
+
+  &.shifted {
+    margin-right: 500px;
+  }
 }
 
 .content {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 50px;
-  flex-grow: 1;
   padding-left: 30px;
   padding-right: 10px;
-  height: auto;
   padding-top: 30px;
+  width: 100%;
+  align-items: start;
+  height: auto;
+
 
   .content-item {
     background: var(--background-color);
@@ -69,16 +80,21 @@
 
 .sidebar {
   position: absolute;
-  right: 0;
+  right: -500px;
   width: 500px;
   background: var(--background-color);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   padding: 10px 20px;
   top: 100px;
-  height: calc(100vh - 100px);
-  max-height: calc(100vh - 100px - 100px); // Ajusté selon la hauteur du footer
-  overflow-y: auto;
-  transition: transform 0.3s ease-in-out;
+  height: calc(100vh - 100px - 63px);
+  max-height: calc(100vh - 100px - 63px);
+  min-height: 0;
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out, right 0.3s ease-in-out;
+
+  &.open {
+    right: 0;
+  }
 
   .sidebar-header {
     font-size: 24px;
@@ -105,6 +121,13 @@
       color: var(--text-color);
     }
   }
+
+  .sidebar-content {
+    /* La hauteur de la liste déroulante s'adapte à la hauteur de la sidebar moins l'en-tête et le bouton */
+    max-height: calc(100vh - 100px - 63px - 110px);
+    overflow-y: auto;
+    padding-right: 8px;
+  }
 }
 
 #load-more, #load-more-activities {
@@ -122,3 +145,29 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
+.toggle-btn {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  background: var(--orange-noodle);
+  color: white;
+  border: none;
+  border-bottom-left-radius: 40%;
+  border-top-left-radius: 40%;
+  width: 40px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease-in-out, right 0.3s ease-in-out;
+  z-index: 1000;
+
+  &:hover {
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  &.shifted {
+    right: 500px;
+  }
+}

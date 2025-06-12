@@ -1,14 +1,16 @@
-<div class="header">
-  <a routerLink="/choix-ue">
-    <img src="assets/Images/Logo_Noodle_Web.webp" alt="logo" width="100px" height="100px" />
-  </a>
-  <div class="header-title">
-    <h1>{{ title || 'Noodle' }}</h1>
+<nav *ngIf="shouldShowNavbar()">
+  <div class="header">
+    <a routerLink="/choix-ue">
+      <img src="assets/Images/Logo_Noodle_Web.webp" routerLink="/choix-ue" alt="logo" width="150"/>
+    </a>
+    <div class="header-title">
+      <h1>{{ title || 'Noodle' }}</h1>
+    </div>
+    <div class="nav" *ngIf="isLoggedIn">
+      <a *ngIf="isAdmin" routerLink="/admin-dashboard">Dashboard</a>
+      <a *ngIf="isAdmin" routerLink="/admin-panel">Panel Admin</a>
+      <a *ngIf="hasRoles" routerLink="/choix-ue">Mes UEs</a>
+      <a (click)="logout()" routerLink="/">Déconnexion</a>
+    </div>
   </div>
-  <div class="nav" *ngIf="isLoggedIn">
-    <a *ngIf="isAdmin" routerLink="/admin-dashboard">Dashboard</a>
-    <a *ngIf="isAdmin" routerLink="/admin-panel">Panel Admin</a>
-    <a *ngIf="hasRoles" routerLink="/choix-ue">Mes UEs</a>
-    <a (click)="logout()">Déconnexion</a>
-  </div>
-</div>
+</nav>

@@ -4,6 +4,8 @@ const Utilisateur = require('../models/utilisateur.model');
 const authMiddleware = require('../security/middleware_auth');
 const mongoose = require('mongoose');
 const multer = require('multer');
+const path = require("path");
+const fs = require('fs');
 
 
 // Obtenir tous les utilisateurs
@@ -45,7 +47,15 @@ router.get('/current', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
 // Configurer Multer pour le stockage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './uploads/'); // Dossier cible
+    const nomUser = req.params.nom;
+    console.log("nomUser : ", nomUser);
+    const dir = path.join(__dirname, '../uploads/user', nomUser, 'photo_profil'); // Chemin dynamique
+
+    // Vérifier si le dossier existe, sinon le créer
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir); // Dossier cible
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname); // Nom unique
@@ -56,15 +66,28 @@ const upload = multer({ storage });
 
 
 // Route pour mettre à jour un utilisateur
-router.put('/update', upload.single('photo'), async (req, res) => {
+router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
   try {
+    console.log('Mise à jour de la photo de l\'utilisateur');
     const photo = req.file ? req.file.filename : null; // Si une nouvelle photo a été envoyée
+    const nom = req.body.nom;
+    const prenom = req.body.prenom;
+    console.log('Photo reçue :', photo);
 
     // Trouver l'utilisateur et effectuer la mise à jour
-    const utilisateur = await Utilisateur.findById(req.userId); // Supposons que l'ID est extrait via un middleware
-
+    const utilisateur = await Utilisateur.findOne({ nom, prenom });
+    console.log('Utilisateur trouvé :', utilisateur);
     if (!utilisateur) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    // Supprimer l'ancienne photo si une nouvelle est envoyée
+    if (photo && utilisateur.photo) {
+      const oldPhotoPath = path.join(__dirname, '../uploads/user', nom, 'photo_profil', utilisateur.photo);
+      if (fs.existsSync(oldPhotoPath)) {
+        fs.unlinkSync(oldPhotoPath); // Supprimer l'ancienne photo
+        console.log('Ancienne photo supprimée :', oldPhotoPath);
+      }
     }
 
     // Mettre à jour la photo si une nouvelle est envoyée
@@ -72,6 +95,7 @@ router.put('/update', upload.single('photo'), async (req, res) => {
       utilisateur.photo = photo;
     }
     console.log('Photo mise à jour :', utilisateur.photo);
+
     // Sauvegarder les modifications
     await utilisateur.save();
 

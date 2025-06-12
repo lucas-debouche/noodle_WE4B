@@ -2,10 +2,10 @@ import {Component, OnInit, ChangeDetectorRef} from '@angular/core';
 import {FormControl, FormGroup, ValidationErrors, Validators} from '@angular/forms';
 import { ViewEncapsulation } from '@angular/core';
 import {UtilisateurService} from "../../services/utilisateur.service";
-import {UesService} from "../../ues/ues.service";
-import {PostsService} from "../../posts/posts.service";
-import {Router} from "@angular/router";
-import {AuthService} from "../../auth/auth.service";
+import {UesService} from "../../services/ues.service";
+import {PostsService} from "../../services/posts.service";
+import {Router, ActivatedRoute} from "@angular/router";
+import {AuthService} from "../../services/auth.service";
 
 @Component({
   selector: 'app-login',
@@ -20,6 +20,7 @@ export class LoginComponent implements OnInit{
   })
   showPassword: boolean = false;
   errorMessage: string | null = null; // Ajout de la variable d'erreur
+  sessionExpired: boolean = false; // Ajout pour gérer l'expiration de session
 
 
   stats = {
@@ -34,7 +35,8 @@ export class LoginComponent implements OnInit{
     private postService: PostsService,
     private cdRef: ChangeDetectorRef,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private route: ActivatedRoute // Ajout pour récupérer les paramètres de la route
   ){}
 
   ngOnInit() {
@@ -50,6 +52,12 @@ export class LoginComponent implements OnInit{
       this.triggerStatAnimation();
     });
 
+    // Vérifier si la session a expiré
+    this.route.queryParams.subscribe(params => {
+      if (params['sessionExpired']) {
+        this.sessionExpired = true;
+      }
+    });
   }
 
   // Gestion de la soumission du formulaire
@@ -68,12 +76,8 @@ export class LoginComponent implements OnInit{
             localStorage.setItem('token', response.token);
 
             if (response.roles.includes('ROLE_ADMIN')) {
-              // Rediriger vers /dashboard
-              console.log("Redirection vers le dashboard");
               this.router.navigate(['/dashboard']);
             } else {
-              // Sinon, rediriger vers une autre page (par exemple choix_ue)
-              console.log("Redirection vers choix_ue");
               this.router.navigate(['/choix-ue']);
             }
           } else {

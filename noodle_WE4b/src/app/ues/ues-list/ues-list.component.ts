@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { UesService } from '../ues.service';
-import { Ue } from '../../shared/models/ue.model';
+import { UesService } from '../../services/ues.service';
+import { Ue } from '../../models/ue.model';
 
 @Component({
   selector: 'app-ues-list',

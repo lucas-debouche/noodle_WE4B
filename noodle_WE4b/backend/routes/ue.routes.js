@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
 const storage = diskStorage({
   destination: function (req, file, cb) {
     const codeUE = req.params.code; // Récupérer le code de l'UE
-    const dir = path.join(__dirname, '../uploads', codeUE, 'photo'); // Chemin dynamique
+    const dir = path.join(__dirname, '../uploads/ue', codeUE, 'photo'); // Chemin dynamique
 
     // Vérifier si le dossier existe, sinon le créer
     if (!fs.existsSync(dir)) {
@@ -43,7 +43,7 @@ router.post('/:code/upload-photo', upload.single('image'), async (req, res) => {
     if (!ue) {
       return res.status(404).json({ message: 'Ue non trouvée' });
     }
-    const relativePath = `/uploads/${req.params.code}/photo/${req.file.filename}`;
+    const relativePath = `/uploads/ue/${req.params.code}/photo/${req.file.filename}`;
     ue.image = relativePath;    await ue.save();
     res.status(200).json({ message: 'Image téléchargée avec succès', ue });
   } catch (error) {

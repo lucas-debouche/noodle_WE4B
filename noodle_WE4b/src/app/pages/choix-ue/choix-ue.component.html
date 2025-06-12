@@ -1,46 +1,8 @@
-<app-navbar [title]="'Choix des UEs'"></app-navbar>
-
-<!-- <button class="toggle-btn" (click)="toggleSidebar()">☰</button> -->
-
 <div class="main-content">
   <div class="content">
-    <div *ngFor="let ue of ues" class="content-item">
-      <a [routerLink]="['/mes-ue', ue.id]">
-        <div class="content-item-inner">
-          <img [src]="'http://localhost:3000' + ue.image" alt="Image UE" />
-          <h3>{{ ue.code }} - {{ ue.intitule }}</h3>
-        </div>
-      </a>
-    </div>
+    <app-ue-box *ngFor="let ue of displayedUes" [ue]="ue"></app-ue-box>
   </div>
-  <button id="load-more" (click)="toggleExpandUe()">
-    {{ isExpandedUe ? 'Voir moins' : 'Voir plus' }}
+  <button id="load-more" (click)="displayUes()">
+    {{ toggleButtonTextUe }}
   </button>
 </div>
-<!--
-<div class="sidebar" [class.open]="isSidebarOpen">
-  <div class="sidebar-header">
-    <h1>Activités</h1>
-  </div>
-
-  <div class="sidebar-content">
-    <div *ngFor="let post of posts" class="sidebar-item">
-      <p class="activity-title">{{ post.titre }}</p>
-      <p class="activity-type">{{ post.type }}</p>
-      <p class="activity-date">{{ post.dateCreation }}</p>
-      <p class="activity-author">{{ post.auteur }}</p>
-    </div>
-  </div>
-
-  <button id="load-more-activities" (click)="toggleExpandActivities()">
-    {{ isExpandedActivities ? 'Voir moins' : 'Voir plus' }}
-  </button>
-</div>
-
-[user]="currentUser" (updateProfil)="onProfilUpdated($event)"
--->
-
-<app-profil ></app-profil>
-
-
-<app-footer></app-footer>

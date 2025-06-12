@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Ue } from "../../shared/models/ue.model";
-import { Post } from "../../shared/models/post.model";
-import { User } from "../../shared/models/user.model";
+import { Ue } from "../../models/ue.model";
+import { User } from "../../models/user.model";
 import { UtilisateurService } from "../../services/utilisateur.service";
+import { NavbarService} from "../../services/navbar.service";
 
 @Component({
   selector: 'app-choix-ue',
@@ -11,84 +11,63 @@ import { UtilisateurService } from "../../services/utilisateur.service";
   styleUrls: ['./choix-ue.component.scss']
 })
 export class ChoixUeComponent implements OnInit {
-  ues: Ue[] = [];
-  posts: Post[] = [];
+  allUes: Ue[] = [];
+  displayedUes: Ue[] = [];
   offset_ue = 0;
   limit_ue = 3;
-  offset_activity = 0;
-  limit_activity = 3;
   isExpandedUe = false;
-  isExpandedActivities = false;
-  isSidebarOpen = false;
-  currentUser: User | null = null; // Pour stocker les données de l'utilisateur actuel
 
 
-  constructor(private http: HttpClient, private utilisateurService: UtilisateurService
+  constructor(
+    private http: HttpClient,
+    private utilisateurService: UtilisateurService,
+    private navbarService: NavbarService,
   ) {}
 
   ngOnInit(): void {
+    this.navbarService.setTitle('Choix UEs');
     this.loadUes();
-    this.loadActivities();
-    this.getCurrentUser();
-  }
-
-loadUes(): void {
-  this.http.get(`http://localhost:3000/api/ue?offset=${this.offset_ue}&limit=${this.limit_ue}`)
-    .subscribe((response: any) => {
-      if (Array.isArray(response)) {
-        this.ues = response;
-      } else {
-        console.error('Invalid response format, expected an array:', response);
-        this.ues = [];
-      }
-    });
-}
-
-  // Charger les activités
-  loadActivities(): void {
-    this.http
-      .get(`http://localhost:3000/api/post?offset=${this.offset_activity}&limit=${this.limit_activity}`)
-      .subscribe((response: any) => {
-        this.posts = response;
-      });
-  }
-
-  getCurrentUser(): void {
     this.utilisateurService.getUtilisateurActuel().subscribe({
       next: (user: User) => {
-        console.log('Utilisateur actuel récupéré :', user);
-        this.currentUser = user; // Stockez l'utilisateur dans une variable locale
+        this.navbarService.setTitle('Choix UEs');
+        this.navbarService.setCurrentUser(user); // Met à jour l'utilisateur dans le NavbarService
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Erreur lors de la récupération de l\'utilisateur actuel :', err);
       }
     });
   }
 
+loadUes(): void {
+  this.http.get<Ue[]>(`http://localhost:3000/api/ue`)
+    .subscribe({
+      next: (data: Ue[]) => {
+        this.allUes = data;
+        this.displayUes();
+      },
+      error: (err) => console.error('Erreur lors du chargement des UEs :', err)
+    });
+}
 
-  // Voir plus ou réduire
-  toggleExpandUe(): void {
-    this.isExpandedUe = !this.isExpandedUe;
-    if (this.isExpandedUe) {
-      this.offset_ue += this.limit_ue;
-      this.loadUes();
-    } else {
-      this.ues = this.ues.slice(0, this.limit_ue);
+displayUes(): void {
+  if (!this.isExpandedUe) {
+    // Afficher un lot de UEs
+    const currentBatch = this.allUes.slice(this.offset_ue, this.offset_ue + this.limit_ue);
+    this.displayedUes = [...this.displayedUes, ...currentBatch];
+    this.offset_ue += this.limit_ue;
+
+    if (this.offset_ue >= this.allUes.length) {
+      this.isExpandedUe = true;
     }
+  } else {
+    // Mode "Voir moins"
+    this.displayedUes = this.allUes.slice(0, this.limit_ue);
+    this.offset_ue = this.limit_ue;
+    this.isExpandedUe = false;
   }
+}
 
-  toggleExpandActivities(): void {
-    this.isExpandedActivities = !this.isExpandedActivities;
-    if (this.isExpandedActivities) {
-      this.offset_activity += this.limit_activity;
-      this.loadUes();
-    } else {
-      this.posts = this.posts.slice(0, this.limit_activity);
-    }
-  }
-
-  toggleSidebar(): void {
-    this.isSidebarOpen = !this.isSidebarOpen;
-  }
-
+get toggleButtonTextUe(): string {
+  return this.isExpandedUe ? 'Voir moins' : 'Voir plus';
+}
 }

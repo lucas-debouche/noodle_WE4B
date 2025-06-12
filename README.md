@@ -13,7 +13,7 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants :
 - **Node.js** (version 16 ou supérieure) : [Télécharger Node.js](https://nodejs.org/)
 - **npm** : Inclus avec Node.js.
 - **MongoDB** : Une instance MongoDB fonctionnelle.
-
+- Télécharger les fichiers que je vous ai envoyé sur discord
 ---
 
 ## Installation
@@ -124,34 +124,6 @@ MongoDB restaurera automatiquement toutes les collections et les documents dans 
 
 ---
 
-## Structure du projet
-
-Voici une vue d'ensemble de l'organisation des fichiers et répertoires :
-
-```
-noodle_WE4B
-├── dump                # Dossier contenant la sauvegarde de la base de données
-├── nouveaux_mdp.txt    # Fichier contenant les identifiants et mots de passe pour les tests
-├── package.json         # Dépendances et scripts du projet
-├── .idea              # Configuration de l'IDE (par exemple, IntelliJ IDEA)
-├── .gitignore         # Fichiers et répertoires ignorés par Git
-├── README.md          # Documentation du projet
-├── noodle_WE4b
-   ├── backend
-   │   ├── models          # Modèles de données MongoDB
-   │   ├── routes          # Routes API
-   │   ├── security        # Gestion des JWT
-   │   ├── .env            # Configuration des variables d'environnement
-   │   ├── server.js       # Point d'entrée du backend
-   │   └── package.json    # Dépendances et scripts backend
-   ├── src
-   │   ├── app             # Composants Angular
-   │   └── ...             # Autres fichiers Angular
-   ├── .gitignore          # Fichiers ignorés par Git
-   └── package.json       # Dépendances et scripts du frontend
-```
-   
----
 
 ## Informations sur les utilisateurs
 
