@@ -39,7 +39,7 @@ exports.login = async (req, res) => {
         lastActivity: Math.floor(Date.now() / 1000), // Temps actuel en secondes
       },
       process.env.JWT_SECRET,
-      { expiresIn: "5h" }
+      { expiresIn: "10h" } // Durée longue, l'inactivité est gérée côté middleware
     );
 
     console.log('Token créé avec succès:', token);

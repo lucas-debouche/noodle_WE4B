@@ -16,7 +16,6 @@ module.exports = (rolesAutorises) => (req, res, next) => {
     }
 
     console.log('authMiddleware : Token décodé avec succès.', decodedToken);
-    req.user = decodedToken;
 
     // Vérification de l'inactivité
     const currentTime = Math.floor(Date.now() / 1000); // Temps actuel en secondes
@@ -25,8 +24,20 @@ module.exports = (rolesAutorises) => (req, res, next) => {
       return res.status(401).json({ error: "Session expirée en raison d'inactivité." });
     }
 
-    // Mise à jour de l'activité
-    req.user.lastActivity = currentTime;
+    // Génère un nouveau token avec la nouvelle activité
+    const newToken = jwt.sign(
+      {
+        userId: decodedToken.userId,
+        roles: decodedToken.roles,
+        lastActivity: currentTime,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "10h" }
+    );
+    res.setHeader('x-refresh-token', newToken);
+
+    req.user = { ...decodedToken, lastActivity: currentTime };
+
 
     // Vérifier les rôles autorisés
     if (!rolesAutorises.some((role) => decodedToken.roles.includes(role))) {

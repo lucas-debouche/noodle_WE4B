@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 @Injectable()
@@ -20,9 +20,16 @@ export class AuthInterceptor implements HttpInterceptor {
     }
 
     return next.handle(request).pipe(
+      tap(event => {
+        if (event instanceof HttpResponse) {
+          const newToken = event.headers.get('x-refresh-token');
+          if (newToken) {
+            localStorage.setItem('token', newToken);
+          }
+        }
+      }),
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401) {
-          // Rediriger vers la page de connexion avec un paramètre indiquant l'expiration
           this.router.navigate(['/login'], { queryParams: { sessionExpired: true } });
         }
         return throwError(error);
