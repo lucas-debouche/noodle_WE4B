@@ -5,23 +5,22 @@
       <button id="closeProfilSidebar" class="close-btn" (click)="toggleProfilSidebar()">&times;</button>
     </div>
 
-    <form (ngSubmit)="saveProfil()">
+    <form [formGroup]="profilForm" (ngSubmit)="saveProfil()">
       <div class="form-group">
         <label for="nom">Nom</label>
-        <input id="nom" [(ngModel)]="profil.nom" name="nom" type="text" class="form-control" />
+        <input id="nom" formControlName="nom" type="text" class="form-control" />
       </div>
 
       <div class="form-group">
         <label for="prenom">Prénom</label>
-        <input id="prenom" [(ngModel)]="profil.prenom" name="prenom" type="text" class="form-control" />
+        <input id="prenom" formControlName="prenom" type="text" class="form-control" />
       </div>
 
       <div class="form-group">
         <label for="plainPassword">Mot de passe</label>
         <input
           id="plainPassword"
-          [(ngModel)]="profil.plainPassword"
-          name="plainPassword"
+          formControlName="plainPassword"
           type="password"
           class="form-control"
         />
@@ -31,18 +30,14 @@
         <label for="confirmPassword">Confirmer le mot de passe</label>
         <input
           id="confirmPassword"
-          [(ngModel)]="profil.confirmPassword"
-          name="confirmPassword"
+          formControlName="confirmPassword"
           type="password"
           class="form-control"
         />
       </div>
 
       <div class="profil-avatar">
-        <!-- Si une nouvelle photo est sélectionnée, afficher l'aperçu -->
-        <img *ngIf="profil.photoPreview; else userPhoto" [src]="profil.photoPreview" alt="Aperçu de la photo" />
-
-        <!-- Sinon, afficher la photo actuelle de l'utilisateur -->
+        <img *ngIf="photoPreview; else userPhoto" [src]="photoPreview" alt="Aperçu de la photo" />
         <ng-template #userPhoto>
           <img *ngIf="user?.photo" [src]="'http://localhost:3000/uploads/user/' + user.nom + '/photo_profil/' + user.photo" alt="Photo de profil" />
         </ng-template>
@@ -53,7 +48,7 @@
         <input id="photo" type="file" class="form-control" (change)="onPhotoChange($event)" />
       </div>
 
-      <button type="submit" class="profil-btn">Enregistrer</button>
+      <button type="submit" class="profil-btn" [disabled]="profilForm.invalid">Enregistrer</button>
     </form>
   </div>
 

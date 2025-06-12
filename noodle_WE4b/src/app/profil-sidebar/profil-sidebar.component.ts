@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter, OnInit } from '@angular/core';
 import { User } from "../models/user.model";
 import { UtilisateurService } from "../services/utilisateur.service";
 import { Router } from "@angular/router";
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-profil',
@@ -10,34 +11,38 @@ import { Router } from "@angular/router";
 })
 
 export class ProfilSidebarComponent implements OnInit {
-  user!: User; // Utilisateur connecté récupéré via un service
-  @Output() updateProfil = new EventEmitter<any>(); // Événement émis lors de la sauvegarde des modifications
+  user!: User;
+  @Output() updateProfil = new EventEmitter<any>();
   isOpen = false;
   toggleBtnShifted = false;
-  profil = {
-    nom: '',
-    prenom: '',
-    plainPassword: '',
-    confirmPassword: '',
-    photo: "",
-    photoPreview: ''
-  };
+  profilForm!: FormGroup;
+  photoPreview: string = '';
 
   constructor(
     private utilisateurService: UtilisateurService,
     private router: Router,
-    ) {}
+    private fb: FormBuilder
+  ) {}
 
   ngOnInit(): void {
+    this.profilForm = this.fb.group({
+      nom: ['', Validators.required],
+      prenom: ['', Validators.required],
+      plainPassword: [''],
+      confirmPassword: [''],
+      photo: [null]
+    });
+
     if (this.ShouldShowProfilSidebar()) {
       this.utilisateurService.getUtilisateurActuel().subscribe({
         next: (data: User) => {
           this.user = data;
-          // Remplir profil avec les données utilisateur récupérées
-          this.profil.nom = this.user.nom || '';
-          this.profil.prenom = this.user.prenom || '';
-          this.profil.plainPassword = this.user.motPasse || '';
-          this.profil.photo = this.user.photo || '';
+          this.profilForm.patchValue({
+            nom: this.user.nom || '',
+            prenom: this.user.prenom || '',
+            plainPassword: this.user.motPasse || '',
+            photo: this.user.photo || ''
+          });
         },
         error: (err) => {
           console.error('Erreur lors de la récupération de l\'utilisateur :', err);
@@ -46,16 +51,13 @@ export class ProfilSidebarComponent implements OnInit {
     }
   }
 
-  // Basculer l'ouverture de la sidebar
   toggleProfilSidebar(): void {
     this.isOpen = !this.isOpen;
-
     const profilSidebarToggle = document.querySelector('#profilSidebarToggle');
     if (profilSidebarToggle) {
       profilSidebarToggle.classList.remove('profil-open', 'shifted-sidebar', 'shifted-profil', 'shifted-both');
       if (this.isOpen) {
         profilSidebarToggle.classList.add('profil-open');
-        // Vérifie si la sidebar principale est ouverte pour appliquer le bon décalage
         const mainSidebar = document.querySelector('.sidebar');
         if (mainSidebar && mainSidebar.classList.contains('open')) {
           profilSidebarToggle.classList.add('shifted-both');
@@ -63,50 +65,45 @@ export class ProfilSidebarComponent implements OnInit {
           profilSidebarToggle.classList.add('shifted-profil');
         }
       } else {
-        // Si la sidebar principale est ouverte, applique le décalage correspondant
         const mainSidebar = document.querySelector('.sidebar');
         if (mainSidebar && mainSidebar.classList.contains('open')) {
           profilSidebarToggle.classList.add('shifted-sidebar');
         }
       }
     }
-
     this.toggleBtnShifted = this.isOpen;
   }
 
-  // Prévisualisation de l'image chargée
   onPhotoChange(event: any): void {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.profil.photoPreview = e.target.result;
+        this.photoPreview = e.target.result;
       };
       reader.readAsDataURL(file);
-      this.profil.photo = file; // Mettre à jour avec le fichier sélectionné
+      this.profilForm.patchValue({ photo: file });
     }
   }
 
   saveProfil(): void {
+    if (this.profilForm.invalid) return;
     const formData = new FormData();
-    // Ajouter les champs texte au formulaire
-    formData.append('nom', this.profil.nom);
-    formData.append('prenom', this.profil.prenom);
-    formData.append('plainPassword', this.profil.plainPassword);
+    formData.append('nom', this.profilForm.value.nom);
+    formData.append('prenom', this.profilForm.value.prenom);
+    formData.append('plainPassword', this.profilForm.value.plainPassword);
 
-    // Vérifier s'il existe une nouvelle photo sélectionnée
-    if (this.profil.photo && typeof this.profil.photo === 'object' && 'name' in this.profil.photo) {
-      formData.append('photo', this.profil.photo as File); // Ajouter la nouvelle photo
+    const photo = this.profilForm.value.photo;
+    if (photo && typeof photo === 'object' && 'name' in photo) {
+      formData.append('photo', photo as File);
     } else if (this.user?.photo) {
-      formData.append('photo', this.user.photo); // Sinon, conserver l'existant
+      formData.append('photo', this.user.photo);
     }
 
-    // Envoi des données au backend pour mise à jour
-    this.utilisateurService.updateUtilisateur(formData, this.profil.nom).subscribe({
+    this.utilisateurService.updateUtilisateur(formData, this.profilForm.value.nom).subscribe({
       next: (response) => {
-        console.log('Profil mis à jour avec succès :', response);
-        this.user = response.utilisateur; // Mettre à jour le profil côté client
-        this.toggleProfilSidebar(); // Fermer la sidebar
+        this.user = response.utilisateur;
+        this.toggleProfilSidebar();
       },
       error: (err: any) => {
         console.error('Erreur lors de la mise à jour du profil :', err);
@@ -115,7 +112,6 @@ export class ProfilSidebarComponent implements OnInit {
   }
 
   ShouldShowProfilSidebar(): boolean {
-    // Vérifie si l'URL actuelle ne commence pas par '/login'
     return !this.router.url.startsWith('/login');
   }
 }

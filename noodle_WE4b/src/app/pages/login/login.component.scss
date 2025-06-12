@@ -27,7 +27,11 @@ body {
   gap: 20px;
   padding: 20px;
   width: 100%;
-  min-height: 100vh; /* Permet à la page de s'étendre en hauteur */
+  min-height: 100vh;
+  box-sizing: border-box;
+  max-width: 100vw;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 .login-container {
@@ -40,6 +44,8 @@ body {
   align-items: center;
   display: flex;
   flex-direction: column;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .login-image {
@@ -152,6 +158,8 @@ body {
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .stat-box {
