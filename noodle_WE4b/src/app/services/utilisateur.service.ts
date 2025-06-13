@@ -20,6 +20,9 @@ export class UtilisateurService {
   getUtilisateurActuel(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/current`);
   }
+  getUtilisateurById(userId: string): Observable<any> {
+    return this.http.get(`http://localhost:3000/api/utilisateur/${userId}`);
+  }
 
   // Mettre à jour un utilisateur
   updateUtilisateur(formData: FormData, nom: string): Observable<any> {

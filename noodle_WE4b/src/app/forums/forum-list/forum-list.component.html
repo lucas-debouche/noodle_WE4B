@@ -1,0 +1,12 @@
+<h2>Créer un nouveau sujet</h2>
+<input [(ngModel)]="newTitle" placeholder="Titre du sujet" />
+<button (click)="createForum()">Créer</button>
+
+<hr />
+
+<h2>Liste des forums</h2>
+<ul>
+  <li *ngFor="let forum of forums">
+    <a [routerLink]="['/forums', forum._id]">{{ forum.title }}</a>
+  </li>
+</ul>

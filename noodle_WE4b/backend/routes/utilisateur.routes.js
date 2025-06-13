@@ -1,48 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const Utilisateur = require('../models/utilisateur.model');
+const utilisateurController = require('../controllers/utilisateur.controller');
 const authMiddleware = require('../security/middleware_auth');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require("path");
 const fs = require('fs');
 
+// GET / → obtenir tous les utilisateurs
+router.get('/', utilisateurController.getAllUtilisateurs);
 
-// Obtenir tous les utilisateurs
-router.get('/', async (req, res) => {
-  try {
-    const utilisateurs = await Utilisateur.find();
-    if (utilisateurs.length === 0) {
-      return res.status(404).json({ error: 'Aucun utilisateur trouvé.' });
-    }
-    res.json(utilisateurs);
-  } catch (err) {
-    res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs.' });
-  }
-});
-
-// Obtenir l'utilisateur actuel
-router.get('/current', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
-  console.log('/current : Début de la gestion de la requête');
-
-  try {
-    console.log('/current : Utilisateur ID extrait du token :', req.user._id);
-
-    // Récupération de l’utilisateur actuel dans MongoDB
-    // Conversion de l'ID du token JWT en ObjectId avant utilisation
-    const utilisateur = await Utilisateur.findById(new mongoose.Types.ObjectId(req.user.userId));
-    if (!utilisateur) {
-      console.log('/current : Aucun utilisateur trouvé avec cet ID');
-      return res.status(404).json({ error: 'Utilisateur non trouvé.' });
-    }
-
-    console.log('/current : Utilisateur trouvé, envoi de la réponse...');
-    res.status(200).json(utilisateur);
-  } catch (err) {
-    console.error('/current : Erreur lors de la récupération des données utilisateur :', err);
-    res.status(500).json({ error: 'Erreur lors de la récupération des données utilisateur.' });
-  }
-});
+// GET /current → obtenir l'utilisateur actuel
+router.get('/current', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getCurrentUtilisateur);
 
 // Configurer Multer pour le stockage
 const storage = multer.diskStorage({
@@ -64,39 +34,34 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-
-// Route pour mettre à jour un utilisateur
+// PUT /update_photo/:nom → mettre à jour la photo d'un utilisateur
 router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
   try {
     console.log('Mise à jour de la photo de l\'utilisateur');
-    const photo = req.file ? req.file.filename : null; // Si une nouvelle photo a été envoyée
+    const photo = req.file ? req.file.filename : null;
     const nom = req.body.nom;
     const prenom = req.body.prenom;
     console.log('Photo reçue :', photo);
 
-    // Trouver l'utilisateur et effectuer la mise à jour
     const utilisateur = await Utilisateur.findOne({ nom, prenom });
     console.log('Utilisateur trouvé :', utilisateur);
     if (!utilisateur) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
 
-    // Supprimer l'ancienne photo si une nouvelle est envoyée
     if (photo && utilisateur.photo) {
       const oldPhotoPath = path.join(__dirname, '../uploads/user', nom, 'photo_profil', utilisateur.photo);
       if (fs.existsSync(oldPhotoPath)) {
-        fs.unlinkSync(oldPhotoPath); // Supprimer l'ancienne photo
+        fs.unlinkSync(oldPhotoPath);
         console.log('Ancienne photo supprimée :', oldPhotoPath);
       }
     }
 
-    // Mettre à jour la photo si une nouvelle est envoyée
     if (photo) {
       utilisateur.photo = photo;
     }
     console.log('Photo mise à jour :', utilisateur.photo);
 
-    // Sauvegarder les modifications
     await utilisateur.save();
 
     res.status(200).json({
@@ -108,5 +73,8 @@ router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la mise à jour de l\'utilisateur' });
   }
 });
+
+// GET /:userId → obtenir un utilisateur par son ID (pour afficher les auteurs de message du forum)
+router.get('/:userId', utilisateurController.getUtilisateurById);
 
 module.exports = router;
