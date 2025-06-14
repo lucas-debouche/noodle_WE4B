@@ -6,7 +6,7 @@ const authMiddleware = require('../security/middleware_auth');
 // Créer un nouveau sujet → protégée par authMiddleware
 router.post(
   '/',
-  authMiddleware(['ROLE_PROF', 'ROLE_ADMIN', 'ROLE_ETUDIANT']),
+  authMiddleware(['ROLE_PROF', 'ROLE_ADMIN', 'ROLE_USER']),
   forumsController.createForum
 );
 
@@ -19,7 +19,7 @@ router.get('/detail/:forumId', forumsController.getForumDetail);
 // Ajouter un message à un sujet existant → protégée par authMiddleware
 router.post(
   '/:forumId/messages',
-  authMiddleware(['ROLE_PROF', 'ROLE_ADMIN', 'ROLE_ETUDIANT']),
+  authMiddleware(['ROLE_PROF', 'ROLE_ADMIN', 'ROLE_USER']),
   forumsController.addMessage
 );
 
