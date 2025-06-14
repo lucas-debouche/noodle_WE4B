@@ -1,0 +1,161 @@
+<div class="forum-detail-container">
+  <div class="forum-content">
+    <!-- En-tête du forum -->
+    <div class="forum-header">
+      <h1>{{ forumDetail?.title }}</h1>
+      <div class="forum-info">
+        <span class="info-item messages">
+          {{ getMessagesCount() }} message{{ getMessagesCount() > 1 ? 's' : '' }}
+        </span>
+        <span class="info-item created">
+          Créé le {{ forumDetail?.createdAt | date:'medium' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Section des messages -->
+    <div class="messages-section">
+      <div class="section-header">
+        <h2>Messages</h2>
+        <span class="message-count" *ngIf="getMessagesCount() > 0">
+          {{ getMessagesCount() }}
+        </span>
+      </div>
+
+      <div class="messages-list">
+        <!-- Liste des messages -->
+        <div
+          class="message-item"
+          *ngFor="let msg of forumDetail?.messages; trackBy: trackByMessageId"
+        >
+          <div class="message-header">
+            <span class="author">
+              {{ userCache[msg.userId] || 'Utilisateur anonyme' }}
+            </span>
+            <span class="timestamp">
+              {{ msg.createdAt | date:'short' }}
+            </span>
+          </div>
+          <div class="message-content">
+            {{ msg.message }}
+          </div>
+        </div>
+
+        <!-- État vide -->
+        <div class="empty-messages" *ngIf="getMessagesCount() === 0">
+          <div class="empty-icon">💬</div>
+          <h3>Aucun message pour le moment</h3>
+          <p>Soyez le premier à participer à cette discussion !</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section d'ajout de message -->
+    <div class="add-message-section">
+      <div class="section-header">
+        <h3>✍️ Ajouter un message</h3>
+        <div class="quick-actions">
+          <button class="btn-icon" title="Aperçu" (click)="togglePreview()" [class.active]="showPreview">👁️</button>
+          <button class="btn-icon" title="Aide" (click)="toggleTips()" [class.active]="showTips">❓</button>
+        </div>
+      </div>
+
+      <form class="message-form" (ngSubmit)="addMessage()">
+        <div class="form-group">
+          <textarea
+            [(ngModel)]="newMessage"
+            name="message"
+            placeholder="Écrivez votre message ici... Soyez respectueux et constructif dans vos échanges."
+            required
+            #messageInput
+            (input)="updateCharCount()"
+            maxlength="1000"
+          ></textarea>
+          <div class="char-counter"
+               [class.warning]="getCharCount() > 800"
+               [class.danger]="getCharCount() > 950">
+            {{ getCharCount() }}/1000
+          </div>
+        </div>
+
+        <!-- Aperçu du message -->
+        <div class="message-preview-card" *ngIf="showPreview && hasMessageContent()">
+          <div class="preview-header">
+            <span class="preview-icon">👁️</span>
+            <span>Aperçu de votre message</span>
+          </div>
+          <div class="preview-content">
+            {{ newMessage }}
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <div class="form-meta">
+            <button type="button" class="emoji-btn" title="Ajouter un emoji" (click)="toggleEmojiPicker()">
+              😊
+            </button>
+            <span class="user-info">En tant que {{ getCurrentUserName() }}</span>
+          </div>
+
+          <div class="action-buttons">
+            <button
+              type="button"
+              class="btn-cancel"
+              (click)="clearMessage()"
+              *ngIf="hasMessageContent()"
+            >
+              🗑️ Effacer
+            </button>
+            <button
+              type="submit"
+              class="btn-submit"
+              [class.sending]="isSending"
+              [disabled]="!hasMessageContent() || isSending"
+            >
+              <span *ngIf="!isSending">
+                 Envoyer
+              </span>
+              <span *ngIf="isSending">
+                <span class="loading-spinner"></span>
+                Envoi...
+              </span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Conseils d'utilisation -->
+      <div class="message-tips" *ngIf="showTips">
+        <div class="tips-header">
+          <span>💡</span>
+          Conseils pour bien communiquer
+        </div>
+        <div class="tips-list">
+          <ul>
+            <li>Soyez respectueux et bienveillant dans vos échanges</li>
+            <li>Utilisez un langage clair et précis</li>
+            <li>Évitez les messages trop longs, privilégiez la concision</li>
+            <li>Restez dans le sujet de la discussion</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sélecteur d'emojis simple -->
+      <div class="emoji-picker" *ngIf="showEmojiPicker">
+        <div class="emoji-header">
+          <span>😊 Choisir un emoji</span>
+          <button type="button" class="close-emoji" (click)="toggleEmojiPicker()">×</button>
+        </div>
+        <div class="emoji-grid">
+          <button type="button"
+                  class="emoji-option"
+                  *ngFor="let emoji of commonEmojis"
+                  (click)="addEmoji(emoji)"
+                  [title]="emoji">
+            {{ emoji }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

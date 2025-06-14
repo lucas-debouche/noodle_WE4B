@@ -13,10 +13,8 @@ import { ProfilSidebarComponent } from './profil-sidebar/profil-sidebar.componen
 import { AuthInterceptor } from './services/auth.interceptor.service';
 import { LoginComponent } from './pages/login/login.component';
 import { UeBoxComponent } from './ue-box/ue-box.component';
-import { ForumListComponent } from './forums/forum-list/forum-list.component';
-import { ForumDetailComponent } from './forums/forum-detail/forum-detail.component';
-import { ForumCreateComponent } from './forums/forum-create/forum-create.component';
-import { ForumMessageComponent } from './forums/forum-message/forum-message.component';
+import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
+import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
 
 @NgModule({
   declarations: [
@@ -30,8 +28,6 @@ import { ForumMessageComponent } from './forums/forum-message/forum-message.comp
     UeBoxComponent,
     ForumListComponent,
     ForumDetailComponent,
-    ForumCreateComponent,
-    ForumMessageComponent,
   ],
   imports: [
     BrowserModule,
