@@ -13,6 +13,8 @@ import { ProfilSidebarComponent } from './profil-sidebar/profil-sidebar.componen
 import { AuthInterceptor } from './services/auth.interceptor.service';
 import { LoginComponent } from './pages/login/login.component';
 import { UeBoxComponent } from './ue-box/ue-box.component';
+import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
+import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
 
 @NgModule({
   declarations: [
@@ -24,6 +26,8 @@ import { UeBoxComponent } from './ue-box/ue-box.component';
     ProfilSidebarComponent,
     LoginComponent,
     UeBoxComponent,
+    ForumListComponent,
+    ForumDetailComponent,
   ],
   imports: [
     BrowserModule,

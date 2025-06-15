@@ -1,10 +1,36 @@
-:root {
-  --orange-noodle: #f77b55;
-  --arriere-plan: #f5d7b8;
-  --background-color: #ffffff;
-  --text-color: #3b5a7a;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+ :root {
+   --orange-noodle: #f77b55;
+   --arriere-plan: #f5d7b8;
+   --background-color: #ffffff;
+   --text-color: #3b5a7a;
+   --primary-color: #ff6b41;
+   --primary-hover: #ff5722;
+   --primary-light: #ffab91;
+   --secondary-color: #2c3e50;
+   --secondary-hover: #34495e;
+   --success-color: #27ae60;
+   --warning-color: #f39c12;
+   --danger-color: #e74c3c;
+   --info-color: #34495e;
 
+   --background-gradient: linear-gradient(135deg, #f5d7b8 0%, #ffeaa7 100%);
+   --card-background: #ffffff;
+   --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+   --card-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.18);
+   --card-border: rgba(255, 255, 255, 0.2);
+
+   --text-primary: #2c3e50;
+   --text-secondary: #34495e;
+   --text-muted: #7f8c8d;
+   --text-light: #ecf0f1;
+
+   --border-radius: 20px;
+   --border-radius-small: 12px;
+   --border-radius-large: 24px;
+   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+   --transition-fast: all 0.2s ease;
+ }
 * {
   margin: 0;
   padding: 0;
@@ -14,7 +40,6 @@
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--arriere-plan);
-  color: var(--text-color);
   line-height: 1.6;
   overflow-x: hidden;
 }

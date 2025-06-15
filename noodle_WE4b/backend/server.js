@@ -7,6 +7,8 @@ const utilisateurRoutes = require('./routes/utilisateur.routes');
 const ueRoutes = require('./routes/ue.routes');
 const postRoutes = require('./routes/post.routes');
 const authRoutes = require('./routes/auth.routes');
+const forumsRoutes = require('./routes/forums.routes');
+
 const path = require('path');
 
 
@@ -26,6 +28,7 @@ app.use('/api/ue', ueRoutes);
 app.use('/api/post', postRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/forums', forumsRoutes);
 
 
 app.listen(PORT, () => {
