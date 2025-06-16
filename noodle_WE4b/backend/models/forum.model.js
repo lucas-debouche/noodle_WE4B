@@ -1,17 +1,29 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const messageSchema = new Schema({
-  userId: { type: String }, // String pour être souple (ObjectId plus tard)
+
+const replySchema = new Schema({
+  userId: { type: String },
   message: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date },
+  isEdited: { type: Boolean, default: false }
 });
 
+const messageSchema = new Schema({
+  userId: { type: String },
+  message: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date },
+  isEdited: { type: Boolean, default: false },
+  replies: [replySchema]
+});
 
 const forumSchema = new Schema({
-  ueId: { type: String, required: true }, // String pour supporter ueId = "1", "2", etc.
+  ueId: { type: String, required: true },
   title: { type: String, required: true },
   creatorId: { type: String },
   createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date },
   messages: [messageSchema]
 });
 

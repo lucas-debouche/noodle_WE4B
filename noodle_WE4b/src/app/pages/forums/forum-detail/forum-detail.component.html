@@ -1,14 +1,52 @@
 <div class="forum-detail-container">
   <div class="forum-content">
-    <!-- En-tête du forum -->
+    <!-- En-tête du forum avec possibilité d'édition -->
     <div class="forum-header">
-      <h1>{{ forumDetail?.title }}</h1>
+      <div class="header-content">
+        <h1 *ngIf="!editingForumTitle" (dblclick)="canModerate() && startEditForumTitle()">
+          {{ forumDetail?.title }}
+          <button *ngIf="canModerate()"
+                  class="btn-edit-title"
+                  (click)="startEditForumTitle()"
+                  title="Modifier le titre">
+            ✏️
+          </button>
+        </h1>
+
+        <!-- Formulaire d'édition du titre -->
+        <div *ngIf="editingForumTitle" class="title-edit-form">
+          <input [(ngModel)]="newForumTitle"
+                 class="title-input"
+                 placeholder="Nouveau titre du forum"
+                 (keyup.enter)="saveForumTitle()"
+                 (keyup.escape)="cancelEditForumTitle()">
+          <div class="title-actions">
+            <button class="btn-save" (click)="saveForumTitle()" [disabled]="!newForumTitle.trim()">
+              ✅ Sauvegarder
+            </button>
+            <button class="btn-cancel" (click)="cancelEditForumTitle()">
+              ❌ Annuler
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions administrateur -->
+        <div class="admin-actions" *ngIf="canDeleteForum()">
+          <button class="btn-delete-forum" (click)="deleteForum()" title="Supprimer le forum">
+            🗑️ Supprimer le forum
+          </button>
+        </div>
+      </div>
+
       <div class="forum-info">
         <span class="info-item messages">
           {{ getMessagesCount() }} message{{ getMessagesCount() > 1 ? 's' : '' }}
         </span>
         <span class="info-item created">
           Créé le {{ forumDetail?.createdAt | date:'medium' }}
+        </span>
+        <span *ngIf="forumDetail?.updatedAt" class="info-item updated">
+          Modifié le {{ forumDetail?.updatedAt | date:'medium' }}
         </span>
       </div>
     </div>
@@ -24,20 +62,148 @@
 
       <div class="messages-list">
         <!-- Liste des messages -->
-        <div
-          class="message-item"
-          *ngFor="let msg of forumDetail?.messages; trackBy: trackByMessageId"
-        >
+        <div class="message-item" *ngFor="let msg of forumDetail?.messages; trackBy: trackByMessageId">
+
+          <!-- En-tête du message -->
           <div class="message-header">
-            <span class="author">
-              {{ userCache[msg.userId] || 'Utilisateur anonyme' }}
-            </span>
-            <span class="timestamp">
-              {{ msg.createdAt | date:'short' }}
+            <div class="author-info">
+              <span class="author">
+                {{ userCache[msg.userId] || 'Utilisateur anonyme' }}
+              </span>
+              <span class="timestamp">
+                {{ getRelativeTime(msg.createdAt) }}
+                <span *ngIf="msg.isEdited" class="edited-badge">(modifié)</span>
+              </span>
+            </div>
+
+            <!-- Actions sur le message -->
+            <div class="message-actions" *ngIf="(canModerate() || isMessageAuthor(msg))">
+              <button *ngIf= isMessageAuthor(msg)
+                      class="btn-action edit"
+                      (click)="startEditMessage(msg)"
+                      title="Modifier">
+                ✏️
+              </button>
+              <button
+                      class="btn-action delete"
+                      (click)="deleteMessage(msg._id)"
+                      title="Supprimer">
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenu du message -->
+          <div class="message-content" *ngIf="editingMessage?._id !== msg._id">
+            {{ msg.message }}
+          </div>
+
+          <!-- Formulaire d'édition du message -->
+          <div class="edit-form" *ngIf="editingMessage?._id === msg._id">
+            <textarea [(ngModel)]="editText"
+                      class="edit-textarea"
+                      placeholder="Modifier le message..."
+                      (keyup.escape)="cancelEdit()"></textarea>
+            <div class="edit-actions">
+              <button class="btn-save" (click)="saveMessageEdit()" [disabled]="!hasEditContent()">
+                ✅ Sauvegarder
+              </button>
+              <button class="btn-cancel" (click)="cancelEdit()">
+                ❌ Annuler
+              </button>
+            </div>
+          </div>
+
+          <!-- Bouton de réponse et affichage des réponses -->
+          <div class="message-footer">
+            <div class="reply-controls">
+              <button class="btn-reply" (click)="toggleReplyForm(msg._id)">
+                💬 {{ showReplyForm[msg._id] ? 'Masquer' : 'Répondre' }}
+              </button>
+
+              <button
+                *ngIf="msg.replies?.length > 0"
+                class="btn-toggle-replies"
+                (click)="toggleReplies(msg._id)">
+                {{ showReplies[msg._id] ? '🔼' : '🔽' }}
+                {{ msg.replies.length }} réponse{{ msg.replies.length > 1 ? 's' : '' }}
+              </button>
+            </div>
+
+            <span class="reply-count" *ngIf="msg.replies?.length > 0 && !showReplies[msg._id]">
+              {{ msg.replies.length }} réponse{{ msg.replies.length > 1 ? 's' : '' }}
             </span>
           </div>
-          <div class="message-content">
-            {{ msg.message }}
+
+          <!-- Formulaire de réponse -->
+          <div class="reply-form" *ngIf="showReplyForm[msg._id]">
+            <textarea [(ngModel)]="replyText"
+                      placeholder="Écrivez votre réponse..."
+                      class="reply-textarea"></textarea>
+            <div class="reply-actions">
+              <button class="btn-send-reply"
+                      (click)="addReply(msg._id)"
+                      [disabled]="!hasReplyContent()">
+                📤 Répondre
+              </button>
+              <button class="btn-cancel-reply" (click)="toggleReplyForm(msg._id)">
+                Annuler
+              </button>
+            </div>
+          </div>
+
+          <!-- Liste des réponses (masquée par défaut) -->
+          <div class="replies-list" *ngIf="msg.replies?.length > 0 && showReplies[msg._id]">
+            <div class="reply-item" *ngFor="let reply of msg.replies; trackBy: trackByReplyId">
+
+              <!-- En-tête de la réponse -->
+              <div class="reply-header">
+                <div class="reply-author-info">
+                  <span class="reply-author">
+                    {{ userCache[reply.userId] || 'Utilisateur anonyme' }}
+                  </span>
+                  <span class="reply-timestamp">
+                    {{ getRelativeTime(reply.createdAt) }}
+                    <span *ngIf="reply.isEdited" class="edited-badge">(modifié)</span>
+                  </span>
+                </div>
+
+                <!-- Actions sur la réponse -->
+                <div class="reply-actions" *ngIf="canModerate() || isReplyAuthor(reply)">
+                  <button class="btn-action edit " *ngIf= isReplyAuthor(reply)
+                          (click)="startEditReply(reply)"
+                          title="Modifier">
+                    ✏️
+                  </button>
+                  <button class="btn-action delete"
+                          (click)="deleteReply(msg._id, reply._id)"
+                          title="Supprimer">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+
+              <!-- Contenu de la réponse -->
+              <div class="reply-content" *ngIf="editingReply?._id !== reply._id">
+                {{ reply.message }}
+              </div>
+
+              <!-- Formulaire d'édition de la réponse -->
+              <div class="edit-form" *ngIf="editingReply?._id === reply._id">
+                <textarea [(ngModel)]="editText"
+                          class="edit-textarea"
+                          placeholder="Modifier la réponse..."
+                          (keyup.escape)="cancelEdit()"></textarea>
+                <div class="edit-actions">
+                  <button class="btn-save" (click)="saveReplyEdit()" [disabled]="!hasEditContent()">
+                    ✅ Sauvegarder
+                  </button>
+                  <button class="btn-cancel" (click)="cancelEdit()">
+                    ❌ Annuler
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -74,7 +240,6 @@
           </div>
         </div>
 
-
         <div class="form-actions">
           <div class="form-meta">
             <button type="button" class="emoji-btn" title="Ajouter un emoji" (click)="toggleEmojiPicker()">
@@ -99,7 +264,7 @@
               [disabled]="!hasMessageContent() || isSending"
             >
               <span *ngIf="!isSending">
-                 Envoyer
+                📤 Envoyer
               </span>
               <span *ngIf="isSending">
                 <span class="loading-spinner"></span>
@@ -110,8 +275,7 @@
         </div>
       </form>
 
-
-      <!-- Sélecteur d'emojis simple -->
+      <!-- Sélecteur d'emojis -->
       <div class="emoji-picker" *ngIf="showEmojiPicker">
         <div class="emoji-header">
           <span>😊 Choisir un emoji</span>
