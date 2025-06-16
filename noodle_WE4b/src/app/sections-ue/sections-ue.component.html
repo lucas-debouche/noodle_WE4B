@@ -1,0 +1,19 @@
+<div class="section-ue" [class.closed]="!opened">
+  <div class="section-header" (click)="toggleSection()">
+    <button class="toggle-btn" [attr.aria-label]="opened ? 'Fermer la section' : 'Ouvrir la section'">
+      <span [ngClass]="opened ? 'arrow-down' : 'arrow-right'"></span>
+    </button>
+    <h2>{{ sectionTitle }}</h2>
+  </div>
+  <div
+    class="modules-list-wrapper"
+    [style.maxHeight]="opened ? modulesListHeight + 'px' : '0px'"
+    [style.opacity]="opened ? 1 : 0"
+    [style.overflow]="opened ? 'visible' : 'hidden'"
+    #modulesListWrapper
+  >
+    <div class="modules-list" #modulesList>
+      <app-modules-ue *ngFor="let module of modules" [module]="module"></app-modules-ue>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,25 @@
+.mes-ue-layout {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 80vh;
+}
+
+.sidebar {
+  min-width: 220px;
+  max-width: 260px;
+  background: #fff8f0;
+  border-radius: 16px;
+  margin-right: 32px;
+  box-shadow: 0 2px 12px rgba(255, 140, 0, 0.07);
+  border: 1.5px solid #ffe0b2;
+  padding: 24px 0;
+  height: 100%;
+  position: sticky;
+  top: 32px;
+}
+
+.mes-ue-sections {
+  flex: 1;
+  min-width: 0;
+}

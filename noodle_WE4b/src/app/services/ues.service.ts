@@ -16,4 +16,9 @@ export class UesService {
     return this.http.get<Ue[]>(this.apiUrl);
   }
 
+  // Récupérer une UE par son ID
+  getUeById(id: string): Observable<Ue> {
+    return this.http.get<Ue>(`${this.apiUrl}/${id}`);
+  }
+
 }

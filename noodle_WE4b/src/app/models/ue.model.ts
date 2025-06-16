@@ -1,5 +1,5 @@
 export interface Ue {
-  id: string;               // Identifiant unique
+  _id: string;               // Identifiant unique
   code: string;             // Code de l'UE (ex. MT101)
   intitule: string;         // Nom de l'UE
   image?: string;           // URL de l'image de l'UE (facultatif)

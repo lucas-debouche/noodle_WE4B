@@ -51,5 +51,18 @@ router.post('/:code/upload-photo', upload.single('image'), async (req, res) => {
   }
 });
 
+// Obtenir une UE par son _id
+router.get('/:id', async (req, res) => {
+  try {
+    const ue = await Ue.findById(req.params.id);
+    if (!ue) {
+      return res.status(404).json({ message: 'UE non trouvée' });
+    }
+    res.json(ue);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 module.exports = router;
