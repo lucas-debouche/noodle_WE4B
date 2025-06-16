@@ -316,32 +316,7 @@
         }
       }
 
-      .message-preview-card {
-        background: #e8f4fd;
-        border: 1px solid #b8daff;
-        border-radius: var(--border-radius-small);
-        padding: 15px;
-        margin-bottom: 15px;
 
-        .preview-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-weight: 600;
-          color: #0066cc;
-          margin-bottom: 10px;
-          font-size: 0.9rem;
-        }
-
-        .preview-content {
-          color: var(--text-primary);
-          line-height: 1.5;
-          padding: 10px;
-          background: white;
-          border-radius: 6px;
-          border: 1px solid #b8daff;
-        }
-      }
 
       .form-actions {
         display: flex;
@@ -443,40 +418,6 @@
               content: "📤";
               font-size: 14px;
             }
-          }
-        }
-      }
-    }
-
-    .message-tips {
-      margin-top: 20px;
-      padding: 16px 20px;
-      background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
-      border-radius: var(--border-radius-small);
-      border: 1px solid var(--success-color);
-      border-left: 4px solid var(--success-color);
-
-      .tips-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 10px;
-        font-weight: 600;
-        color: var(--success-color);
-        font-size: 0.95rem;
-      }
-
-      .tips-list {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        line-height: 1.5;
-
-        ul {
-          margin: 0;
-          padding-left: 18px;
-
-          li {
-            margin-bottom: 6px;
           }
         }
       }

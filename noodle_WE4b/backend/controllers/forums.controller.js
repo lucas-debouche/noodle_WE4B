@@ -1,5 +1,6 @@
 const { ObjectId } = require('mongodb');
 const Forum = require('../models/forum.model');
+const {logAction } = require("../utils/logActions");
 
 // GET /api/forums/:ueId → récupérer les forums par ueId
 exports.getForumsByUe = async (req, res) => {
@@ -23,8 +24,9 @@ exports.getForumsByUe = async (req, res) => {
 };
 
 // POST /api/forums → créer un nouveau forum
+
 exports.createForum = async (req, res) => {
-  console.log('createForum → req.user =', req.user); // Ajoute ce log
+  console.log('createForum → req.user =', req.user);
 
   const { ueId, title } = req.body;
   const newForum = new Forum({
@@ -34,9 +36,18 @@ exports.createForum = async (req, res) => {
     createdAt: new Date(),
     messages: []
   });
-
   try {
     const savedForum = await newForum.save();
+
+    // Création du log
+    await logAction({
+      action: 'create_forum',
+      category: 'forum',
+      userId: req.user.userId,
+      targetId: savedForum._id.toString(),
+      details: { ueId, title }
+    });
+
     res.status(201).json(savedForum);
   } catch (err) {
     console.error('Error in createForum:', err);
@@ -84,7 +95,13 @@ exports.addMessage = async (req, res) => {
     forum.messages.push(newMessage);
     await forum.save();
 
-    res.status(201).json(newMessage);
+    await logAction({
+      action: 'add_message',
+      category: 'forum',
+      userId: req.user ? req.user.userId : null,
+      targetId: forumId,
+      details: { message }
+    });
   } catch (err) {
     console.error('Error in addMessage:', err);
     res.status(500).json({ message: 'Erreur serveur' });

@@ -54,10 +54,6 @@
     <div class="add-message-section">
       <div class="section-header">
         <h3>✍️ Ajouter un message</h3>
-        <div class="quick-actions">
-          <button class="btn-icon" title="Aperçu" (click)="togglePreview()" [class.active]="showPreview">👁️</button>
-          <button class="btn-icon" title="Aide" (click)="toggleTips()" [class.active]="showTips">❓</button>
-        </div>
       </div>
 
       <form class="message-form" (ngSubmit)="addMessage()">
@@ -79,15 +75,7 @@
         </div>
 
         <!-- Aperçu du message -->
-        <div class="message-preview-card" *ngIf="showPreview && hasMessageContent()">
-          <div class="preview-header">
-            <span class="preview-icon">👁️</span>
-            <span>Aperçu de votre message</span>
-          </div>
-          <div class="preview-content">
-            {{ newMessage }}
-          </div>
-        </div>
+        <
 
         <div class="form-actions">
           <div class="form-meta">
@@ -124,21 +112,6 @@
         </div>
       </form>
 
-      <!-- Conseils d'utilisation -->
-      <div class="message-tips" *ngIf="showTips">
-        <div class="tips-header">
-          <span>💡</span>
-          Conseils pour bien communiquer
-        </div>
-        <div class="tips-list">
-          <ul>
-            <li>Soyez respectueux et bienveillant dans vos échanges</li>
-            <li>Utilisez un langage clair et précis</li>
-            <li>Évitez les messages trop longs, privilégiez la concision</li>
-            <li>Restez dans le sujet de la discussion</li>
-          </ul>
-        </div>
-      </div>
 
       <!-- Sélecteur d'emojis simple -->
       <div class="emoji-picker" *ngIf="showEmojiPicker">
