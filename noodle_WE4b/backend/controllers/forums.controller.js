@@ -1,6 +1,55 @@
 const { ObjectId } = require('mongodb');
 const Forum = require('../models/forum.model');
 const { logAction } = require("../utils/logActions");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configuration Multer pour les fichiers de forum
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, '../uploads/forums');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'forum-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  // Types de fichiers autorisés (vous pouvez ajuster selon vos besoins)
+  const allowedTypes = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf',
+    'text/plain',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/zip',
+    'application/x-rar-compressed'
+  ];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Type de fichier non autorisé'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB max
+  }
+});
 
 // GET /api/forums/:ueId → récupérer les forums par ueId
 exports.getForumsByUe = async (req, res) => {
@@ -69,93 +118,168 @@ exports.getForumDetail = async (req, res) => {
   }
 };
 
-// POST /api/forums/:forumId/messages → ajouter un message (ROLE_USER, ROLE_PROF, ROLE_ADMIN)
-exports.addMessage = async (req, res) => {
-  const forumId = req.params.forumId;
-  const { message } = req.body;
-  console.log(`forums.controller.js → addMessage | forumId = ${forumId}, message = "${message}"`);
+// POST /api/forums/:forumId/messages → ajouter un message avec fichiers (ROLE_USER, ROLE_PROF, ROLE_ADMIN)
+exports.addMessage = [
+  upload.array('attachments', 5), // Maximum 5 fichiers
+  async (req, res) => {
+    const forumId = req.params.forumId;
 
-  try {
-    const forum = await Forum.findById(forumId);
-    if (!forum) {
-      return res.status(404).json({ message: 'Forum non trouvé' });
+    // Avec multer et FormData, les données sont dans req.body mais peuvent être undefined
+    const message = req.body.message || '';
+
+    console.log(`forums.controller.js → addMessage | forumId = ${forumId}, message = "${message}"`);
+    console.log('req.body:', req.body);
+    console.log('req.files:', req.files);
+
+    // Vérifier que le message n'est pas vide
+    if (!message || message.trim() === '') {
+      return res.status(400).json({ message: 'Le message ne peut pas être vide' });
     }
 
-    const newMessage = {
-      _id: new ObjectId(),
-      userId: req.user ? req.user.userId : null,
-      message: message,
-      createdAt: new Date(),
-      replies: []
-    };
+    try {
+      const forum = await Forum.findById(forumId);
+      if (!forum) {
+        return res.status(404).json({ message: 'Forum non trouvé' });
+      }
 
-    forum.messages.push(newMessage);
-    await forum.save();
+      // Traitement des fichiers attachés
+      const attachments = [];
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          attachments.push({
+            filename: file.filename,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+            uploadedAt: new Date()
+          });
+        });
+      }
 
-    await logAction({
-      action: 'add_message',
-      category: 'forum',
-      userId: req.user ? req.user.userId : null,
-      targetId: forumId,
-      details: { message }
-    });
+      const newMessage = {
+        _id: new ObjectId(),
+        userId: req.user ? req.user.userId : null,
+        message: message.trim(),
+        createdAt: new Date(),
+        replies: [],
+        attachments: attachments
+      };
 
-    res.status(201).json(newMessage);
-  } catch (err) {
-    console.error('Error in addMessage:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
+      forum.messages.push(newMessage);
+      await forum.save();
+
+      await logAction({
+        action: 'add_message',
+        category: 'forum',
+        userId: req.user ? req.user.userId : null,
+        targetId: forumId,
+        details: { message: message.trim(), attachmentCount: attachments.length }
+      });
+
+      res.status(201).json(newMessage);
+    } catch (err) {
+      console.error('Error in addMessage:', err);
+
+      // Nettoyer les fichiers uploadés en cas d'erreur
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          const filePath = path.join(__dirname, '../uploads/forums', file.filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        });
+      }
+
+      res.status(500).json({ message: 'Erreur serveur' });
+    }
   }
-};
+];
 
-// POST /api/forums/:forumId/messages/:messageId/replies → ajouter une réponse à un message
-exports.addReply = async (req, res) => {
-  const { forumId, messageId } = req.params;
-  const { message } = req.body;
-  console.log(`forums.controller.js → addReply | forumId = ${forumId}, messageId = ${messageId}`);
+// POST /api/forums/:forumId/messages/:messageId/replies → ajouter une réponse avec fichiers
+exports.addReply = [
+  upload.array('attachments', 5), // Maximum 5 fichiers
+  async (req, res) => {
+    const { forumId, messageId } = req.params;
 
-  try {
-    const forum = await Forum.findById(forumId);
-    if (!forum) {
-      return res.status(404).json({ message: 'Forum non trouvé' });
+    // Avec multer et FormData, les données sont dans req.body mais peuvent être undefined
+    const message = req.body.message || '';
+
+    console.log(`forums.controller.js → addReply | forumId = ${forumId}, messageId = ${messageId}`);
+    console.log('req.body:', req.body);
+    console.log('req.files:', req.files);
+
+    // Vérifier que le message n'est pas vide
+    if (!message || message.trim() === '') {
+      return res.status(400).json({ message: 'La réponse ne peut pas être vide' });
     }
 
-    // Trouver le message par son _id
-    const messageToReply = forum.messages.find(msg => msg._id.toString() === messageId);
-    if (!messageToReply) {
-      console.log('Message non trouvé avec ID:', messageId);
-      console.log('Messages disponibles:', forum.messages.map(m => m._id.toString()));
-      return res.status(404).json({ message: 'Message non trouvé' });
+    try {
+      const forum = await Forum.findById(forumId);
+      if (!forum) {
+        return res.status(404).json({ message: 'Forum non trouvé' });
+      }
+
+      const messageToReply = forum.messages.find(msg => msg._id.toString() === messageId);
+      if (!messageToReply) {
+        console.log('Message non trouvé avec ID:', messageId);
+        return res.status(404).json({ message: 'Message non trouvé' });
+      }
+
+      // Traitement des fichiers attachés
+      const attachments = [];
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          attachments.push({
+            filename: file.filename,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+            uploadedAt: new Date()
+          });
+        });
+      }
+
+      const newReply = {
+        _id: new ObjectId(),
+        userId: req.user ? req.user.userId : null,
+        message: message.trim(),
+        createdAt: new Date(),
+        attachments: attachments
+      };
+
+      if (!messageToReply.replies) {
+        messageToReply.replies = [];
+      }
+
+      messageToReply.replies.push(newReply);
+      await forum.save();
+
+      await logAction({
+        action: 'add_reply',
+        category: 'forum',
+        userId: req.user ? req.user.userId : null,
+        targetId: forumId,
+        details: { messageId, reply: message.trim(), attachmentCount: attachments.length }
+      });
+
+      res.status(201).json(newReply);
+    } catch (err) {
+      console.error('Error in addReply:', err);
+
+      // Nettoyer les fichiers uploadés en cas d'erreur
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          const filePath = path.join(__dirname, '../uploads/forums', file.filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        });
+      }
+
+      res.status(500).json({ message: 'Erreur serveur' });
     }
-
-    const newReply = {
-      _id: new ObjectId(),
-      userId: req.user ? req.user.userId : null,
-      message: message,
-      createdAt: new Date()
-    };
-
-    // Initialiser le tableau des réponses s'il n'existe pas
-    if (!messageToReply.replies) {
-      messageToReply.replies = [];
-    }
-
-    messageToReply.replies.push(newReply);
-    await forum.save();
-
-    await logAction({
-      action: 'add_reply',
-      category: 'forum',
-      userId: req.user ? req.user.userId : null,
-      targetId: forumId,
-      details: { messageId, reply: message }
-    });
-
-    res.status(201).json(newReply);
-  } catch (err) {
-    console.error('Error in addReply:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
   }
-};
+];
 
 // PUT /api/forums/:forumId/title → modifier le titre du forum (ROLE_PROF, ROLE_ADMIN)
 exports.updateForumTitle = async (req, res) => {
@@ -200,6 +324,30 @@ exports.deleteForum = async (req, res) => {
       return res.status(404).json({ message: 'Forum non trouvé' });
     }
 
+    // Supprimer les fichiers associés
+    forum.messages.forEach(message => {
+      if (message.attachments) {
+        message.attachments.forEach(attachment => {
+          const filePath = path.join(__dirname, '../uploads/forums', attachment.filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        });
+      }
+      if (message.replies) {
+        message.replies.forEach(reply => {
+          if (reply.attachments) {
+            reply.attachments.forEach(attachment => {
+              const filePath = path.join(__dirname, '../uploads/forums', attachment.filename);
+              if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+              }
+            });
+          }
+        });
+      }
+    });
+
     await Forum.findByIdAndDelete(forumId);
 
     await logAction({
@@ -234,6 +382,31 @@ exports.deleteMessage = async (req, res) => {
     }
 
     const messageToDelete = forum.messages[messageIndex];
+
+    // Supprimer les fichiers attachés
+    if (messageToDelete.attachments) {
+      messageToDelete.attachments.forEach(attachment => {
+        const filePath = path.join(__dirname, '../uploads/forums', attachment.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      });
+    }
+
+    // Supprimer les fichiers des réponses
+    if (messageToDelete.replies) {
+      messageToDelete.replies.forEach(reply => {
+        if (reply.attachments) {
+          reply.attachments.forEach(attachment => {
+            const filePath = path.join(__dirname, '../uploads/forums', attachment.filename);
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+            }
+          });
+        }
+      });
+    }
+
     forum.messages.splice(messageIndex, 1);
     await forum.save();
 
@@ -274,6 +447,17 @@ exports.deleteReply = async (req, res) => {
     }
 
     const replyToDelete = message.replies[replyIndex];
+
+    // Supprimer les fichiers attachés
+    if (replyToDelete.attachments) {
+      replyToDelete.attachments.forEach(attachment => {
+        const filePath = path.join(__dirname, '../uploads/forums', attachment.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      });
+    }
+
     message.replies.splice(replyIndex, 1);
     await forum.save();
 
@@ -327,5 +511,22 @@ exports.updateMessage = async (req, res) => {
   } catch (err) {
     console.error('Error in updateMessage:', err);
     res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+// GET /api/forums/download/:filename → télécharger un fichier
+exports.downloadFile = async (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, '../uploads/forums', filename);
+
+  try {
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Fichier non trouvé' });
+    }
+
+    res.download(filePath);
+  } catch (err) {
+    console.error('Error in downloadFile:', err);
+    res.status(500).json({ message: 'Erreur lors du téléchargement' });
   }
 };

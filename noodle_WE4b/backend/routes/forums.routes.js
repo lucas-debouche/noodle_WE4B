@@ -7,6 +7,9 @@ const authMiddleware = require('../security/middleware_auth');
 router.get('/:ueId', forumsController.getForumsByUe);
 router.get('/detail/:forumId', forumsController.getForumDetail);
 
+// Route pour télécharger les fichiers
+router.get('/download/:filename', forumsController.downloadFile);
+
 // Routes pour ROLE_USER, ROLE_PROF, ROLE_ADMIN
 router.post(
   '/',
@@ -14,12 +17,14 @@ router.post(
   forumsController.createForum
 );
 
+// Route pour ajouter un message avec fichiers
 router.post(
   '/:forumId/messages',
   authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.addMessage
 );
 
+// Route pour ajouter une réponse avec fichiers
 router.post(
   '/:forumId/messages/:messageId/replies',
   authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),

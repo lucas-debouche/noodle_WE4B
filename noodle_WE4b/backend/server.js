@@ -10,10 +10,29 @@ const authRoutes = require('./routes/auth.routes');
 const forumsRoutes = require('./routes/forums.routes');
 
 const path = require('path');
-
+const fs = require('fs');
 
 const app = express();
 const PORT = 3000;
+
+// Créer les dossiers d'upload s'ils n'existent pas
+const createUploadDirs = () => {
+  const dirs = [
+    path.join(__dirname, 'uploads'),
+    path.join(__dirname, 'uploads/forums'),
+    path.join(__dirname, 'uploads/user')
+  ];
+
+  dirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log(`Dossier créé: ${dir}`);
+    }
+  });
+};
+
+// Initialiser les dossiers
+createUploadDirs();
 
 // Middleware
 app.use(cors());
@@ -23,13 +42,18 @@ mongoose.connect('mongodb://localhost:27017/noodle')
   .then(() => console.log('Connecté à MongoDB'))
   .catch(err => console.error(err));
 
+// Routes
 app.use('/api/utilisateur', utilisateurRoutes);
 app.use('/api/ue', ueRoutes);
 app.use('/api/post', postRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/forums', forumsRoutes);
 
+// Servir les fichiers statiques
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Route spécifique pour les fichiers de forum (pour la sécurité)
+app.use('/uploads/forums', express.static(path.join(__dirname, 'uploads/forums')));
 
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur http://localhost:${PORT}`);

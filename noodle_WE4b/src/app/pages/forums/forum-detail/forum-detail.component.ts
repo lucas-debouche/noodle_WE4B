@@ -19,6 +19,21 @@ export class ForumDetailComponent implements OnInit {
   showEmojiPicker: boolean = false;
   currentUser: any = null;
 
+  // Gestion des fichiers
+  selectedFiles: FileList | null = null;
+  selectedReplyFiles: FileList | null = null;
+  selectedFilesArray: File[] = []; // Nouveau: tableau pour accumulation
+  selectedReplyFilesArray: File[] = []; // Nouveau: tableau pour accumulation réponses
+  maxFileSize = 10 * 1024 * 1024; // 10MB
+  allowedTypes = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf', 'text/plain',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/zip', 'application/x-rar-compressed'
+  ];
+
   // Fonctionnalités de réponse
   replyToMessage: any = null;
   replyText: string = '';
@@ -107,9 +122,11 @@ export class ForumDetailComponent implements OnInit {
     const forumId = this.route.snapshot.paramMap.get('forumId');
     if (forumId && this.newMessage.trim() !== '') {
       this.isSending = true;
-      this.forumService.addMessage(forumId, this.newMessage).subscribe(
+      this.forumService.addMessage(forumId, this.newMessage, this.selectedFiles || undefined).subscribe(
         () => {
           this.newMessage = '';
+          this.selectedFiles = null;
+          this.selectedFilesArray = []; // Reset le tableau
           this.isSending = false;
           this.loadForumDetail();
         },
@@ -126,6 +143,14 @@ export class ForumDetailComponent implements OnInit {
     this.showReplyForm[messageId] = !this.showReplyForm[messageId];
     if (!this.showReplyForm[messageId]) {
       this.replyText = '';
+      this.selectedReplyFiles = null;
+      this.selectedReplyFilesArray = []; // Reset le tableau aussi
+
+      // Reset l'input file de réponse
+      const replyFileInput = document.querySelector('#replyFileInput') as HTMLInputElement;
+      if (replyFileInput) {
+        replyFileInput.value = '';
+      }
     }
   }
 
@@ -136,9 +161,11 @@ export class ForumDetailComponent implements OnInit {
   addReply(messageId: string) {
     const forumId = this.route.snapshot.paramMap.get('forumId');
     if (forumId && this.replyText.trim() !== '') {
-      this.forumService.addReply(forumId, messageId, this.replyText).subscribe(
+      this.forumService.addReply(forumId, messageId, this.replyText, this.selectedReplyFiles || undefined).subscribe(
         () => {
           this.replyText = '';
+          this.selectedReplyFiles = null;
+          this.selectedReplyFilesArray = []; // Reset le tableau
           this.showReplyForm[messageId] = false;
           this.loadForumDetail();
         },
@@ -275,7 +302,189 @@ export class ForumDetailComponent implements OnInit {
   // Méthodes utilitaires
   clearMessage() {
     this.newMessage = '';
+    this.selectedFiles = null;
+    this.selectedFilesArray = []; // Reset le tableau aussi
     this.showEmojiPicker = false;
+
+    // Reset l'input file si nécessaire
+    const fileInput = document.querySelector('#fileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }
+
+  // Gestion des fichiers
+  onFileSelected(event: any) {
+    const files: FileList = event.target.files;
+    console.log('Fichiers sélectionnés:', files.length);
+
+    if (files && files.length > 0) {
+      // Convertir FileList en Array et ajouter aux fichiers existants
+      const newFiles = Array.from(files);
+
+      // Vérifier que le total ne dépasse pas 5 fichiers
+      if (this.selectedFilesArray.length + newFiles.length > 5) {
+        alert(`Maximum 5 fichiers autorisés. Vous avez déjà ${this.selectedFilesArray.length} fichier(s) sélectionné(s).`);
+        event.target.value = ''; // Reset l'input
+        return;
+      }
+
+      // Valider chaque nouveau fichier
+      for (const file of newFiles) {
+        if (!this.validateSingleFile(file)) {
+          event.target.value = ''; // Reset l'input
+          return;
+        }
+
+        // Vérifier les doublons (même nom et même taille)
+        const isDuplicate = this.selectedFilesArray.some(existingFile =>
+          existingFile.name === file.name && existingFile.size === file.size
+        );
+
+        if (!isDuplicate) {
+          this.selectedFilesArray.push(file);
+        } else {
+          console.log(`Fichier en doublon ignoré: ${file.name}`);
+        }
+      }
+
+      // Convertir le tableau en FileList pour compatibilité
+      this.updateFileListFromArray();
+
+      console.log('Total fichiers après ajout:', this.selectedFilesArray.length);
+    }
+
+    // Reset l'input pour permettre la resélection du même fichier
+    event.target.value = '';
+  }
+
+  onReplyFileSelected(event: any) {
+    const files: FileList = event.target.files;
+    console.log('Fichiers réponse sélectionnés:', files.length);
+
+    if (files && files.length > 0) {
+      // Convertir FileList en Array et ajouter aux fichiers existants
+      const newFiles = Array.from(files);
+
+      // Vérifier que le total ne dépasse pas 5 fichiers
+      if (this.selectedReplyFilesArray.length + newFiles.length > 5) {
+        alert(`Maximum 5 fichiers autorisés. Vous avez déjà ${this.selectedReplyFilesArray.length} fichier(s) sélectionné(s).`);
+        event.target.value = ''; // Reset l'input
+        return;
+      }
+
+      // Valider chaque nouveau fichier
+      for (const file of newFiles) {
+        if (!this.validateSingleFile(file)) {
+          event.target.value = ''; // Reset l'input
+          return;
+        }
+
+        // Vérifier les doublons
+        const isDuplicate = this.selectedReplyFilesArray.some(existingFile =>
+          existingFile.name === file.name && existingFile.size === file.size
+        );
+
+        if (!isDuplicate) {
+          this.selectedReplyFilesArray.push(file);
+        } else {
+          console.log(`Fichier réponse en doublon ignoré: ${file.name}`);
+        }
+      }
+
+      // Convertir le tableau en FileList pour compatibilité
+      this.updateReplyFileListFromArray();
+
+      console.log('Total fichiers réponse après ajout:', this.selectedReplyFilesArray.length);
+    }
+
+    // Reset l'input pour permettre la resélection
+    event.target.value = '';
+  }
+
+  validateSingleFile(file: File): boolean {
+    if (file.size > this.maxFileSize) {
+      alert(`Le fichier "${file.name}" dépasse la taille maximale de 10MB`);
+      return false;
+    }
+
+    if (!this.allowedTypes.includes(file.type)) {
+      console.warn(`Type non autorisé: ${file.type}`);
+      alert(`Le type de fichier "${file.name}" n'est pas autorisé`);
+      return false;
+    }
+
+    return true;
+  }
+
+  updateFileListFromArray() {
+    if (this.selectedFilesArray.length > 0) {
+      const dt = new DataTransfer();
+      this.selectedFilesArray.forEach(file => dt.items.add(file));
+      this.selectedFiles = dt.files;
+    } else {
+      this.selectedFiles = null;
+    }
+  }
+
+  updateReplyFileListFromArray() {
+    if (this.selectedReplyFilesArray.length > 0) {
+      const dt = new DataTransfer();
+      this.selectedReplyFilesArray.forEach(file => dt.items.add(file));
+      this.selectedReplyFiles = dt.files;
+    } else {
+      this.selectedReplyFiles = null;
+    }
+  }
+
+  removeSelectedFile(index: number) {
+    console.log(`Suppression du fichier à l'index ${index}`);
+    this.selectedFilesArray.splice(index, 1);
+    this.updateFileListFromArray();
+    console.log('Fichiers restants:', this.selectedFilesArray.length);
+  }
+
+  removeSelectedReplyFile(index: number) {
+    console.log(`Suppression du fichier réponse à l'index ${index}`);
+    this.selectedReplyFilesArray.splice(index, 1);
+    this.updateReplyFileListFromArray();
+    console.log('Fichiers réponse restants:', this.selectedReplyFilesArray.length);
+  }
+
+  // Utilitaires pour l'affichage des fichiers
+  formatFileSize(bytes: number): string {
+    return this.forumService.formatFileSize(bytes);
+  }
+
+  getFileIcon(mimeType: string): string {
+    return this.forumService.getFileIcon(mimeType);
+  }
+
+  isImageFile(mimeType: string): boolean {
+    return this.forumService.isImageFile(mimeType);
+  }
+
+  downloadFile(filename: string, originalName: string) {
+    this.forumService.downloadFile(filename).subscribe(
+      (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = originalName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      (error) => {
+        console.error('Erreur lors du téléchargement:', error);
+        alert('Erreur lors du téléchargement du fichier');
+      }
+    );
+  }
+
+  getImageUrl(filename: string): string {
+    return `http://localhost:3000/uploads/forums/${filename}`;
   }
 
   toggleEmojiPicker() {
@@ -367,26 +576,29 @@ export class ForumDetailComponent implements OnInit {
     if (!user || !reply || !reply.userId) return false;
     return reply.userId === user._id;
   }
+
   canEditMessage(message: any): boolean {
-    // Seul l'auteur peut modifier son message
+    // Seul l'auteur peut modifier son message (tous les rôles)
     return this.isMessageAuthor(message);
   }
 
-  canDeleteMessage(): boolean {
-    // Les profs et admins peuvent supprimer tous les messages
-    return this.canModerate();
+  canDeleteMessage(message: any): boolean {
+    // L'auteur peut supprimer son propre message OU les profs/admins peuvent supprimer tous les messages
+    return this.isMessageAuthor(message) || this.canModerate();
   }
 
   canEditReply(reply: any): boolean {
-    // Seul l'auteur peut modifier sa réponse
+    // Seul l'auteur peut modifier sa réponse (tous les rôles)
     const user = this.authService.getCurrentUserValue();
     if (!user || !reply || !reply.userId) return false;
     return reply.userId === user._id;
   }
 
-  canDeleteReply(): boolean {
-    // Les profs et admins peuvent supprimer toutes les réponses
-    return this.canModerate();
+  canDeleteReply(reply: any): boolean {
+    // L'auteur peut supprimer sa propre réponse OU les profs/admins peuvent supprimer toutes les réponses
+    const user = this.authService.getCurrentUserValue();
+    if (!user || !reply || !reply.userId) return false;
+    return reply.userId === user._id || this.canModerate();
   }
 
   // Méthodes pour formater les dates
