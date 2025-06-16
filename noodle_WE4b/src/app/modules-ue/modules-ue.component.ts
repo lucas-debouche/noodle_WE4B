@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, ElementRef, AfterViewInit, AfterViewChecked } from '@angular/core';
 import { PostsService } from '../services/posts.service';
 import { Post } from '../models/post.model';
 
@@ -7,11 +7,11 @@ import { Post } from '../models/post.model';
   templateUrl: './modules-ue.component.html',
   styleUrls: ['./modules-ue.component.scss']
 })
-export class ModulesUeComponent implements OnInit, AfterViewInit {
+export class ModulesUeComponent implements OnInit, AfterViewInit, AfterViewChecked {
   @Input() module: any;
   posts: Post[] = [];
 
-  opened = false; // <-- fermé par défaut
+  opened = false;
   contentHeight = 0;
 
   @ViewChild('contentWrapper') contentWrapper!: ElementRef;
@@ -28,11 +28,20 @@ export class ModulesUeComponent implements OnInit, AfterViewInit {
     }
     this.postsService.getPosts().subscribe(posts => {
       this.posts = posts.filter(post => post.ue === this.module.id || post.ue === this.module.name);
+      // Met à jour la hauteur si les posts changent
+      setTimeout(() => this.updateContentHeight());
     });
   }
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.updateContentHeight());
+    this.updateContentHeight();
+  }
+
+  ngAfterViewChecked(): void {
+    // Met à jour la hauteur si le contenu change (ex: ouverture d'un post)
+    if (this.opened) {
+      this.updateContentHeight();
+    }
   }
 
   toggleModule() {

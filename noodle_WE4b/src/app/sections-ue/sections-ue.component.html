@@ -7,9 +7,8 @@
   </div>
   <div
     class="modules-list-wrapper"
-    [style.maxHeight]="opened ? modulesListHeight + 'px' : '0px'"
     [style.opacity]="opened ? 1 : 0"
-    [style.overflow]="opened ? 'visible' : 'hidden'"
+    [style.display]="opened ? 'block' : 'none'"
     #modulesListWrapper
   >
     <div class="modules-list" #modulesList>

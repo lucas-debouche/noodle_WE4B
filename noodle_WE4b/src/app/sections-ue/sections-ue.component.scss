@@ -57,9 +57,9 @@
   }
 
   .modules-list-wrapper {
-    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
-    will-change: max-height, opacity;
-    overflow: hidden;
+    transition: opacity 0.25s;
+    will-change: opacity;
+    overflow: visible;
   }
 }
 
