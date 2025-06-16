@@ -1,14 +1,52 @@
 <div class="forum-detail-container">
   <div class="forum-content">
-    <!-- En-tête du forum -->
+    <!-- En-tête du forum avec possibilité d'édition -->
     <div class="forum-header">
-      <h1>{{ forumDetail?.title }}</h1>
+      <div class="header-content">
+        <h1 *ngIf="!editingForumTitle" (dblclick)="canModerate() && startEditForumTitle()">
+          {{ forumDetail?.title }}
+          <button *ngIf="canModerate()"
+                  class="btn-edit-title"
+                  (click)="startEditForumTitle()"
+                  title="Modifier le titre">
+            ✏️
+          </button>
+        </h1>
+
+        <!-- Formulaire d'édition du titre -->
+        <div *ngIf="editingForumTitle" class="title-edit-form">
+          <input [(ngModel)]="newForumTitle"
+                 class="title-input"
+                 placeholder="Nouveau titre du forum"
+                 (keyup.enter)="saveForumTitle()"
+                 (keyup.escape)="cancelEditForumTitle()">
+          <div class="title-actions">
+            <button class="btn-save" (click)="saveForumTitle()" [disabled]="!newForumTitle.trim()">
+              ✅ Sauvegarder
+            </button>
+            <button class="btn-cancel" (click)="cancelEditForumTitle()">
+              ❌ Annuler
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions administrateur -->
+        <div class="admin-actions" *ngIf="canDeleteForum()">
+          <button class="btn-delete-forum" (click)="deleteForum()" title="Supprimer le forum">
+            🗑️ Supprimer le forum
+          </button>
+        </div>
+      </div>
+
       <div class="forum-info">
         <span class="info-item messages">
           {{ getMessagesCount() }} message{{ getMessagesCount() > 1 ? 's' : '' }}
         </span>
         <span class="info-item created">
           Créé le {{ forumDetail?.createdAt | date:'medium' }}
+        </span>
+        <span *ngIf="forumDetail?.updatedAt" class="info-item updated">
+          Modifié le {{ forumDetail?.updatedAt | date:'medium' }}
         </span>
       </div>
     </div>
@@ -24,20 +62,220 @@
 
       <div class="messages-list">
         <!-- Liste des messages -->
-        <div
-          class="message-item"
-          *ngFor="let msg of forumDetail?.messages; trackBy: trackByMessageId"
-        >
+        <div class="message-item" *ngFor="let msg of forumDetail?.messages; trackBy: trackByMessageId">
+
+          <!-- En-tête du message -->
           <div class="message-header">
-            <span class="author">
-              {{ userCache[msg.userId] || 'Utilisateur anonyme' }}
-            </span>
-            <span class="timestamp">
-              {{ msg.createdAt | date:'short' }}
+            <div class="author-info">
+              <span class="author">
+                {{ userCache[msg.userId] || 'Utilisateur anonyme' }}
+              </span>
+              <span class="timestamp">
+                {{ getRelativeTime(msg.createdAt) }}
+                <span *ngIf="msg.isEdited" class="edited-badge">(modifié)</span>
+              </span>
+            </div>
+
+            <!-- Actions sur le message -->
+            <div class="message-actions" *ngIf="canModerate() || isMessageAuthor(msg)">
+              <button *ngIf="isMessageAuthor(msg)"
+                      class="btn-action edit"
+                      (click)="startEditMessage(msg)"
+                      title="Modifier">
+                ✏️
+              </button>
+              <button *ngIf="canModerate()"
+                      class="btn-action delete"
+                      (click)="deleteMessage(msg._id)"
+                      title="Supprimer">
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenu du message -->
+          <div class="message-content" *ngIf="editingMessage?._id !== msg._id">
+            {{ msg.message }}
+
+            <!-- Fichiers attachés au message -->
+            <div class="attachments" *ngIf="msg.attachments && msg.attachments.length > 0">
+              <div class="attachments-header">
+                <span class="attachments-title">📎 Fichiers joints ({{ msg.attachments.length }})</span>
+              </div>
+              <div class="attachment-list">
+                <div class="attachment-item" *ngFor="let attachment of msg.attachments">
+                  <!-- Image preview -->
+                  <div class="attachment-preview" *ngIf="isImageFile(attachment.mimeType)">
+                    <img [src]="getImageUrl(attachment.filename)"
+                         [alt]="attachment.originalName"
+                         (click)="downloadFile(attachment.filename, attachment.originalName)"
+                         class="attachment-image">
+                  </div>
+
+                  <!-- File info -->
+                  <div class="attachment-info">
+                    <div class="attachment-header">
+                      <span class="file-icon">{{ getFileIcon(attachment.mimeType) }}</span>
+                      <span class="file-name" [title]="attachment.originalName">
+                        {{ attachment.originalName }}
+                      </span>
+                    </div>
+                    <div class="attachment-meta">
+                      <span class="file-size">{{ formatFileSize(attachment.size) }}</span>
+                      <button class="download-btn"
+                              (click)="downloadFile(attachment.filename, attachment.originalName)"
+                              title="Télécharger">
+                        ⬇️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulaire d'édition du message -->
+          <div class="edit-form" *ngIf="editingMessage?._id === msg._id">
+            <textarea [(ngModel)]="editText"
+                      class="edit-textarea"
+                      placeholder="Modifier le message..."
+                      (keyup.escape)="cancelEdit()"></textarea>
+            <div class="edit-actions">
+              <button class="btn-save" (click)="saveMessageEdit()" [disabled]="!hasEditContent()">
+                ✅ Sauvegarder
+              </button>
+              <button class="btn-cancel" (click)="cancelEdit()">
+                ❌ Annuler
+              </button>
+            </div>
+          </div>
+
+          <!-- Bouton de réponse et affichage des réponses -->
+          <div class="message-footer">
+            <div class="reply-controls">
+              <button class="btn-reply" (click)="toggleReplyForm(msg._id)">
+                💬 {{ showReplyForm[msg._id] ? 'Masquer' : 'Répondre' }}
+              </button>
+
+              <button
+                *ngIf="msg.replies?.length > 0"
+                class="btn-toggle-replies"
+                (click)="toggleReplies(msg._id)">
+                {{ showReplies[msg._id] ? '🔼' : '🔽' }}
+                {{ msg.replies.length }} réponse{{ msg.replies.length > 1 ? 's' : '' }}
+              </button>
+            </div>
+
+            <span class="reply-count" *ngIf="msg.replies?.length > 0 && !showReplies[msg._id]">
+              {{ msg.replies.length }} réponse{{ msg.replies.length > 1 ? 's' : '' }}
             </span>
           </div>
-          <div class="message-content">
-            {{ msg.message }}
+
+          <!-- Formulaire de réponse -->
+          <div class="reply-form" *ngIf="showReplyForm[msg._id]">
+            <textarea [(ngModel)]="replyText"
+                      placeholder="Écrivez votre réponse..."
+                      class="reply-textarea"></textarea>
+            <div class="reply-actions">
+              <button class="btn-send-reply"
+                      (click)="addReply(msg._id)"
+                      [disabled]="!hasReplyContent()">
+                📤 Répondre
+              </button>
+              <button class="btn-cancel-reply" (click)="toggleReplyForm(msg._id)">
+                Annuler
+              </button>
+            </div>
+          </div>
+
+          <!-- Liste des réponses (masquée par défaut) -->
+          <div class="replies-list" *ngIf="msg.replies?.length > 0 && showReplies[msg._id]">
+            <div class="reply-item" *ngFor="let reply of msg.replies; trackBy: trackByReplyId">
+
+              <!-- En-tête de la réponse -->
+              <div class="reply-header">
+                <div class="reply-author-info">
+                  <span class="reply-author">
+                    {{ userCache[reply.userId] || 'Utilisateur anonyme' }}
+                  </span>
+                  <span class="reply-timestamp">
+                    {{ getRelativeTime(reply.createdAt) }}
+                    <span *ngIf="reply.isEdited" class="edited-badge">(modifié)</span>
+                  </span>
+                </div>
+
+                <!-- Actions sur la réponse -->
+                <div class="reply-actions" *ngIf="canModerate() || isReplyAuthor(reply)">
+                  <button class="btn-action edit" *ngIf="isReplyAuthor(reply)"
+                          (click)="startEditReply(reply)"
+                          title="Modifier">
+                    ✏️
+                  </button>
+                  <button class="btn-action delete"
+                          (click)="deleteReply(msg._id, reply._id)"
+                          title="Supprimer">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+
+              <!-- Contenu de la réponse -->
+              <div class="reply-content" *ngIf="editingReply?._id !== reply._id">
+                {{ reply.message }}
+
+                <!-- Fichiers attachés à la réponse -->
+                <div class="attachments reply-attachments" *ngIf="reply.attachments && reply.attachments.length > 0">
+                  <div class="attachments-header">
+                    <span class="attachments-title">📎 {{ reply.attachments.length }} fichier{{ reply.attachments.length > 1 ? 's' : '' }}</span>
+                  </div>
+                  <div class="attachment-list">
+                    <div class="attachment-item small" *ngFor="let attachment of reply.attachments">
+                      <!-- Image preview -->
+                      <div class="attachment-preview" *ngIf="isImageFile(attachment.mimeType)">
+                        <img [src]="getImageUrl(attachment.filename)"
+                             [alt]="attachment.originalName"
+                             (click)="downloadFile(attachment.filename, attachment.originalName)"
+                             class="attachment-image small">
+                      </div>
+
+                      <!-- File info -->
+                      <div class="attachment-info">
+                        <div class="attachment-header">
+                          <span class="file-icon">{{ getFileIcon(attachment.mimeType) }}</span>
+                          <span class="file-name" [title]="attachment.originalName">
+                            {{ attachment.originalName }}
+                          </span>
+                        </div>
+                        <div class="attachment-meta">
+                          <span class="file-size">{{ formatFileSize(attachment.size) }}</span>
+                          <button class="download-btn"
+                                  (click)="downloadFile(attachment.filename, attachment.originalName)"
+                                  title="Télécharger">
+                            ⬇️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Formulaire d'édition de la réponse -->
+              <div class="edit-form" *ngIf="editingReply?._id === reply._id">
+                <textarea [(ngModel)]="editText"
+                          class="edit-textarea"
+                          placeholder="Modifier la réponse..."
+                          (keyup.escape)="cancelEdit()"></textarea>
+                <div class="edit-actions">
+                  <button class="btn-save" (click)="saveReplyEdit()" [disabled]="!hasEditContent()">
+                    ✅ Sauvegarder
+                  </button>
+                  <button class="btn-cancel" (click)="cancelEdit()">
+                    ❌ Annuler
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -54,10 +292,6 @@
     <div class="add-message-section">
       <div class="section-header">
         <h3>✍️ Ajouter un message</h3>
-        <div class="quick-actions">
-          <button class="btn-icon" title="Aperçu" (click)="togglePreview()" [class.active]="showPreview">👁️</button>
-          <button class="btn-icon" title="Aide" (click)="toggleTips()" [class.active]="showTips">❓</button>
-        </div>
       </div>
 
       <form class="message-form" (ngSubmit)="addMessage()">
@@ -78,14 +312,32 @@
           </div>
         </div>
 
-        <!-- Aperçu du message -->
-        <div class="message-preview-card" *ngIf="showPreview && hasMessageContent()">
-          <div class="preview-header">
-            <span class="preview-icon">👁️</span>
-            <span>Aperçu de votre message</span>
+        <!-- Section d'ajout de fichiers -->
+        <div class="file-input-section">
+          <label class="file-input-label">
+            <input type="file"
+                   multiple
+                   (change)="onFileSelected($event)"
+                   accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar"
+                   class="file-input"
+                   #fileInput>
+            <span class="file-btn">📎 Ajouter des fichiers (max 5)</span>
+          </label>
+          <span class="file-help">Max 5 fichiers, 10MB chacun • Images, PDF, documents, archives</span>
+        </div>
+
+        <!-- Aperçu des fichiers sélectionnés -->
+        <div class="selected-files" *ngIf="selectedFilesArray && selectedFilesArray.length > 0">
+          <div class="selected-files-header">
+            <span>Fichiers sélectionnés ({{ selectedFilesArray.length }})</span>
           </div>
-          <div class="preview-content">
-            {{ newMessage }}
+          <div class="selected-file-list">
+            <div class="selected-file" *ngFor="let file of selectedFilesArray; let i = index">
+              <span class="file-icon">{{ getFileIcon(file.type) }}</span>
+              <span class="file-name">{{ file.name }}</span>
+              <span class="file-size">{{ formatFileSize(file.size) }}</span>
+              <button class="remove-file" (click)="removeSelectedFile(i)" title="Retirer">×</button>
+            </div>
           </div>
         </div>
 
@@ -113,7 +365,7 @@
               [disabled]="!hasMessageContent() || isSending"
             >
               <span *ngIf="!isSending">
-                 Envoyer
+                📤 Envoyer
               </span>
               <span *ngIf="isSending">
                 <span class="loading-spinner"></span>
@@ -124,23 +376,7 @@
         </div>
       </form>
 
-      <!-- Conseils d'utilisation -->
-      <div class="message-tips" *ngIf="showTips">
-        <div class="tips-header">
-          <span>💡</span>
-          Conseils pour bien communiquer
-        </div>
-        <div class="tips-list">
-          <ul>
-            <li>Soyez respectueux et bienveillant dans vos échanges</li>
-            <li>Utilisez un langage clair et précis</li>
-            <li>Évitez les messages trop longs, privilégiez la concision</li>
-            <li>Restez dans le sujet de la discussion</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Sélecteur d'emojis simple -->
+      <!-- Sélecteur d'emojis -->
       <div class="emoji-picker" *ngIf="showEmojiPicker">
         <div class="emoji-header">
           <span>😊 Choisir un emoji</span>

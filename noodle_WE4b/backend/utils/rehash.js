@@ -14,7 +14,7 @@ async function generateNewPasswords() {
   const updatedUsers = [];
 
   for (const user of allUsers) {
-    const newPassword = generateRandomPassword(12); // ou 8, comme tu veux
+    const newPassword = generateRandomPassword(12);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await users.updateOne(
@@ -23,7 +23,7 @@ async function generateNewPasswords() {
     );
 
     updatedUsers.push({
-      email: user.email || user.username, // selon ce que tu as
+      email: user.email || user.username,
       newPassword,
     });
   }
