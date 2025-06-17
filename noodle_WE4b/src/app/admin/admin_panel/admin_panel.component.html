@@ -1,0 +1,254 @@
+<div class="container">
+  <!-- Loader -->
+  <div class="loader" *ngIf="isLoading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Notification Pop-up -->
+  <div class="notification"
+       [class.success]="notificationType === 'success'"
+       [class.error]="notificationType === 'error'"
+       *ngIf="showNotification">
+    <span>{{ notificationMessage }}</span>
+    <button class="close-btn" (click)="hideNotification()">×</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab" [class.active]="activeTab === 'ue'" (click)="switchTab('ue')">
+      📚 Unités d'Enseignement
+    </div>
+    <div class="tab" [class.active]="activeTab === 'users'" (click)="switchTab('users')">
+      👥 Utilisateurs
+    </div>
+  </div>
+
+  <!-- Section des Unités d'Enseignement -->
+  <div id="ue-tab" class="tab-content" [class.active]="activeTab === 'ue'">
+    <a class="create-btn" [routerLink]="['/ue-registration']">
+      + Créer une UE
+    </a>
+
+    <div class="search-filter-container">
+      <div class="search-box">
+        <input type="text"
+               [(ngModel)]="ueSearch"
+               placeholder="🔍 Rechercher une UE..."
+               (input)="applyUeFilters()">
+        <button (click)="applyUeFilters()">
+          <i>🔍</i>
+        </button>
+      </div>
+      <div class="filters">
+        <select [(ngModel)]="ueFilterField" (change)="applyUeFilters()">
+          <option value="all">🔍 Tous les champs</option>
+          <option value="code">🏷️ Code</option>
+          <option value="intitule">📝 Nom</option>
+          <option value="description">📄 Description</option>
+        </select>
+      </div>
+      <button class="reset-btn" (click)="resetUeFilters()">
+        🔄 Réinitialiser
+      </button>
+    </div>
+
+    <!-- Affichage du nombre total d'UE trouvées -->
+    <div class="results-info">
+      📊 {{ filteredUes.length }} UE(s) trouvée(s) - Page {{ ueCurrentPage }} sur {{ ueTotalPages }}
+    </div>
+
+    <div class="table-container">
+      <table class="ue-table">
+        <thead>
+        <tr>
+          <th>🏷️ Code</th>
+          <th>📝 Nom</th>
+          <th>📄 Description</th>
+          <th>⚙️ Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let ue of pagedUes" class="fade-in">
+          <td>
+            <strong>{{ ue.code }}</strong>
+          </td>
+          <td>
+                        <span [title]="ue.intitule" class="text-truncate">
+                            {{ getTruncatedText(ue.intitule, 30) }}
+                        </span>
+          </td>
+          <td>
+                        <span [title]="ue.description" class="text-truncate">
+                            {{ getTruncatedText(ue.description, 50) }}
+                        </span>
+          </td>
+          <td>
+            <div class="actions">
+              <a class="action-btn edit" [routerLink]="['/ue-registration', ue.id]">
+                <i>✏️</i> Modifier
+              </a>
+              <button class="action-btn delete" (click)="showDeleteConfirmation('ue', ue.id)">
+                <i>🗑️</i> Supprimer
+              </button>
+            </div>
+          </td>
+        </tr>
+        <!-- Lignes vides pour maintenir la taille du tableau -->
+        <tr *ngFor="let i of [].constructor(ueItemsPerPage - pagedUes.length); index as idx"
+            style="height: 60px; opacity: 0;">
+          <td colspan="4">&nbsp;</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination UE -->
+    <div class="pagination" *ngIf="ueTotalPages > 1">
+      <button (click)="changeUePage(ueCurrentPage - 1)"
+              [disabled]="ueCurrentPage === 1">
+        ‹
+      </button>
+      <button *ngFor="let page of getPaginationArray(ueTotalPages)"
+              [class.active]="ueCurrentPage === page"
+              (click)="changeUePage(page)">
+        {{ page }}
+      </button>
+      <button (click)="changeUePage(ueCurrentPage + 1)"
+              [disabled]="ueCurrentPage === ueTotalPages">
+        ›
+      </button>
+    </div>
+  </div>
+
+  <!-- Section des Utilisateurs -->
+  <div id="users-tab" class="tab-content" [class.active]="activeTab === 'users'">
+    <a class="create-btn" [routerLink]="['/user-registration']">
+      + Créer un utilisateur
+    </a>
+
+    <div class="search-filter-container">
+      <div class="search-box">
+        <input type="text"
+               [(ngModel)]="userSearch"
+               placeholder="🔍 Rechercher un utilisateur..."
+               (input)="applyUserFilters()">
+        <button (click)="applyUserFilters()">
+          <i>🔍</i>
+        </button>
+      </div>
+      <div class="filters">
+        <select [(ngModel)]="userFilterField" (change)="applyUserFilters()">
+          <option value="all">🔍 Tous les champs</option>
+          <option value="nom">👤 Nom</option>
+          <option value="prenom">👤 Prénom</option>
+          <option value="email">📧 Email</option>
+          <option value="roles">🎭 Rôle</option>
+        </select>
+        <select [(ngModel)]="userFilterRole" (change)="applyUserFilters()">
+          <option value="all">🎭 Tous les rôles</option>
+          <option value="ROLE_ADMIN">👑 Admin</option>
+          <option value="ROLE_USER">🎓 Etudiant</option>
+          <option value="ROLE_PROF">👨‍🏫 Professeur</option>
+        </select>
+      </div>
+      <button class="reset-btn" (click)="resetUserFilters()">
+        🔄 Réinitialiser
+      </button>
+    </div>
+
+    <!-- Affichage du nombre total d'utilisateurs trouvés -->
+    <div class="results-info">
+      📊 {{ filteredUsers.length }} utilisateur(s) trouvé(s) - Page {{ userCurrentPage }} sur {{ userTotalPages }}
+    </div>
+
+    <div class="table-container">
+      <table class="users-table">
+        <thead>
+        <tr>
+          <th>👤 Nom</th>
+          <th>👤 Prénom</th>
+          <th>📧 Email</th>
+          <th>🎭 Rôle</th>
+          <th>⚙️ Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let user of pagedUsers" class="fade-in">
+          <td>
+            <strong>{{ user.nom }}</strong>
+          </td>
+          <td>
+            {{ user.prenom }}
+          </td>
+          <td>
+                        <span [title]="user.email" class="text-truncate">
+                            {{ getTruncatedText(user.email, 25) }}
+                        </span>
+          </td>
+          <td>
+            <ng-container *ngIf="user.role?.length; else noRole">
+                            <span *ngFor="let role of user.role; let last = last"
+                                  class="badge"
+                                  [ngClass]="getRoleBadgeClass(role)">
+                                {{ role.replace('ROLE_', '') }}
+                            </span>
+            </ng-container>
+            <ng-template #noRole>
+              <span class="badge badge-default">Aucun rôle</span>
+            </ng-template>
+          </td>
+          <td>
+            <div class="actions">
+              <a class="action-btn edit" [routerLink]="['/user-edit', user.id]">
+                <i>✏️</i> Modifier
+              </a>
+              <button class="action-btn delete" (click)="showDeleteConfirmation('user', user.id)">
+                <i>🗑️</i> Supprimer
+              </button>
+            </div>
+          </td>
+        </tr>
+        <!-- Lignes vides pour maintenir la taille du tableau -->
+        <tr *ngFor="let i of [].constructor(userItemsPerPage - pagedUsers.length); index as idx"
+            style="height: 60px; opacity: 0;">
+          <td colspan="5">&nbsp;</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Utilisateurs -->
+    <div class="pagination" *ngIf="userTotalPages > 1">
+      <button (click)="changeUserPage(userCurrentPage - 1)"
+              [disabled]="userCurrentPage === 1">
+        ‹
+      </button>
+      <button *ngFor="let page of getPaginationArray(userTotalPages)"
+              [class.active]="userCurrentPage === page"
+              (click)="changeUserPage(page)">
+        {{ page }}
+      </button>
+      <button (click)="changeUserPage(userCurrentPage + 1)"
+              [disabled]="userCurrentPage === userTotalPages">
+        ›
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal" *ngIf="showDeleteModal">
+  <div class="modal-content slide-up">
+    <h3>⚠️ Confirmation de suppression</h3>
+    <p>{{ deleteMessage }}</p>
+    <p><strong>Cette action est irréversible.</strong></p>
+    <div class="modal-buttons">
+      <button (click)="confirmDelete()" [disabled]="isLoading">
+        {{ isLoading ? '⏳ Suppression...' : '🗑️ Confirmer' }}
+      </button>
+      <button (click)="hideDeleteConfirmation()" [disabled]="isLoading">
+        ❌ Annuler
+      </button>
+    </div>
+  </div>
+</div>
