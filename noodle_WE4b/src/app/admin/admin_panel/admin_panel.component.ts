@@ -189,45 +189,35 @@ export class Admin_panelComponent implements OnInit {
   confirmDelete() {
     if (!this.deleteId || !this.deleteType) return;
 
-    // Simulation d'une requête API avec gestion d'erreur
-    const simulateApiCall = () => {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Simulation d'un succès dans 80% des cas
-          if (Math.random() > 0.2) {
-            resolve('success');
-          } else {
-            reject(new Error('Erreur serveur'));
-          }
-        }, 1000);
-      });
-    };
-
     this.isLoading = true;
+    let url = '';
+    if (this.deleteType === 'ue') {
+      url = `http://localhost:3000/api/admin/ue/${this.deleteId}`;
+    } else if (this.deleteType === 'user') {
+      url = `http://localhost:3000/api/admin/user/${this.deleteId}`;
+    }
 
-    simulateApiCall()
-      .then(() => {
-        // Suppression réussie
-        if (this.deleteType === 'ue' && this.deleteId !== null) {
-          this.ues = this.ues.filter(ue => ue.id !== this.deleteId);
+    this.http.delete(url).subscribe({
+      next: () => {
+        if (this.deleteType === 'ue') {
+          this.ues = this.ues.filter(ue => ue._id !== this.deleteId);
           this.applyUeFilters();
           this.showNotificationMessage('UE supprimée avec succès', 'success');
-        } else if (this.deleteType === 'user' && this.deleteId !== null) {
-          this.users = this.users.filter(user => user.id !== this.deleteId);
+        } else if (this.deleteType === 'user') {
+          this.users = this.users.filter(user => user._id !== this.deleteId);
           this.applyUserFilters();
           this.showNotificationMessage('Utilisateur supprimé avec succès', 'success');
         }
         this.hideDeleteConfirmation();
         this.isLoading = false;
-      })
-      .catch((error) => {
-        // Gestion d'erreur
-        console.error('Erreur lors de la suppression:', error);
+      },
+      error: (error) => {
         const itemType = this.deleteType === 'ue' ? 'UE' : 'utilisateur';
         this.showNotificationMessage(`Erreur lors de la suppression de ${itemType}`, 'error');
         this.hideDeleteConfirmation();
         this.isLoading = false;
-      });
+      }
+    });
   }
 
   // Nouvelle méthode pour afficher les notifications

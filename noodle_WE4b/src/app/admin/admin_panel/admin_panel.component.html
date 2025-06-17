@@ -87,7 +87,7 @@
               <a class="action-btn edit" [routerLink]="['/ue-registration', ue.id]">
                 <i>✏️</i> Modifier
               </a>
-              <button class="action-btn delete" (click)="showDeleteConfirmation('ue', ue.id)">
+              <button class="action-btn delete" (click)="showDeleteConfirmation('ue', ue._id)">
                 <i>🗑️</i> Supprimer
               </button>
             </div>
@@ -202,7 +202,7 @@
               <a class="action-btn edit" [routerLink]="['/user-edit', user.id]">
                 <i>✏️</i> Modifier
               </a>
-              <button class="action-btn delete" (click)="showDeleteConfirmation('user', user.id)">
+              <button class="action-btn delete" (click)="showDeleteConfirmation('user', user._id)">
                 <i>🗑️</i> Supprimer
               </button>
             </div>

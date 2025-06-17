@@ -5,9 +5,6 @@
   padding: 15px;
   height: 80%;
   box-sizing: border-box;
-  position: fixed;
-  transform: translateX(-50%);
-  bottom: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -420,7 +417,7 @@ table {
   gap: 6px;
   padding: 16px 0;
   position: absolute;
-  bottom: 16px;
+  bottom: 1px;
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 40px);

@@ -14,4 +14,24 @@ router.get('/panel_data', async (req, res) => {
   }
 });
 
+// Supprimer une UE
+router.delete('/ue/:id', async (req, res) => {
+  try {
+    await Ue.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Supprimer un utilisateur
+router.delete('/user/:id', async (req, res) => {
+  try {
+    await Utilisateur.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
