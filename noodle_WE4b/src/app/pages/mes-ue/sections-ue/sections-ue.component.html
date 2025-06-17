@@ -8,8 +8,12 @@
   <div *ngIf="opened">
     <div *ngIf="posts.length === 0" class="no-posts">Aucun post dans cette section.</div>
     <ul *ngIf="posts.length > 0" class="posts-list">
-      <li *ngFor="let post of posts">
-        <app-post-mes-ue [post]="post"></app-post-mes-ue>
+      <li *ngFor="let post of posts; let i = index">
+        <app-post-mes-ue
+          [post]="post"
+          [fait]="faitStates[i]"
+          (faitChange)="onFaitChange(i, $event)">
+        </app-post-mes-ue>
       </li>
     </ul>
   </div>

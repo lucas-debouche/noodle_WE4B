@@ -1,17 +1,37 @@
 <div class="mes-ue-layout">
   <app-sidebar-mes-ue [ueId]="selectedUeId" class="sidebar"></app-sidebar-mes-ue>
   <div class="mes-ue-sections">
+    <div class="progress-bar-container" *ngIf="nbPosts">
+      <div class="progress-bar-label">
+        Progression : {{ nbFaits }} / {{ nbPosts }} posts faits
+      </div>
+      <div class="progress-bar">
+        <div class="progress-bar-inner" [style.width.%]="(nbFaits / nbPosts) * 100"></div>
+      </div>
+    </div>
     <div id="info">
-      <app-sections-ue [sectionTitle]="'info'" [ueId]="selectedUeId"></app-sections-ue>
+      <app-sections-ue [sectionTitle]="'info'" [ueId]="selectedUeId"
+        (postsLoaded)="onPostsLoaded('info', $event)"
+        (faitChange)="onFaitChange('info', $event.index, $event.value)">
+      </app-sections-ue>
     </div>
     <div id="cm">
-      <app-sections-ue [sectionTitle]="'CM'" [ueId]="selectedUeId"></app-sections-ue>
+      <app-sections-ue [sectionTitle]="'CM'" [ueId]="selectedUeId"
+        (postsLoaded)="onPostsLoaded('CM', $event)"
+        (faitChange)="onFaitChange('CM', $event.index, $event.value)">
+      </app-sections-ue>
     </div>
     <div id="td">
-      <app-sections-ue [sectionTitle]="'TD'" [ueId]="selectedUeId"></app-sections-ue>
+      <app-sections-ue [sectionTitle]="'TD'" [ueId]="selectedUeId"
+        (postsLoaded)="onPostsLoaded('TD', $event)"
+        (faitChange)="onFaitChange('TD', $event.index, $event.value)">
+      </app-sections-ue>
     </div>
     <div id="tp">
-      <app-sections-ue [sectionTitle]="'TP'" [ueId]="selectedUeId"></app-sections-ue>
+      <app-sections-ue [sectionTitle]="'TP'" [ueId]="selectedUeId"
+        (postsLoaded)="onPostsLoaded('TP', $event)"
+        (faitChange)="onFaitChange('TP', $event.index, $event.value)">
+      </app-sections-ue>
     </div>
   </div>
 </div>

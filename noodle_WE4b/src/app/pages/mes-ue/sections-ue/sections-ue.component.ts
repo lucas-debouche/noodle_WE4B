@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { PostsService } from '../../../services/posts.service';
 import { Post } from '../../../models/post.model';
 
@@ -11,8 +11,12 @@ export class SectionsUeComponent implements OnInit, OnChanges {
   @Input() sectionTitle: string = '';
   @Input() ueId: string = '';
 
+  @Output() postsLoaded = new EventEmitter<Post[]>();
+  @Output() faitChange = new EventEmitter<{index: number, value: boolean}>();
+
   opened = true;
   posts: Post[] = [];
+  faitStates: boolean[] = [];
 
   constructor(private postsService: PostsService) { }
 
@@ -30,11 +34,17 @@ export class SectionsUeComponent implements OnInit, OnChanges {
       this.posts = posts.filter(post =>
         post.categorie && post.categorie.trim().toLowerCase() === this.sectionTitle.trim().toLowerCase()
       );
-      console.log(this.posts);
+      this.faitStates = this.posts.map(() => false);
+      this.postsLoaded.emit(this.posts);
     });
   }
 
   toggleSection() {
     this.opened = !this.opened;
+  }
+
+  onFaitChange(index: number, value: boolean) {
+    this.faitStates[index] = value;
+    this.faitChange.emit({index, value});
   }
 }

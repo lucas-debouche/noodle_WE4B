@@ -1,66 +1,149 @@
 .post-card {
-  background: #fff;
-  border-radius: 13px;
-  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.08);
-  border: 1px solid #ffe0b2;
-  padding: 18px 22px 16px 22px;
+  background: #fffdfa;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(255, 140, 0, 0.13);
+  border: 2px solid #ffe0b2;
+  padding: 28px 34px 22px 34px;
   transition: box-shadow 0.18s, border 0.18s;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 14px;
   position: relative;
+  margin-bottom: 24px;
+
+  &.message {
+    border-left: 7px solid #ffb74d;
+  }
+  &.fichier {
+    border-left: 7px solid #64b5f6;
+  }
+  &.devoir {
+    border-left: 7px solid #81c784;
+  }
 
   &:hover {
-    box-shadow: 0 4px 18px rgba(255, 140, 0, 0.16);
+    box-shadow: 0 8px 32px rgba(255, 140, 0, 0.18);
     border-color: #ffb74d;
   }
 
   .post-header {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 18px;
     margin-bottom: 2px;
+    position: relative;
 
-    .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
-      color: #e65100;
-      font-weight: 700;
-      font-size: 1.25rem;
+    .post-type-icon {
+      font-size: 2.3rem;
+      margin-right: 10px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      user-select: none;
+      filter: drop-shadow(0 1px 2px #ffe0b2);
+    }
+
+    .post-meta {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 1px 4px rgba(255, 140, 0, 0.10);
-    }
+      flex-direction: column;
+      gap: 2px;
 
-    .post-author {
-      font-weight: 600;
-      color: #e65100;
-      font-size: 1rem;
-    }
-    .post-date {
-      font-size: 0.93rem;
-      color: #bdbdbd;
-      margin-left: 8px;
-    }
-  }
+      .post-title {
+        font-size: 1.22rem;
+        font-weight: 700;
+        color: #ff9800;
+        margin-bottom: 1px;
+        word-break: break-word;
+        letter-spacing: 0.2px;
+      }
 
-  .post-title {
-    font-size: 1.13rem;
-    font-weight: 600;
-    color: #ff9800;
-    margin-bottom: 2px;
-    margin-top: 2px;
-    word-break: break-word;
+      .post-date {
+        font-size: 1rem;
+        color: #bdbdbd;
+        margin-right: 8px;
+      }
+
+      .post-user {
+        font-size: 1rem;
+        color: #8d6e63;
+      }
+    }
   }
 
   .post-content {
-    font-size: 1.04rem;
+    font-size: 1.12rem;
     color: #4e342e;
-    line-height: 1.6;
+    line-height: 1.7;
     word-break: break-word;
     margin-bottom: 2px;
+
+    .post-message {
+      margin-bottom: 8px;
+      white-space: pre-line;
+    }
+
+    .post-file {
+      background: #e3f2fd;
+      border-radius: 8px;
+      padding: 9px 16px;
+      margin-bottom: 8px;
+      color: #1976d2;
+      font-size: 1.07rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .file-icon {
+        font-size: 1.25rem;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      .file-name {
+        font-weight: 600;
+        color: #1565c0;
+        margin-left: 4px;
+      }
+      .file-none {
+        color: #bdbdbd;
+        margin-left: 4px;
+      }
+    }
+
+    .post-devoir {
+      background: #e8f5e9;
+      border-radius: 8px;
+      padding: 9px 16px;
+      margin-bottom: 8px;
+      color: #388e3c;
+      font-size: 1.07rem;
+
+      strong {
+        color: #2e7d32;
+      }
+      .devoir-date {
+        color: #388e3c;
+        margin-left: 8px;
+      }
+    }
+  }
+
+  .fait-btn {
+    margin-left: auto;
+    align-self: flex-start;
+    padding: 7px 22px;
+    border-radius: 22px;
+    border: none;
+    background: #ffe0b2;
+    color: #ff9800;
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.10);
+
+    &.fait {
+      background: #81c784;
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(129, 199, 132, 0.15);
+    }
   }
 }

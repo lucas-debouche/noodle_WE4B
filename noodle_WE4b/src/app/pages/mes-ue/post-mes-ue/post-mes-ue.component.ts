@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { Post } from '../../../models/post.model';
 import { User } from "../../../models/user.model";
 import { UtilisateurService } from "../../../services/utilisateur.service";
@@ -10,6 +10,8 @@ import { UtilisateurService } from "../../../services/utilisateur.service";
 })
 export class PostMesUeComponent implements OnInit {
   @Input() post!: Post;
+  @Input() fait: boolean = false;
+  @Output() faitChange = new EventEmitter<boolean>();
   currentUser!: User;
 
   constructor(
@@ -25,5 +27,21 @@ export class PostMesUeComponent implements OnInit {
         console.error('Erreur lors de la récupération de l\'utilisateur :', err);
       }
     });
+  }
+
+  isUtilisateurObj(utilisateur: any): utilisateur is { nom?: string; prenom?: string } {
+    return utilisateur && typeof utilisateur === 'object' && ('nom' in utilisateur || 'prenom' in utilisateur);
+  }
+
+  getTypeNom(post: Post): string {
+    if (post.type_id && typeof post.type_id === 'object' && 'nom' in post.type_id) {
+      return (post.type_id as any).nom;
+    }
+    return '';
+  }
+
+  toggleFait() {
+    this.fait = !this.fait;
+    this.faitChange.emit(this.fait);
   }
 }
