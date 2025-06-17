@@ -1,0 +1,75 @@
+<div *ngIf="ShouldShowProfilSidebar()">
+  <div id="profilSidebar" class="profil-sidebar" [class.open]="isOpen">
+    <div class="sidebar-header">
+      <h2>Mon Profil</h2>
+      <button id="closeProfilSidebar" class="close-btn" (click)="toggleProfilSidebar()">&times;</button>
+    </div>
+
+    <form [formGroup]="profilForm" (ngSubmit)="saveProfil()">
+      <div class="form-group">
+        <label for="nom">Nom</label>
+        <input id="nom" formControlName="nom" type="text" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label for="prenom">Prénom</label>
+        <input id="prenom" formControlName="prenom" type="text" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label for="plainPassword">Mot de passe</label>
+        <input
+          id="plainPassword"
+          formControlName="plainPassword"
+          type="password"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirmer le mot de passe</label>
+        <input
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          type="password"
+          class="form-control"
+        />
+      </div>
+
+      <div class="profil-avatar">
+        <img *ngIf="photoPreview; else userPhoto" [src]="photoPreview" alt="Aperçu de la photo" />
+        <ng-template #userPhoto>
+          <img *ngIf="user?.photo" [src]="'http://localhost:3000/uploads/user/' + user.nom + '/photo_profil/' + user.photo" alt="Photo de profil" />
+        </ng-template>
+      </div>
+
+      <div class="form-group">
+        <label for="photo">Changer la photo de profil</label>
+        <input id="photo" type="file" class="form-control" (change)="onPhotoChange($event)" />
+      </div>
+
+      <button type="submit" class="profil-btn" [disabled]="profilForm.invalid">Enregistrer</button>
+    </form>
+  </div>
+
+  <button
+    id="profilSidebarToggle"
+    class="profil-toggle-btn"
+    title="Modifier mon profil"
+    (click)="toggleProfilSidebar()"
+    [class.shifted]="toggleBtnShifted"
+  >
+    <ng-container *ngIf="user?.photo; else defaultAvatar">
+      <img
+        [src]="'http://localhost:3000/uploads/user/' + user.nom + '/photo_profil/' + user.photo"
+        alt="Photo de profil"
+        class="profil-toggle-avatar"
+      />
+    </ng-container>
+    <ng-template #defaultAvatar>
+      <span class="profil-toggle-avatar" style="display:flex;align-items:center;justify-content:center;font-size:2rem;">
+        👤
+      </span>
+    </ng-template>
+  </button>
+</div>

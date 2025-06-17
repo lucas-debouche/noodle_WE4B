@@ -1,28 +1,54 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { AuthModule } from './auth/auth.module';
 import { UtilisateurComponent } from './utilisateurs/utilisateurs.component';
 import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
-import {FormsModule} from "@angular/forms";
+import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
+import { NavbarComponent } from './navbar/navbar.component';
+import { FooterComponent } from './footer/footer.component';
+import { ProfilSidebarComponent } from './profil-sidebar/profil-sidebar.component';
+import { AuthInterceptor } from './services/auth.interceptor.service';
+import { LoginComponent } from './pages/login/login.component';
+import { UeBoxComponent } from './ue-box/ue-box.component';
+import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
+import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
+import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     UtilisateurComponent,
-    Admin_panelComponent
+    Admin_panelComponent,
+    UtilisateurComponent,
+    ChoixUeComponent,
+    NavbarComponent,
+    FooterComponent,
+    ProfilSidebarComponent,
+    LoginComponent,
+    UeBoxComponent,
+    ForumListComponent,
+    ForumDetailComponent,
+    ParticipantsListComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    AuthModule,
-    FormsModule
+    FormsModule,
+    FormsModule,
+    ReactiveFormsModule,
   ],
-  providers: [],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true,
+    },
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
