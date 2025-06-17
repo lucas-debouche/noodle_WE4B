@@ -16,6 +16,7 @@ import { UeBoxComponent } from './ue-box/ue-box.component';
 import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
 import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
 import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
+import { UeRegistrationComponent } from './pages/ue-registration/ue-registration.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { ParticipantsListComponent } from './pages/partipants-ue/participants-li
     ForumListComponent,
     ForumDetailComponent,
     ParticipantsListComponent,
+    UeRegistrationComponent,
   ],
   imports: [
     BrowserModule,
