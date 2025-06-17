@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ModulesUeComponent } from './modules-ue.component';
+import { PostMesUeComponent } from './post-mes-ue.component';
 
-describe('ModulesUeComponent', () => {
-  let component: ModulesUeComponent;
-  let fixture: ComponentFixture<ModulesUeComponent>;
+describe('PostMesUeComponent', () => {
+  let component: PostMesUeComponent;
+  let fixture: ComponentFixture<PostMesUeComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ModulesUeComponent ]
+      declarations: [ PostMesUeComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ModulesUeComponent);
+    fixture = TestBed.createComponent(PostMesUeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

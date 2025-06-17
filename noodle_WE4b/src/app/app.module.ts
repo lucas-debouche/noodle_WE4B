@@ -14,9 +14,9 @@ import { AuthInterceptor } from './services/auth.interceptor.service';
 import { LoginComponent } from './pages/login/login.component';
 import { UeBoxComponent } from './ue-box/ue-box.component';
 import { MesUeComponent } from "./pages/mes-ue/mes-ue.component";
-import { SectionsUeComponent } from './sections-ue/sections-ue.component';
-import { ModulesUeComponent } from './modules-ue/modules-ue.component';
-import { SidebarMesUeComponent } from './sidebar-mes-ue/sidebar-mes-ue.component';
+import { SectionsUeComponent } from './pages/mes-ue/sections-ue/sections-ue.component';
+import { SidebarMesUeComponent } from './pages/mes-ue/sidebar-mes-ue/sidebar-mes-ue.component';
+import { PostMesUeComponent } from './pages/mes-ue/post-mes-ue/post-mes-ue.component';
 
 @NgModule({
   declarations: [
@@ -30,8 +30,8 @@ import { SidebarMesUeComponent } from './sidebar-mes-ue/sidebar-mes-ue.component
     MesUeComponent,
     UeBoxComponent,
     SectionsUeComponent,
-    ModulesUeComponent,
     SidebarMesUeComponent,
+    PostMesUeComponent,
   ],
   imports: [
     BrowserModule,

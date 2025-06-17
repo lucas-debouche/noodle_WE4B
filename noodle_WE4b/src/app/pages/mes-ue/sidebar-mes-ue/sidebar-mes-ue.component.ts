@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 
 @Component({
   selector: 'app-sidebar-mes-ue',
@@ -6,6 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./sidebar-mes-ue.component.scss']
 })
 export class SidebarMesUeComponent implements OnInit {
+  @Input() ueId: string = '';
 
   constructor() { }
 

@@ -12,6 +12,7 @@ import { Ue } from "../../models/ue.model";
 })
 export class MesUeComponent implements OnInit {
   currentUe!: Ue;
+  selectedUeId: any;
 
   constructor(
     private navbarService: NavbarService,
@@ -26,8 +27,8 @@ export class MesUeComponent implements OnInit {
         this.currentUe = ue;
         console.log(this.currentUe);
         this.navbarService.setTitle(this.currentUe.intitule);
+        this.selectedUeId = ueId;
       });
     }
   }
-
 }

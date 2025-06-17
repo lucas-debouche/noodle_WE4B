@@ -1,14 +1,17 @@
 <div class="mes-ue-layout">
-  <app-sidebar-mes-ue class="sidebar"></app-sidebar-mes-ue>
+  <app-sidebar-mes-ue [ueId]="selectedUeId" class="sidebar"></app-sidebar-mes-ue>
   <div class="mes-ue-sections">
-    <div id="semaine-1">
-      <app-sections-ue [sectionTitle]="'Semaine 1'"></app-sections-ue>
+    <div id="info">
+      <app-sections-ue [sectionTitle]="'info'" [ueId]="selectedUeId"></app-sections-ue>
     </div>
-    <div id="semaine-2">
-      <app-sections-ue [sectionTitle]="'Semaine 2'"></app-sections-ue>
+    <div id="cm">
+      <app-sections-ue [sectionTitle]="'CM'" [ueId]="selectedUeId"></app-sections-ue>
     </div>
-    <div id="semaine-3">
-      <app-sections-ue [sectionTitle]="'Semaine 3'"></app-sections-ue>
+    <div id="td">
+      <app-sections-ue [sectionTitle]="'TD'" [ueId]="selectedUeId"></app-sections-ue>
+    </div>
+    <div id="tp">
+      <app-sections-ue [sectionTitle]="'TP'" [ueId]="selectedUeId"></app-sections-ue>
     </div>
   </div>
 </div>

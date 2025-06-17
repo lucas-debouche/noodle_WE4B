@@ -15,4 +15,8 @@ export class PostsService {
   getPosts(): Observable<Post[]> {
     return this.http.get<Post[]>(this.apiUrl);
   }
+
+  getPostsByUe(ueId: string): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.apiUrl}/ue/${ueId}`);
+  }
 }
