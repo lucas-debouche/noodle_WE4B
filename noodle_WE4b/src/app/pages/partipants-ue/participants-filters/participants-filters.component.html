@@ -1,0 +1,124 @@
+<div class="filters-card">
+  <div class="card-icon">🔍</div>
+  <div class="card-content">
+    <div class="filters-header">
+      <h3>Rechercher et filtrer les participants</h3>
+      <div class="results-count" *ngIf="totalVisibleParticipants > 0">
+        {{ totalVisibleParticipants }} participant{{ totalVisibleParticipants > 1 ? 's' : '' }}
+        <span *ngIf="hasActiveFilters">
+          sur {{ totalParticipants }}
+        </span>
+      </div>
+    </div>
+
+    <div class="search-section">
+      <div class="search-input-wrapper">
+        <i class="search-icon">🔍</i>
+        <input
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="Rechercher par nom, prénom, email, promotion..."
+          class="search-input"
+        />
+        <button
+          *ngIf="searchTerm"
+          (click)="clearSearch()"
+          class="clear-btn"
+          title="Effacer"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-controls">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Type :</label>
+          <select
+            [(ngModel)]="roleFilter"
+            (change)="onRoleFilterChange()"
+            class="filter-select"
+          >
+            <option *ngFor="let option of roleOptions" [value]="option.value">
+              {{ option.icon }} {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Trier par :</label>
+          <select
+            [(ngModel)]="sortBy"
+            (change)="onSortChange()"
+            class="filter-select"
+          >
+            <option *ngFor="let option of sortOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <button
+          (click)="toggleFilters()"
+          class="btn-toggle-filters"
+          [class.active]="showFilters"
+          title="Plus de filtres"
+        >
+          <i class="icon">⚙️</i>
+        </button>
+      </div>
+
+      <!-- Filtres avancés -->
+      <div class="advanced-filters" *ngIf="showFilters">
+        <div class="filter-row">
+          <div class="filter-group" *ngIf="promotions.length > 0">
+            <label>Promotion :</label>
+            <select
+              [(ngModel)]="selectedPromotion"
+              (change)="onPromotionChange()"
+              class="filter-select"
+            >
+              <option value="toutes">Toutes les promotions</option>
+              <option *ngFor="let promotion of promotions" [value]="promotion">
+                {{ promotion }}
+              </option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Statut :</label>
+            <select
+              [(ngModel)]="selectedStatut"
+              (change)="onStatutChange()"
+              class="filter-select"
+            >
+              <option *ngFor="let option of statutOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="filter-actions">
+            <button
+              (click)="onResetFilters()"
+              class="btn-reset"
+              *ngIf="hasActiveFilters"
+            >
+              <i class="icon">🔄</i>
+              Réinitialiser
+            </button>
+
+            <button
+              (click)="onExportParticipants()"
+              class="btn-export"
+            >
+              <i class="icon">📊</i>
+              Exporter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

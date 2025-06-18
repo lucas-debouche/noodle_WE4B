@@ -74,8 +74,14 @@ export class AuthService {
     const token = localStorage.getItem('token') || '';
     return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }
+  getToken(): string | null {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    console.log('Token récupéré:', token ? `${token.substring(0, 20)}...` : 'null');
+    return token;
+  }
 
-  getCurrentUserValue(): User | null {
+
+  getCurrentUserValue(): any  {
     return this.currentUserSubject.value;
   }
 

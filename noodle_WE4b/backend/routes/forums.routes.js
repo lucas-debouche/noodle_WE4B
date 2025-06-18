@@ -40,19 +40,23 @@ router.put(
 
 router.put(
   '/:forumId/messages/:messageId',
-  authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
+  authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.updateMessage
 );
-
+router.put(
+  '/:forumId/messages/:messageId/replies/:replyId',
+  authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
+  forumsController.updateReply
+);
 router.delete(
   '/:forumId/messages/:messageId',
-  authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
+  authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.deleteMessage
 );
 
 router.delete(
   '/:forumId/messages/:messageId/replies/:replyId',
-  authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
+  authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.deleteReply
 );
 

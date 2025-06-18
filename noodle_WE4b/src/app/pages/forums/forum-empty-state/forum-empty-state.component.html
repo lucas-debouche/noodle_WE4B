@@ -1,0 +1,31 @@
+<div class="empty-card">
+  <div class="empty-content">
+    <div class="empty-icon">
+      {{ searchTerm ? '🔍' : '💬' }}
+    </div>
+    <h3>
+      {{ searchTerm ? 'Aucun résultat trouvé' : 'Aucune discussion pour le moment' }}
+    </h3>
+    <p>
+      {{ searchTerm ? 'Essayez avec d\'autres mots-clés ou modifiez vos filtres' : 'Soyez le premier à créer un sujet de discussion !' }}
+    </p>
+    <div class="empty-actions">
+      <button
+        *ngIf="searchTerm"
+        (click)="onClearSearch()"
+        class="btn-action"
+      >
+        <i class="icon">🔄</i>
+        Effacer la recherche
+      </button>
+      <button
+        *ngIf="!searchTerm"
+        (click)="onCreateFirstForum()"
+        class="btn-action"
+      >
+        <i class="icon">✨</i>
+        Créer le premier sujet
+      </button>
+    </div>
+  </div>
+</div>

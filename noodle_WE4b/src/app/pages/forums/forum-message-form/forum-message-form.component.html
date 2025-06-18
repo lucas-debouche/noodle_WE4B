@@ -1,0 +1,94 @@
+<div class="add-message-section">
+  <div class="section-header">
+    <h3>✍️ Ajouter un message</h3>
+  </div>
+
+  <form class="message-form" (ngSubmit)="onSubmitMessage()">
+    <div class="form-group">
+      <textarea
+        [(ngModel)]="newMessage"
+        name="message"
+        placeholder="Écrivez votre message ici... Soyez respectueux et constructif dans vos échanges."
+        required
+        #messageInput
+        (input)="onMessageChange(); onUpdateCharCount()"
+        maxlength="1000"
+      ></textarea>
+      <div class="char-counter"
+           [class.warning]="getCharCount() > 800"
+           [class.danger]="getCharCount() > 950">
+        {{ getCharCount() }}/1000
+      </div>
+    </div>
+
+    <!-- Section d'ajout de fichiers -->
+    <div class="file-input-section">
+      <label class="file-input-label">
+        <input type="file"
+               multiple
+               (change)="onFileSelected($event)"
+               accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar"
+               class="file-input"
+               #fileInput>
+        <span class="file-btn">📎 Ajouter des fichiers (max 5)</span>
+      </label>
+      <span class="file-help">Max 5 fichiers, 10MB chacun • Images, PDF, documents, archives</span>
+    </div>
+
+    <!-- Aperçu des fichiers sélectionnés -->
+    <div class="selected-files" *ngIf="selectedFilesArray && selectedFilesArray.length > 0">
+      <div class="selected-files-header">
+        <span>Fichiers sélectionnés ({{ selectedFilesArray.length }})</span>
+      </div>
+      <div class="selected-file-list">
+        <div class="selected-file" *ngFor="let file of selectedFilesArray; let i = index">
+          <span class="file-icon">{{ getFileIcon(file.type) }}</span>
+          <span class="file-name">{{ file.name }}</span>
+          <span class="file-size">{{ formatFileSize(file.size) }}</span>
+          <button class="remove-file" (click)="onRemoveFile(i)" title="Retirer">×</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <div class="form-meta">
+        <button type="button" class="emoji-btn" title="Ajouter un emoji" (click)="onToggleEmojiPicker()">
+          😊
+        </button>
+        <span class="user-info">En tant que {{ currentUserName }}</span>
+      </div>
+
+      <div class="action-buttons">
+        <button
+          type="button"
+          class="btn-cancel"
+          (click)="onClearMessage()"
+          *ngIf="hasMessageContent()"
+        >
+          🗑️ Effacer
+        </button>
+        <button
+          type="submit"
+          class="btn-submit"
+          [class.sending]="isSending"
+          [disabled]="!hasMessageContent() || isSending"
+        >
+          <span *ngIf="!isSending">
+            📤 Envoyer
+          </span>
+          <span *ngIf="isSending">
+            <span class="loading-spinner"></span>
+            Envoi...
+          </span>
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Sélecteur d'emojis -->
+  <app-forum-emoji-picker
+    [(showEmojiPicker)]="showEmojiPicker"
+    (addEmoji)="onAddEmoji($event)"
+    (toggleEmojiPicker)="onToggleEmojiPicker()">
+  </app-forum-emoji-picker>
+</div>
