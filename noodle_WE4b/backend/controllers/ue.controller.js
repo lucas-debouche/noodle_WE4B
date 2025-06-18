@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Utilisateur = require('../models/utilisateur.model');
 const Ue = require('../models/ue.model');
 const UtilisateurUe = require('../models/utilisateur_ue.model');
-const Departement = require('../models/departement.model'); // Nouveau modèle
+const Departement = require('../models/departement.model');
 const { logAction } = require("../utils/logActions");
 const multer = require('multer');
 const path = require('path');
@@ -68,15 +68,15 @@ exports.getAllUes = async (req, res) => {
 
     // Ajouter le nombre de participants pour chaque UE
     const uesWithParticipants = await Promise.all(
-      ues.map(async (ue) => {
-        const participantCount = await UtilisateurUe.countDocuments({ ue_id: ue._id.toString() });
-        return {
-          ...ue,
-          id: ue._id.toString(),
-          participants: Array(participantCount).fill().map((_, i) => i.toString()), // Mock pour compatibilité
-          participantCount
-        };
-      })
+        ues.map(async (ue) => {
+          const participantCount = await UtilisateurUe.countDocuments({ ue_id: ue._id.toString() });
+          return {
+            ...ue,
+            id: ue._id.toString(),
+            participants: Array(participantCount).fill().map((_, i) => i.toString()), // Mock pour compatibilité
+            participantCount
+          };
+        })
     );
 
     res.json(uesWithParticipants);
@@ -144,8 +144,8 @@ exports.getUeById = async (req, res) => {
 exports.createUe = [
   upload.single('image'),
   async (req, res) => {
-    console.log('createUe → req.body =', req.body);
-    console.log('createUe → req.file =', req.file);
+    console.log('📝 createUe → req.body =', req.body);
+    console.log('📁 createUe → req.file =', req.file);
 
     try {
       const { code, intitule, description, ects, departement, assigned_users } = req.body;
@@ -159,23 +159,56 @@ exports.createUe = [
         });
       }
 
-      // Vérifier si le département existe
+      // ✅ GESTION ULTRA-ROBUSTE DU DÉPARTEMENT
       let departementId = null;
-      if (departement) {
-        const departementExists = await Departement.findById(departement);
-        if (!departementExists) {
-          return res.status(400).json({
-            success: false,
-            message: 'Département introuvable'
-          });
+
+      console.log('🏢 Département reçu:', departement, 'Type:', typeof departement);
+
+      if (departement && departement !== 'null' && departement !== '' && departement !== 'undefined') {
+        // Cas 1: C'est un ObjectId valide
+        if (mongoose.Types.ObjectId.isValid(departement)) {
+          console.log('✅ ObjectId valide détecté');
+          const departementExists = await Departement.findById(departement);
+          if (departementExists) {
+            departementId = new mongoose.Types.ObjectId(departement);
+            console.log('✅ Département trouvé par ObjectId:', departementExists.nom);
+          } else {
+            console.log('⚠️ ObjectId valide mais département non trouvé');
+          }
         }
-        departementId = departement;
+        // Cas 2: C'est un ID simple (comme "1", "2", etc.) - On ignore silencieusement
+        else if (departement.match(/^[0-9]+$/)) {
+          console.log('⚠️ ID numérique simple détecté, ignoré car non-MongoDB:', departement);
+          departementId = null;
+        }
+        // Cas 3: Recherche par nom ou code
+        else {
+          console.log('🔍 Recherche département par nom/code:', departement);
+          const departementExists = await Departement.findOne({
+            $or: [
+              { nom: new RegExp(departement, 'i') },
+              { code: departement.toUpperCase() }
+            ]
+          });
+
+          if (departementExists) {
+            departementId = departementExists._id;
+            console.log('✅ Département trouvé par recherche:', departementExists.nom);
+          } else {
+            console.log('⚠️ Département non trouvé par recherche');
+          }
+        }
+      } else {
+        console.log('📝 Aucun département spécifié');
       }
+
+      console.log('🎯 Département final:', departementId);
 
       // Traitement de l'image
       let imageFilename = null;
       if (req.file) {
         imageFilename = req.file.filename;
+        console.log('🖼️ Image uploadée:', imageFilename);
       }
 
       // Créer la nouvelle UE
@@ -185,28 +218,69 @@ exports.createUe = [
         description: description || '',
         ects: parseInt(ects),
         image: imageFilename,
-        departementId: departementId ? new mongoose.Types.ObjectId(departementId) : null
+        departementId: departementId // Peut être null
+      });
+
+      console.log('💾 Sauvegarde UE:', {
+        code: newUe.code,
+        intitule: newUe.intitule,
+        departementId: newUe.departementId
       });
 
       const savedUe = await newUe.save();
+      console.log('✅ UE sauvegardée avec succès:', savedUe._id);
 
-      // Affecter des utilisateurs à l'UE si fournis
+      // ✅ CORRECTION: Affecter des utilisateurs à l'UE si fournis
       if (assigned_users && Array.isArray(assigned_users)) {
+        console.log('👥 Assignation utilisateurs:', assigned_users.length, 'utilisateurs');
+
         for (const userId of assigned_users) {
           try {
-            // Vérifier que l'utilisateur existe
-            const user = await Utilisateur.findById(userId);
+            console.log('🔍 Recherche utilisateur avec ID:', userId, 'Type:', typeof userId);
+
+            let user = null;
+
+            // Cas 1: Essayer avec ObjectId si c'est un ObjectId valide
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+              console.log('✅ ObjectId valide, recherche par _id');
+              user = await Utilisateur.findById(userId);
+            }
+
+            // Cas 2: Si pas trouvé et que ce n'est pas un ObjectId, chercher par le champ "id" personnalisé
+            if (!user) {
+              console.log('🔍 Recherche par champ id personnalisé');
+              user = await Utilisateur.findOne({ id: userId });
+            }
+
+            // Cas 3: Si toujours pas trouvé, chercher par email ou autres critères
+            if (!user && typeof userId === 'string') {
+              console.log('🔍 Recherche par email');
+              user = await Utilisateur.findOne({ email: userId });
+            }
+
             if (user) {
+              console.log('✅ Utilisateur trouvé:', user.email);
+
+              // Utiliser l'ID approprié pour la relation
+              const userIdForRelation = user.id || user._id.toString();
+
               const relation = new UtilisateurUe({
-                utilisateur_id: userId,
+                utilisateur_id: userIdForRelation,
                 ue_id: savedUe._id.toString(),
                 statut: 'actif',
                 date_inscription: new Date()
               });
+
               await relation.save();
+              console.log('✅ Relation utilisateur-UE créée');
+
+            } else {
+              console.log('⚠️ Utilisateur non trouvé pour ID:', userId);
             }
+
           } catch (error) {
-            console.error(`Erreur lors de l'assignation de l'utilisateur ${userId}:`, error);
+            console.error(`❌ Erreur assignation utilisateur ${userId}:`, error.message);
+            // Continuer avec les autres utilisateurs même si un échoue
           }
         }
       }
@@ -243,6 +317,12 @@ exports.createUe = [
         id: ueWithDepartement[0]._id.toString()
       };
 
+      console.log('🎉 Réponse envoyée:', {
+        success: true,
+        code: formattedUe.code,
+        departement: formattedUe.departementNom || 'Aucun'
+      });
+
       res.status(201).json({
         success: true,
         message: 'UE créée avec succès!',
@@ -250,7 +330,7 @@ exports.createUe = [
       });
 
     } catch (err) {
-      console.error('Error in createUe:', err);
+      console.error('❌ Error in createUe:', err);
 
       // Nettoyer le fichier uploadé en cas d'erreur
       if (req.file) {
@@ -301,20 +381,40 @@ exports.updateUe = [
         }
       }
 
-      // Vérifier le département si fourni
+      // ✅ CORRECTION: Gestion améliorée du département
       let departementId = existingUe.departementId;
       if (departement !== undefined) {
-        if (departement) {
-          const departementExists = await Departement.findById(departement);
-          if (!departementExists) {
-            return res.status(400).json({
-              success: false,
-              message: 'Département introuvable'
-            });
-          }
-          departementId = new mongoose.Types.ObjectId(departement);
-        } else {
+        if (departement === null || departement === '' || departement === 'null') {
+          // Retirer le département
           departementId = null;
+        } else {
+          // Vérifier si c'est un ObjectId valide
+          if (mongoose.Types.ObjectId.isValid(departement)) {
+            const departementExists = await Departement.findById(departement);
+            if (!departementExists) {
+              return res.status(400).json({
+                success: false,
+                message: 'Département introuvable'
+              });
+            }
+            departementId = new mongoose.Types.ObjectId(departement);
+          } else {
+            // Si ce n'est pas un ObjectId valide, essayer de chercher par nom ou code
+            const departementExists = await Departement.findOne({
+              $or: [
+                { nom: departement },
+                { code: departement }
+              ]
+            });
+
+            if (departementExists) {
+              departementId = departementExists._id;
+            } else {
+              console.log(`⚠️ Département non trouvé pour: "${departement}"`);
+              // Ne pas changer le département existant si on ne trouve pas le nouveau
+              // departementId reste inchangé
+            }
+          }
         }
       }
 
@@ -342,29 +442,69 @@ exports.updateUe = [
       // Mettre à jour l'UE
       const updatedUe = await Ue.findByIdAndUpdate(ueId, updateData, { new: true });
 
-      // Mettre à jour les utilisateurs assignés
+      // ✅ CORRECTION: Mettre à jour les utilisateurs assignés
       if (assigned_users !== undefined) {
+        console.log('👥 Mise à jour des utilisateurs assignés');
+
         // Supprimer toutes les anciennes relations
         await UtilisateurUe.deleteMany({ ue_id: ueId });
+        console.log('🗑️ Anciennes relations supprimées');
 
         // Ajouter les nouvelles relations
-        if (Array.isArray(assigned_users)) {
+        if (Array.isArray(assigned_users) && assigned_users.length > 0) {
+          console.log('➕ Ajout de', assigned_users.length, 'nouvelles relations');
+
           for (const userId of assigned_users) {
             try {
-              const user = await Utilisateur.findById(userId);
+              console.log('🔍 Recherche utilisateur avec ID:', userId, 'Type:', typeof userId);
+
+              let user = null;
+
+              // Cas 1: Essayer avec ObjectId si c'est un ObjectId valide
+              if (mongoose.Types.ObjectId.isValid(userId)) {
+                console.log('✅ ObjectId valide, recherche par _id');
+                user = await Utilisateur.findById(userId);
+              }
+
+              // Cas 2: Si pas trouvé et que ce n'est pas un ObjectId, chercher par le champ "id" personnalisé
+              if (!user) {
+                console.log('🔍 Recherche par champ id personnalisé');
+                user = await Utilisateur.findOne({ id: userId });
+              }
+
+              // Cas 3: Si toujours pas trouvé, chercher par email
+              if (!user && typeof userId === 'string') {
+                console.log('🔍 Recherche par email');
+                user = await Utilisateur.findOne({ email: userId });
+              }
+
               if (user) {
+                console.log('✅ Utilisateur trouvé:', user.email);
+
+                // Utiliser l'ID approprié pour la relation
+                const userIdForRelation = user.id || user._id.toString();
+
                 const relation = new UtilisateurUe({
-                  utilisateur_id: userId,
+                  utilisateur_id: userIdForRelation,
                   ue_id: ueId,
                   statut: 'actif',
                   date_inscription: new Date()
                 });
+
                 await relation.save();
+                console.log('✅ Nouvelle relation utilisateur-UE créée');
+
+              } else {
+                console.log('⚠️ Utilisateur non trouvé pour ID:', userId);
               }
+
             } catch (error) {
-              console.error(`Erreur lors de l'assignation de l'utilisateur ${userId}:`, error);
+              console.error(`❌ Erreur assignation utilisateur ${userId}:`, error.message);
+              // Continuer avec les autres utilisateurs même si un échoue
             }
           }
+        } else {
+          console.log('📝 Aucun utilisateur à assigner');
         }
       }
 
@@ -433,47 +573,82 @@ exports.updateUe = [
 // DELETE /api/ue/:ueId → supprimer une UE
 exports.deleteUe = async (req, res) => {
   const ueId = req.params.ueId;
-  console.log(`deleteUe → ueId = ${ueId}`);
+  console.log(`🗑️ deleteUe → ueId = ${ueId}`);
 
   try {
-    const ue = await Ue.findById(ueId);
+    // Vérifier que l'UE existe
+    let ue;
+
+    // Essayer de trouver par _id (ObjectId)
+    if (mongoose.Types.ObjectId.isValid(ueId)) {
+      ue = await Ue.findById(ueId);
+    }
+
+    // Si pas trouvé, essayer par le champ "id" personnalisé
     if (!ue) {
+      ue = await Ue.findOne({ id: ueId });
+    }
+
+    // Si toujours pas trouvé, essayer par code
+    if (!ue) {
+      ue = await Ue.findOne({ code: ueId });
+    }
+
+    if (!ue) {
+      console.log(`❌ UE non trouvée pour ID: ${ueId}`);
       return res.status(404).json({
         success: false,
         message: 'UE non trouvée'
       });
     }
 
-    // Supprimer l'image associée
-    if (ue.image) {
-      const imagePath = path.join(__dirname, '../uploads/ue', ue.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+    console.log(`✅ UE trouvée: ${ue.code} - ${ue.intitule}`);
+
+    // ✅ CORRECTION: Suppression sans transaction pour MongoDB standalone
+    try {
+      // 1. Supprimer les relations utilisateur-UE
+      const deleteResult = await UtilisateurUe.deleteMany({ ue_id: ue._id.toString() });
+      console.log(`✅ ${deleteResult.deletedCount} relations utilisateur-UE supprimées`);
+
+      // 2. Supprimer les posts/forums liés si nécessaire
+      // Uncomment if you have these collections:
+      // await Post.deleteMany({ ue_id: ue._id.toString() });
+      // await Forum.deleteMany({ ueId: ue._id.toString() });
+
+      // 3. Supprimer l'image associée
+      if (ue.image) {
+        const imagePath = path.join(__dirname, '../uploads/ue', ue.image);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+          console.log('✅ Image supprimée:', ue.image);
+        }
       }
+
+      // 4. Supprimer l'UE elle-même
+      await Ue.findByIdAndDelete(ue._id);
+      console.log('✅ UE supprimée de la base de données');
+
+      // Logger l'action
+      await logAction({
+        action: 'delete_ue',
+        category: 'ue',
+        userId: req.user ? req.user.userId : null,
+        targetId: ue._id.toString(),
+        details: { code: ue.code, intitule: ue.intitule }
+      });
+
+      res.json({
+        success: true,
+        message: 'UE supprimée avec succès'
+      });
+
+    } catch (deleteError) {
+      console.error('❌ Erreur lors de la suppression:', deleteError);
+      throw deleteError;
     }
 
-    // Supprimer toutes les relations utilisateur-UE
-    await UtilisateurUe.deleteMany({ ue_id: ueId });
-
-    // Supprimer l'UE
-    await Ue.findByIdAndDelete(ueId);
-
-    // Logger l'action
-    await logAction({
-      action: 'delete_ue',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      targetId: ueId,
-      details: { code: ue.code, intitule: ue.intitule }
-    });
-
-    res.json({
-      success: true,
-      message: 'UE supprimée avec succès'
-    });
-
   } catch (err) {
-    console.error('Error in deleteUe:', err);
+    console.error('❌ Error in deleteUe:', err);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de l\'UE: ' + err.message
@@ -519,62 +694,123 @@ exports.searchUes = async (req, res) => {
 exports.getParticipantsByUe = async (req, res) => {
   try {
     const ueId = req.params.ueId;
+    console.log(`🔍 Recherche participants pour UE: ${ueId}`);
 
-    // DEBUG: Vérifier toutes les relations dans la collection
-    const allRelations = await UtilisateurUe.find({});
-    allRelations.slice(0, 5).forEach((rel, index) => {
-      console.log(`Relation ${index}:`, { utilisateur_id: rel.utilisateur_id, ue_id: rel.ue_id });
+    // ✅ ÉTAPE 1: D'abord récupérer l'UE pour connaître ses différents identifiants
+    let ue = null;
+    let ueIdForSearch = ueId;
+
+    // Chercher l'UE pour récupérer tous ses identifiants possibles
+    if (mongoose.Types.ObjectId.isValid(ueId)) {
+      ue = await Ue.findById(ueId);
+    }
+    if (!ue) {
+      ue = await Ue.findOne({ id: ueId });
+    }
+    if (!ue) {
+      ue = await Ue.findOne({ code: ueId });
+    }
+
+    if (ue) {
+      console.log(`✅ UE trouvée: ${ue.code} - ${ue.intitule}`);
+      console.log(`📋 Identifiants UE disponibles:`, {
+        _id: ue._id.toString(),
+        id: ue.id,
+        code: ue.code
+      });
+    }
+
+    // ✅ ÉTAPE 2: Construire une liste de tous les IDs possibles à rechercher
+    const possibleUeIds = [ueId]; // ID fourni en paramètre
+
+    if (ue) {
+      // Ajouter les autres identifiants de l'UE
+      possibleUeIds.push(ue._id.toString());
+      if (ue.id) possibleUeIds.push(ue.id);
+      if (ue.code) possibleUeIds.push(ue.code);
+    }
+
+    // Retirer les doublons
+    const uniqueUeIds = [...new Set(possibleUeIds)];
+    console.log(`🔍 IDs à rechercher dans les relations:`, uniqueUeIds);
+
+    // ✅ ÉTAPE 3: DEBUG - Afficher quelques relations pour comprendre la structure
+    const allRelations = await UtilisateurUe.find({}).limit(10);
+    console.log(`📋 Exemples de relations dans la BDD:`);
+    allRelations.forEach((rel, index) => {
+      console.log(`  Relation ${index}:`, {
+        utilisateur_id: rel.utilisateur_id,
+        ue_id: rel.ue_id,
+        ue_id_type: typeof rel.ue_id
+      });
     });
 
-    // 1. Récupérer toutes les relations utilisateur_ue pour cette UE
-    let relations = await UtilisateurUe.find({ ue_id: ueId });
+    // ✅ ÉTAPE 4: Rechercher les relations avec tous les IDs possibles
+    let relations = [];
 
-    // Si pas trouvé, essayer comme string
-    if (relations.length === 0) {
-      relations = await UtilisateurUe.find({ ue_id: ueId.toString() });
+    for (const searchId of uniqueUeIds) {
+      console.log(`🔍 Recherche relations avec ue_id: "${searchId}"`);
+
+      // Recherche exacte (string)
+      const foundRelations = await UtilisateurUe.find({ ue_id: searchId });
+      console.log(`  → Trouvé ${foundRelations.length} relations`);
+
+      relations.push(...foundRelations);
+
+      // Si on a trouvé des relations, pas besoin de chercher plus
+      if (foundRelations.length > 0) {
+        console.log(`✅ Relations trouvées avec ue_id: "${searchId}"`);
+        break;
+      }
     }
 
-    // Si pas trouvé, essayer comme number
-    if (relations.length === 0 && !isNaN(ueId)) {
-      relations = await UtilisateurUe.find({ ue_id: parseInt(ueId) });
-    }
+    // Retirer les doublons au cas où
+    const uniqueRelations = relations.filter((rel, index, self) =>
+        index === self.findIndex(r => r.utilisateur_id === rel.utilisateur_id && r.ue_id === rel.ue_id)
+    );
 
-    console.log(`Relations trouvées pour UE ${ueId}:`, relations.length);
+    console.log(`📊 Total relations uniques trouvées: ${uniqueRelations.length}`);
 
-    if (relations.length === 0) {
-      console.log(`⚠️ Aucune relation trouvée pour ue_id="${ueId}"`);
+    if (uniqueRelations.length === 0) {
+      console.log(`⚠️ Aucune relation trouvée pour l'UE`);
       return res.json({
         success: true,
         data: [],
         debug: {
           searchedUeId: ueId,
+          possibleUeIds: uniqueUeIds,
           totalRelationsInDB: allRelations.length,
           availableUeIds: [...new Set(allRelations.map(r => r.ue_id))]
         }
       });
     }
 
-    // 2. Extraire les IDs des utilisateurs
-    const userIds = relations.map(rel => rel.utilisateur_id);
+    // ✅ ÉTAPE 5: Récupérer les utilisateurs correspondants
+    const userIds = uniqueRelations.map(rel => rel.utilisateur_id);
+    console.log(`👥 IDs utilisateurs à récupérer:`, userIds);
 
-    // 3. Récupérer les utilisateurs correspondants
     const participants = [];
 
     for (const userId of userIds) {
       try {
-        let utilisateur;
+        let utilisateur = null;
 
-        // CORRECTION : Chercher par le champ "id" personnalisé (pas "_id")
+        // Recherche par champ "id" personnalisé d'abord
         utilisateur = await Utilisateur.findOne({ id: userId });
 
-        // Si pas trouvé avec le champ "id", essayer avec _id si c'est un ObjectId valide
+        // Si pas trouvé et que c'est un ObjectId valide, chercher par _id
         if (!utilisateur && mongoose.Types.ObjectId.isValid(userId)) {
           utilisateur = await Utilisateur.findById(userId);
         }
 
+        // Si toujours pas trouvé, chercher par email
+        if (!utilisateur) {
+          utilisateur = await Utilisateur.findOne({ email: userId });
+        }
+
         if (utilisateur) {
           // Récupérer les métadonnées de la relation
-          const relation = relations.find(rel => rel.utilisateur_id === userId);
+          const relation = uniqueRelations.find(rel => rel.utilisateur_id === userId);
 
           // Formater selon l'interface frontend
           const formattedParticipant = {
@@ -584,7 +820,7 @@ exports.getParticipantsByUe = async (req, res) => {
             email: utilisateur.email,
             photo: utilisateur.photo,
             role: Array.isArray(utilisateur.role) ? utilisateur.role : [utilisateur.role],
-            ues: [], // À remplir si nécessaire
+            ues: [],
             // Métadonnées de la relation utilisateur_ue
             dateInscription: relation?.date_inscription || relation?.createdAt,
             statut: relation?.statut || 'actif',
@@ -595,22 +831,16 @@ exports.getParticipantsByUe = async (req, res) => {
           };
 
           participants.push(formattedParticipant);
+          console.log(`✅ Participant ajouté: ${utilisateur.prenom} ${utilisateur.nom}`);
         } else {
           console.log(`⚠️ Utilisateur non trouvé pour ID: ${userId}`);
-
-          // DEBUG: Afficher quelques utilisateurs pour voir leur structure (seulement pour le premier)
-          if (userId === userIds[0]) {
-            const sampleUsers = await Utilisateur.find({}).limit(3);
-            console.log(`📋 Exemples d'utilisateurs dans la BDD :`);
-            sampleUsers.forEach(u => {
-              console.log(`  - _id: ${u._id}, id: ${u.id}, nom: ${u.nom}, email: ${u.email}`);
-            });
-          }
         }
       } catch (error) {
         console.error(`❌ Erreur lors de la récupération du participant ${userId}:`, error.message);
       }
     }
+
+    console.log(`🎉 Total participants récupérés: ${participants.length}`);
 
     res.json({
       success: true,

@@ -1,0 +1,256 @@
+.ue-form-container {
+  background: var(--card-background);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  position: sticky;
+  top: 20px;
+
+  .form-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    padding: 30px;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -20px;
+      width: 100px;
+      height: 200%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: rotate(15deg);
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0 0 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .icon {
+        font-size: 1.6rem;
+      }
+    }
+
+    .form-status {
+      .status-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+      }
+    }
+  }
+
+  .ue-form {
+    padding: 30px;
+
+    .form-group {
+      margin-bottom: 25px;
+
+      .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        font-size: 14px;
+
+        .required {
+          color: var(--danger-color);
+          margin-left: 2px;
+        }
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #e9ecef;
+        border-radius: var(--border-radius);
+        font-size: 16px;
+        font-weight: 500;
+        transition: var(--transition);
+        background: #f8f9fa;
+
+        &::placeholder {
+          color: var(--text-muted);
+        }
+
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          background: white;
+          box-shadow: 0 0 0 4px rgba(255, 107, 65, 0.1);
+        }
+
+        &.invalid {
+          border-color: var(--danger-color);
+          background: #ffe6e6;
+
+          &:focus {
+            box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.1);
+          }
+        }
+
+        &.textarea {
+          resize: vertical;
+          min-height: 80px;
+        }
+      }
+
+      .field-error {
+        color: var(--danger-color);
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &::before {
+          content: "⚠️";
+          font-size: 12px;
+        }
+      }
+
+      .field-hint {
+        color: var(--text-muted);
+        font-size: 12px;
+        margin-top: 4px;
+        font-style: italic;
+      }
+    }
+
+  // Actions du formulaire
+  .form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid #e9ecef;
+
+    .btn-submit,
+    .btn-cancel,
+    .btn-reset {
+      padding: 14px 24px;
+      border: none;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+
+      .icon {
+        font-size: 16px;
+      }
+
+      .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+      color: white;
+      box-shadow: 0 4px 12px rgba(255, 107, 65, 0.3);
+
+      &:hover:not(:disabled) {
+        background: linear-gradient(135deg, var(--primary-hover), #d84315);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(255, 107, 65, 0.4);
+      }
+    }
+
+    .btn-cancel {
+      background: linear-gradient(135deg, var(--danger-color), var(--danger-hover));
+      color: white;
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+
+      &:hover {
+        background: linear-gradient(135deg, var(--danger-hover), #c0392b);
+        transform: translateY(-2px);
+      }
+    }
+
+    .btn-reset {
+      background: linear-gradient(135deg, var(--secondary-color), var(--secondary-hover));
+      color: white;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+
+      &:hover {
+        background: linear-gradient(135deg, var(--secondary-hover), #2980b9);
+        transform: translateY(-2px);
+      }
+    }
+  }
+  }
+}
+
+// Animation
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .ue-form-container {
+    position: static;
+
+    .form-header {
+      padding: 20px;
+
+      h2 {
+        font-size: 1.4rem;
+      }
+    }
+
+    .ue-form {
+      padding: 20px;
+
+      .form-actions {
+        flex-direction: column;
+
+        .btn-submit,
+        .btn-cancel,
+        .btn-reset {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .ue-form-container {
+    .form-header {
+      padding: 15px;
+    }
+
+    .ue-form {
+      padding: 15px;
+    }
+  }
+}

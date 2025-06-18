@@ -3,10 +3,15 @@ import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login.component';
 import { UtilisateurComponent } from "./utilisateurs/utilisateurs.component";
 import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
+
 import { AuthGuard } from './guards/auth.guard';
+import {AdminGuard} from "./guards/admin.guard";
+
 import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
 import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
 import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
+import { UeRegistrationComponent } from './pages/ue-registration/ue-registration/ue-registration.component';
+import {AuthAdminGuard} from "./guards/auth-admin.guard";
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -18,7 +23,7 @@ const routes: Routes = [
 
   {path : 'ues/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard]},
 
-
+  {path : 'admin/ue-registration', component: UeRegistrationComponent, canActivate: [AuthAdminGuard]},
 
   { path: '**', redirectTo: '/login'}
 

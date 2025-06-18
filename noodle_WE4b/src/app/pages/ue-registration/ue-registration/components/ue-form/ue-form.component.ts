@@ -1,9 +1,9 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { UesService } from '../../../../services/ues.service';
-import { Ue } from '../../../../models/ue.model';
-import { User } from '../../../../models/user.model';
-import { Departement } from '../../../../models/departement.model';
+import { User } from '../../../../../models/user.model'
+import { UesService } from '../../../../../services/ues.service';
+import { Ue } from  '../../../../../models/ue.model';
+import { Departement } from '../../../../../models/departement.model';
 
 @Component({
   selector: 'app-ue-form',
@@ -21,7 +21,7 @@ export class UeFormComponent implements OnChanges {
   @Output() editCancelled = new EventEmitter<void>();
   @Output() error = new EventEmitter<string>();
 
-  ueForm: FormGroup;
+  ueForm: FormGroup = this.fb.group({});
   submitting = false;
   assignedUsers: User[] = [];
   selectedFile: File | null = null;
@@ -35,6 +35,11 @@ export class UeFormComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    // DEBUG: Afficher les départements reçus
+    if (changes['departements']) {
+      console.log('🏢 Départements reçus dans le formulaire:', this.departements);
+    }
+
     if (changes['editingUe'] && this.editingUe) {
       this.populateFormForEdit();
     } else if (changes['editingUe'] && !this.editingUe) {
@@ -46,9 +51,9 @@ export class UeFormComponent implements OnChanges {
     this.ueForm = this.fb.group({
       code: ['', [Validators.required, Validators.pattern(/^[A-Z0-9]{2,8}$/)]],
       intitule: ['', [Validators.required, Validators.minLength(3)]],
-      description: [''],
+      description: ['', [Validators.maxLength(500)]], // Description optionnelle
       ects: ['', [Validators.required, Validators.min(1), Validators.max(30)]],
-      departementId: ['', Validators.required]
+      departementId: [''] // Pas de validation requise pour le debug
     });
   }
 
@@ -76,14 +81,62 @@ export class UeFormComponent implements OnChanges {
     if (!this.editingUe) return;
 
     try {
-      const participants = await this.uesService.getParticipantsByUe(this.editingUe.id).toPromise();
-      this.assignedUsers = participants || [];
+      console.log('👥 Chargement des utilisateurs assignés pour UE:', this.editingUe.id);
+
+      // ✅ CORRECTION: Typage explicite pour éviter l'erreur TypeScript
+      const participants: any = await this.uesService.getParticipantsByUe(this.editingUe.id).toPromise();
+
+      console.log('📥 Participants reçus:', participants);
+
+      // ✅ CORRECTION: Vérification de type avec casting approprié
+      if (Array.isArray(participants)) {
+        this.assignedUsers = participants as User[];
+      } else if (participants && typeof participants === 'object' && 'data' in participants && Array.isArray(participants.data)) {
+        this.assignedUsers = participants.data as User[];
+      } else {
+        console.log('⚠️ Format de participants inattendu:', participants);
+        this.assignedUsers = [];
+      }
+
+      console.log('✅ Utilisateurs assignés chargés:', this.assignedUsers.length);
+
     } catch (error) {
-      console.error('Erreur lors du chargement des utilisateurs assignés:', error);
+      console.error('❌ Erreur lors du chargement des utilisateurs assignés:', error);
+      this.assignedUsers = [];
+
+      // ✅ FALLBACK: Essayer de récupérer depuis les données de l'UE elle-même
+      if (this.editingUe.participants && Array.isArray(this.editingUe.participants)) {
+        console.log('🔄 Utilisation des participants depuis les données UE');
+        this.tryLoadUsersFromIds(this.editingUe.participants);
+      }
+    }
+  }
+
+  // ✅ MÉTHODE: Fallback pour charger les utilisateurs depuis leurs IDs
+  private async tryLoadUsersFromIds(participantIds: string[]) {
+    try {
+      console.log('🔍 Tentative de chargement des utilisateurs depuis les IDs:', participantIds);
+
+      // Filtrer les utilisateurs disponibles qui correspondent aux IDs
+      this.assignedUsers = this.users.filter(user =>
+        participantIds.includes(user.id)
+      );
+
+      console.log('✅ Utilisateurs trouvés depuis les IDs:', this.assignedUsers.length);
+
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des utilisateurs depuis les IDs:', error);
+      this.assignedUsers = [];
     }
   }
 
   async onSubmit() {
+    // DEBUG: Afficher les valeurs du formulaire avant soumission
+    const formValue = this.ueForm.value;
+    console.log('📝 Valeurs du formulaire:', formValue);
+    console.log('🏢 Département sélectionné:', formValue.departementId);
+    console.log('🏢 Départements disponibles:', this.departements);
+
     if (this.ueForm.invalid) {
       this.markFormGroupTouched();
       return;
@@ -92,7 +145,10 @@ export class UeFormComponent implements OnChanges {
     this.submitting = true;
 
     try {
+      // ✅ CORRECTION: Créer FormData selon le besoin du service
       const formData = this.prepareFormData();
+
+      console.log('📤 Données préparées pour envoi:', formData);
 
       if (this.isEditMode && this.editingUe) {
         const updatedUe = await this.uesService.updateUe(this.editingUe.id, formData).toPromise();
@@ -104,20 +160,51 @@ export class UeFormComponent implements OnChanges {
       }
 
     } catch (error) {
-      console.error('Erreur lors de la soumission:', error);
+      console.error('❌ Erreur lors de la soumission:', error);
       this.error.emit(error instanceof Error ? error.message : 'Erreur lors de la soumission');
     } finally {
       this.submitting = false;
     }
   }
 
-  private prepareFormData(): any {
+  // ✅ CORRECTION: Retourner FormData pour les uploads de fichiers
+  private prepareFormData(): FormData {
     const formValue = this.ueForm.value;
-    return {
-      ...formValue,
-      assignedUsers: this.assignedUsers.map(u => u.id),
-      image: this.selectedFile
-    };
+    const formData = new FormData();
+
+    // Ajouter les champs de base
+    formData.append('code', formValue.code || '');
+    formData.append('intitule', formValue.intitule || '');
+    formData.append('description', formValue.description || '');
+    formData.append('ects', (formValue.ects || '').toString());
+
+    // Gestion du département
+    if (formValue.departementId && formValue.departementId !== '') {
+      const selectedDept = this.departements.find(d => d.id === formValue.departementId);
+      if (selectedDept) {
+        console.log('✅ Département trouvé:', selectedDept);
+        formData.append('departement', formValue.departementId);
+      } else {
+        console.log('⚠️ Département non trouvé, envoi sans département');
+      }
+    } else {
+      console.log('📝 Aucun département sélectionné');
+    }
+
+    // Ajouter les utilisateurs assignés
+    if (this.assignedUsers.length > 0) {
+      this.assignedUsers.forEach((user, index) => {
+        formData.append(`assigned_users[${index}]`, user.id);
+      });
+    }
+
+    // Ajouter l'image si sélectionnée
+    if (this.selectedFile) {
+      formData.append('image', this.selectedFile);
+      console.log('🖼️ Image ajoutée au FormData');
+    }
+
+    return formData;
   }
 
   private markFormGroupTouched() {

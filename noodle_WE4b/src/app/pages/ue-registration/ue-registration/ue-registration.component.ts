@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UesService } from '../../../services/ues.service';
 import { UtilisateurService } from '../../../services/utilisateur.service';
+import { DepartementService } from '../../../services/departement.service';
 import { Ue } from '../../../models/ue.model';
 import { User } from '../../../models/user.model';
 import { Departement } from '../../../models/departement.model';
@@ -26,7 +27,8 @@ export class UeRegistrationComponent implements OnInit {
 
   constructor(
     private uesService: UesService,
-    private utilisateurService: UtilisateurService
+    private utilisateurService: UtilisateurService,
+    private departementService: DepartementService
   ) {}
 
   ngOnInit() {
@@ -40,48 +42,77 @@ export class UeRegistrationComponent implements OnInit {
       const [ues, users, departements] = await Promise.all([
         this.uesService.getAllUes().toPromise(),
         this.utilisateurService.getUtilisateurs().toPromise(),
-        this.loadDepartements()
+        this.departementService.getAllDepartements().toPromise()
       ]);
 
       this.ues = ues || [];
       this.users = users || [];
       this.departements = departements || [];
 
+      console.log('🏢 Départements chargés:', this.departements);
+
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
       this.error = 'Erreur lors du chargement des données';
+
+      // Fallback en cas d'erreur avec l'API départements
+      if (!this.departements || this.departements.length === 0) {
+        console.log('📦 Utilisation des départements par défaut');
+        this.departements = this.getDefaultDepartements();
+      }
     } finally {
       this.loading = false;
     }
   }
 
-  private async loadDepartements(): Promise<Departement[]> {
-    // Mock data - à remplacer par un service réel
+  private getDefaultDepartements(): Departement[] {
     return [
-      { id: '1', nom: 'Informatique', description: 'Département informatique' },
-      { id: '2', nom: 'Mathématiques', description: 'Département mathématiques' },
-      { id: '3', nom: 'Physique', description: 'Département physique' }
+      {
+        id: 'default-1',
+        nom: 'Informatique',
+        description: 'Département informatique',
+        code: 'INFO',
+        actif: true
+      },
+      {
+        id: 'default-2',
+        nom: 'Mathématiques',
+        description: 'Département mathématiques',
+        code: 'MATH',
+        actif: true
+      },
+      {
+        id: 'default-3',
+        nom: 'Physique',
+        description: 'Département physique',
+        code: 'PHYS',
+        actif: true
+      }
     ];
   }
 
-  // Gestion des événements du formulaire
-  onUeCreated(ue: Ue) {
-    this.ues.push(ue);
+  // ✅ CORRECTION: Actualisation après création
+  async onUeCreated(ue: Ue) {
+    console.log('🎉 UE créée, actualisation des données...');
     this.success = 'UE créée avec succès !';
     this.clearMessages();
+
+    // Recharger toutes les UEs pour avoir la liste à jour
+    await this.refreshUesList();
   }
 
-  onUeUpdated(updatedUe: Ue) {
-    const index = this.ues.findIndex(ue => ue.id === updatedUe.id);
-    if (index !== -1) {
-      this.ues[index] = updatedUe;
-    }
+
+  async onUeUpdated(updatedUe: Ue) {
+    console.log('🔄 UE mise à jour, actualisation des données...');
     this.success = 'UE mise à jour avec succès !';
     this.exitEditMode();
     this.clearMessages();
+
+    // Recharger toutes les UEs pour avoir la liste à jour
+    await this.refreshUesList();
   }
 
-  onUeDeleted(deletedUe: Ue) {
+  async onUeDeleted(deletedUe: Ue) {
     this.ues = this.ues.filter(ue => ue.id !== deletedUe.id);
     this.success = 'UE supprimée avec succès !';
     if (this.editingUe?.id === deletedUe.id) {
@@ -118,8 +149,21 @@ export class UeRegistrationComponent implements OnInit {
     }, 5000);
   }
 
+  // ✅ NOUVELLE MÉTHODE: Actualiser uniquement les UEs
+  private async refreshUesList() {
+    try {
+      console.log('🔄 Actualisation de la liste des UEs...');
+      const ues = await this.uesService.getAllUes().toPromise();
+      this.ues = ues || [];
+      console.log('✅ Liste des UEs actualisée:', this.ues.length, 'UEs');
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'actualisation des UEs:', error);
+    }
+  }
+
   // Méthodes utilitaires
-  onRefreshData() {
-    this.loadInitialData();
+  async onRefreshData() {
+    console.log('🔄 Actualisation complète des données...');
+    await this.loadInitialData();
   }
 }

@@ -1,70 +1,59 @@
 const express = require('express');
 const router = express.Router();
-const Ue = require('../models/ue.model');
-const ueController = require('../controllers/ue.controller'); // Nouveau contrôleur
+const ueController = require('../controllers/ue.controller');
 const authMiddleware = require('../security/middleware_auth');
-const multer = require("multer");
-const { diskStorage } = require("multer");
-const fs = require('fs');
-const path = require('path');
 
-// Obtenir toutes les Unités d'Enseignement (UE)
+// ===================================
+// ROUTES PUBLIQUES (sans authentification)
+// ===================================
+
+// Routes spécifiques AVANT les routes avec paramètres
+router.get('/search', ueController.searchUes);
+
+// Route générale
 router.get('/', ueController.getAllUes);
 
-// Obtenir une UE par son ID
-router.get('/:ueId', ueController.getUeById);
+// ===================================
+// ROUTES PROTÉGÉES ADMIN UNIQUEMENT
+// ===================================
 
-// Obtenir les statistiques des participants d'une UE
+// Création d'une UE
+router.post('/',
+  authMiddleware(['ROLE_ADMIN']),
+  ueController.createUe
+);
+
+// ===================================
+// ROUTES AVEC PARAMÈTRES
+// ===================================
+
+// Routes spécifiques avec paramètres AVANT les routes génériques
 router.get('/:ueId/participants/stats', ueController.getParticipantsStats);
-
-// Obtenir les participants d'une UE
 router.get('/:ueId/participants', ueController.getParticipantsByUe);
 
-// Ajouter un participant à une UE (protégé)
+// Gestion des participants (PROF + ADMIN)
 router.post('/:ueId/participants',
   authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
   ueController.addParticipantToUe
 );
 
-// Retirer un participant d'une UE (protégé)
 router.delete('/:ueId/participants/:utilisateurId',
   authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
   ueController.removeParticipantFromUe
 );
 
-// Configuration multer pour stocker les images dans un dossier spécifique
-const storage = diskStorage({
-  destination: function (req, file, cb) {
-    const codeUE = req.params.code; // Récupérer le code de l'UE
-    const dir = path.join(__dirname, '../uploads/ue', codeUE, 'photo'); // Chemin dynamique
+// Routes générales avec paramètre (APRÈS les routes spécifiques)
+router.get('/:ueId', ueController.getUeById);
 
-    // Vérifier si le dossier existe, sinon le créer
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+// Modification/suppression (ADMIN uniquement)
+router.put('/:ueId',
+  authMiddleware(['ROLE_ADMIN']),
+  ueController.updateUe
+);
 
-    cb(null, dir); // Définir le dossier cible
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname); // Renommer l'image avec un timestamp
-  }
-});
-const upload = multer({ storage: storage });
-
-// Route pour ajouter une image à une UE
-router.post('/:code/upload-photo', upload.single('image'), async (req, res) => {
-  try {
-    const ue = await Ue.findOne({ code: req.params.code });
-    if (!ue) {
-      return res.status(404).json({ message: 'Ue non trouvée' });
-    }
-    const relativePath = `/uploads/ue/${req.params.code}/photo/${req.file.filename}`;
-    ue.image = relativePath;
-    await ue.save();
-    res.status(200).json({ message: 'Image téléchargée avec succès', ue });
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de l\'enregistrement de l\'image', error });
-  }
-});
+router.delete('/:ueId',
+  authMiddleware(['ROLE_ADMIN']),
+  ueController.deleteUe
+);
 
 module.exports = router;

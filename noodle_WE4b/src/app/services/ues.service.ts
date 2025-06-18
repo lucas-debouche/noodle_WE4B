@@ -1,410 +1,411 @@
 import { Injectable } from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {map, Observable, throwError} from 'rxjs';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { Ue } from '../models/ue.model';
-import {catchError} from "rxjs/operators";
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  ue?: T;
+  message?: string;
+  error?: string;
+}
+
+export interface CreateUeResponse {
+  success: boolean;
+  message: string;
+  ue: Ue;
+}
+
+export interface UpdateUeResponse {
+  success: boolean;
+  message: string;
+  ue: Ue;
+}
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class UesService {
   private apiUrl = 'http://localhost:3000/api/ue';
 
   constructor(private http: HttpClient) {}
 
-  // Récupérer la liste des UEs
-  getUes(): Observable<Ue[]> {
-    return this.http.get<Ue[]>(this.apiUrl);
+  // ===============================
+  // MÉTHODES CRUD PRINCIPALES
+  // ===============================
+
+  /**
+   * Récupérer toutes les UEs
+   */
+  getAllUes(): Observable<Ue[]> {
+    console.log('🔍 UesService.getAllUes appelé');
+
+    return this.http.get<Ue[]>(`${this.apiUrl}`)
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse getAllUes:', response);
+          return Array.isArray(response) ? response : [];
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
-   * Récupère les informations détaillées d'une UE
-   * @param ueId - Identifiant de l'UE
-   * @returns Observable<Ue>
+   * Alias pour getAllUes() pour compatibilité avec l'ancien code
    */
-  getUeById(ueId: string): Observable<Ue> {
-    const url = `${this.apiUrl}/${ueId}`;
+  getUes(): Observable<Ue[]> {
+    return this.getAllUes();
+  }
 
-    console.log('🌐 Appel API vers:', url);
+  /**
+   * Récupérer une UE par ID
+   */
+  getUeById(id: string): Observable<Ue> {
+    console.log('🔍 UesService.getUeById appelé pour ID:', id);
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    });
-
-    return this.http.get<any>(url, { headers }).pipe(
+    return this.http.get<Ue>(`${this.apiUrl}/${id}`)
+      .pipe(
         map(response => {
-          console.log('📥 Réponse UE brute:', response);
+          console.log('✅ Réponse getUeById:', response);
+          return response;
+        }),
+        catchError(this.handleError)
+      );
+  }
 
-          // Adapter la réponse selon le format de votre API
-          if (response.success) {
-            return this.formatUe(response.data || response.ue);
-          } else if (response.id || response._id) {
-            return this.formatUe(response);
+  /**
+   * Créer une nouvelle UE avec FormData (pour upload de fichiers)
+   */
+  createUe(ueData: FormData): Observable<Ue> {
+    console.log('🚀 UesService.createUe appelé avec FormData');
+    console.log('📤 Données envoyées:', this.logFormData(ueData));
+
+    // ✅ IMPORTANT: Ne pas définir Content-Type pour FormData
+    // Le navigateur le fera automatiquement avec la boundary correcte
+    return this.http.post<CreateUeResponse>(`${this.apiUrl}`, ueData)
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse createUe:', response);
+          if (response.success && response.ue) {
+            return response.ue;
           } else {
-            return this.formatUe(response.ue || response);
+            throw new Error(response.message || 'Erreur lors de la création de l\'UE');
           }
         }),
-        catchError(error => {
-          console.error('❌ Erreur lors du chargement de l\'UE:', error);
-          console.error('🔗 URL appelée:', url);
-          return throwError(() => new Error(
-              error.error?.message ||
-              `Erreur lors du chargement de l'UE ${ueId}`
-          ));
+        catchError((error) => {
+          console.error('❌ Erreur lors de la création de l\'UE:', error);
+          return this.handleError(error);
         })
-    );
+      );
   }
 
   /**
-   * Récupère les participants d'une UE
-   * @param ueId - Identifiant de l'UE
-   * @returns Observable<any[]>
+   * Mettre à jour une UE avec FormData
+   */
+  updateUe(id: string, ueData: FormData): Observable<Ue> {
+    console.log('🔄 UesService.updateUe appelé pour ID:', id);
+    console.log('📤 Données envoyées:', this.logFormData(ueData));
+
+    return this.http.put<UpdateUeResponse>(`${this.apiUrl}/${id}`, ueData)
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse updateUe:', response);
+          if (response.success && response.ue) {
+            return response.ue;
+          } else {
+            throw new Error(response.message || 'Erreur lors de la mise à jour de l\'UE');
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Erreur lors de la mise à jour de l\'UE:', error);
+          return this.handleError(error);
+        })
+      );
+  }
+
+  /**
+   * Supprimer une UE
+   */
+  deleteUe(id: string): Observable<void> {
+    console.log('🗑️ UesService.deleteUe appelé pour ID:', id);
+
+    return this.http.delete<{success: boolean, message: string}>(`${this.apiUrl}/${id}`)
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse deleteUe:', response);
+          if (!response.success) {
+            throw new Error(response.message || 'Erreur lors de la suppression de l\'UE');
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Erreur lors de la suppression de l\'UE:', error);
+          console.log('🔗 URL appelée:', `${this.apiUrl}/${id}`);
+          console.log('📊 Status:', error.status);
+          console.log('📄 Response:', error.error);
+          return this.handleError(error);
+        })
+      );
+  }
+
+  // ===============================
+  // MÉTHODES DE RECHERCHE
+  // ===============================
+
+  /**
+   * Rechercher des UEs
+   */
+  searchUes(query: string): Observable<Ue[]> {
+    console.log('🔍 UesService.searchUes appelé avec query:', query);
+
+    if (!query.trim()) {
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+
+    return this.http.get<Ue[]>(`${this.apiUrl}/search?q=${encodeURIComponent(query)}`)
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse searchUes:', response);
+          return Array.isArray(response) ? response : [];
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  // ===============================
+  // GESTION DES PARTICIPANTS
+  // ===============================
+
+  /**
+   * Récupérer les participants d'une UE
    */
   getParticipantsByUe(ueId: string): Observable<any[]> {
-    const url = `${this.apiUrl}/${ueId}/participants`;
+    console.log('👥 UesService.getParticipantsByUe appelé pour UE:', ueId);
 
-    console.log('🌐 Appel API participants vers:', url);
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-
-    return this.http.get<any>(url, { headers }).pipe(
+    return this.http.get<any>(`${this.apiUrl}/${ueId}/participants`)
+      .pipe(
         map(response => {
-          console.log('📥 Réponse participants brute:', response);
+          console.log('✅ Réponse getParticipantsByUe brute:', response);
 
-          // Adapter la réponse selon le format de votre API
-          if (response.success && response.data) {
-            console.log('✅ Format API avec success:', response.data.length, 'participants');
-            return response.data;
-          } else if (Array.isArray(response)) {
-            console.log('✅ Format API tableau direct:', response.length, 'participants');
+          // ✅ CORRECTION: Gestion de différents formats de réponse
+          if (Array.isArray(response)) {
+            console.log('📋 Format tableau direct');
             return response;
-          } else if (response.participants) {
-            console.log('✅ Format API avec participants:', response.participants.length, 'participants');
+          } else if (response && response.success && Array.isArray(response.data)) {
+            console.log('📋 Format avec success et data');
+            return response.data;
+          } else if (response && Array.isArray(response.data)) {
+            console.log('📋 Format avec data seulement');
+            return response.data;
+          } else if (response && response.participants && Array.isArray(response.participants)) {
+            console.log('📋 Format avec participants');
             return response.participants;
           } else {
-            console.log('⚠️ Format API non reconnu, structure:', Object.keys(response));
+            console.log('⚠️ Format de réponse non reconnu, retour tableau vide');
             return [];
           }
         }),
-        catchError(error => {
-          console.error('❌ Erreur lors du chargement des participants:', error);
-          console.error('🔗 URL appelée:', url);
-          return throwError(() => new Error(
-              error.error?.message ||
-              `Erreur lors du chargement des participants de l'UE ${ueId}`
-          ));
+        catchError((error) => {
+          console.error('❌ Erreur lors de la récupération des participants:', error);
+          return this.handleError(error);
         })
-    );
-  }
-
-  /**
-   * Récupère toutes les UEs
-   * @returns Observable<Ue[]>
-   */
-  getAllUes(): Observable<Ue[]> {
-    const url = `${this.apiUrl}`;
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-
-    return this.http.get<any>(url, { headers }).pipe(
-        map(response => {
-          const ues = response.data || response.ues || response;
-          return Array.isArray(ues) ? ues.map(ue => this.formatUe(ue)) : [];
-        }),
-        catchError(error => {
-          console.error('Erreur lors du chargement des UEs:', error);
-          return throwError(() => new Error(
-              error.error?.message ||
-              'Erreur lors du chargement de la liste des UEs'
-          ));
-        })
-    );
-  }
-
-  /**
-   * Crée une nouvelle UE
-   * @param ueData - Données de l'UE à créer
-   * @returns Observable<Ue>
-   */
-  createUe(ueData: {
-    code: string;
-    intitule: string;
-    description?: string;
-    ects: number;
-    image?: File | null;
-    departementId?: string;
-    assignedUsers?: string[];
-  }): Observable<Ue> {
-    const url = `${this.apiUrl}`;
-
-    // Préparer FormData pour l'upload de fichier
-    const formData = new FormData();
-    formData.append('code', ueData.code);
-    formData.append('intitule', ueData.intitule);
-    formData.append('ects', ueData.ects.toString());
-
-    if (ueData.description) {
-      formData.append('description', ueData.description);
-    }
-
-    if (ueData.departementId) {
-      formData.append('departement', ueData.departementId);
-    }
-
-    if (ueData.image) {
-      formData.append('image', ueData.image);
-    }
-
-    if (ueData.assignedUsers && ueData.assignedUsers.length > 0) {
-      ueData.assignedUsers.forEach(userId => {
-        formData.append('assigned_users[]', userId);
-      });
-    }
-
-    // Ajouter le token CSRF si nécessaire
-    // formData.append('_token', this.getCsrfToken());
-
-    return this.http.post<any>(url, formData).pipe(
-        map(response => {
-          const ue = response.data || response.ue || response;
-          return this.formatUe(ue);
-        }),
-        catchError(error => {
-          console.error('Erreur lors de la création de l\'UE:', error);
-          return throwError(() => new Error(
-              error.error?.message ||
-              'Erreur lors de la création de l\'UE'
-          ));
-        })
-    );
-  }
-
-  /**
-   * Met à jour une UE existante
-   * @param ueId - Identifiant de l'UE
-   * @param ueData - Nouvelles données de l'UE
-   * @returns Observable<Ue>
-   */
-  updateUe(ueId: string, ueData: {
-    code?: string;
-    intitule?: string;
-    description?: string;
-    ects?: number;
-    image?: File | null;
-    departementId?: string;
-    assignedUsers?: string[];
-  }): Observable<Ue> {
-    const url = `${this.apiUrl}/${ueId}`;
-
-    // Préparer FormData pour l'upload de fichier
-    const formData = new FormData();
-
-    if (ueData.code !== undefined) {
-      formData.append('code', ueData.code);
-    }
-
-    if (ueData.intitule !== undefined) {
-      formData.append('intitule', ueData.intitule);
-    }
-
-    if (ueData.ects !== undefined) {
-      formData.append('ects', ueData.ects.toString());
-    }
-
-    if (ueData.description !== undefined) {
-      formData.append('description', ueData.description);
-    }
-
-    if (ueData.departementId !== undefined) {
-      formData.append('departement', ueData.departementId);
-    }
-
-    if (ueData.image) {
-      formData.append('image', ueData.image);
-    }
-
-    if (ueData.assignedUsers && ueData.assignedUsers.length > 0) {
-      ueData.assignedUsers.forEach(userId => {
-        formData.append('assigned_users[]', userId);
-      });
-    }
-
-    return this.http.put<any>(url, formData).pipe(
-        map(response => {
-          const ue = response.data || response.ue || response;
-          return this.formatUe(ue);
-        }),
-        catchError(error => {
-          console.error('Erreur lors de la mise à jour de l\'UE:', error);
-          return throwError(() => new Error(
-              error.error?.message ||
-              'Erreur lors de la mise à jour de l\'UE'
-          ));
-        })
-    );
-  }
-
-  /**
-   * Supprime une UE
-   * @param ueId - Identifiant de l'UE
-   * @returns Observable<any>
-   */
-  deleteUe(ueId: string): Observable<any> {
-    const url = `${this.apiUrl}/${ueId}`;
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-
-    return this.http.delete<any>(url, { headers }).pipe(
-        catchError(error => {
-          console.error('Erreur lors de la suppression de l\'UE:', error);
-          return throwError(() => new Error(
-              error.error?.message ||
-              'Erreur lors de la suppression de l\'UE'
-          ));
-        })
-    );
-  }
-
-  /**
-   * Recherche des UEs par critères
-   * @param searchTerm - Terme de recherche
-   * @returns Observable<Ue[]>
-   */
-  searchUes(searchTerm: string): Observable<Ue[]> {
-    const url = `${this.apiUrl}/search?q=${encodeURIComponent(searchTerm)}`;
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-
-    return this.http.get<any>(url, { headers }).pipe(
-        map(response => {
-          const ues = response.data || response.ues || response;
-          return Array.isArray(ues) ? ues.map(ue => this.formatUe(ue)) : [];
-        }),
-        catchError(error => {
-          console.error('Erreur lors de la recherche d\'UEs:', error);
-          return throwError(() => new Error(
-              error.error?.message ||
-              'Erreur lors de la recherche d\'UEs'
-          ));
-        })
-    );
+      );
   }
 
   /**
    * Ajouter un participant à une UE
-   * @param ueId - Identifiant de l'UE
-   * @param utilisateurId - Identifiant de l'utilisateur
-   * @param metadata - Métadonnées d'inscription
-   * @returns Observable<any>
    */
-  addParticipantToUe(
-      ueId: string,
-      utilisateurId: string,
-      metadata?: {
-        promotion?: string;
-        specialite?: string;
-        statut?: 'actif' | 'inactif';
-      }
-  ): Observable<any> {
-    const url = `${this.apiUrl}/${ueId}/participants`;
+  addParticipantToUe(ueId: string, participantData: any): Observable<any> {
+    console.log('➕ UesService.addParticipantToUe appelé');
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-
-    const body = {
-      utilisateurId: utilisateurId,
-      ...metadata
-    };
-
-    return this.http.post<any>(url, body, { headers }).pipe(
-        catchError(error => {
-          console.error('Erreur lors de l\'ajout du participant:', error);
-          return throwError(() => new Error(
-              error.error?.message ||
-              'Erreur lors de l\'ajout du participant à l\'UE'
-          ));
-        })
-    );
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/${ueId}/participants`, participantData)
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse addParticipantToUe:', response);
+          return response.data;
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
    * Retirer un participant d'une UE
-   * @param ueId - Identifiant de l'UE
-   * @param utilisateurId - Identifiant de l'utilisateur
-   * @returns Observable<any>
    */
-  removeParticipantFromUe(ueId: string, utilisateurId: string): Observable<any> {
-    const url = `${this.apiUrl}/${ueId}/participants/${utilisateurId}`;
+  removeParticipantFromUe(ueId: string, participantId: string): Observable<void> {
+    console.log('➖ UesService.removeParticipantFromUe appelé');
+
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${ueId}/participants/${participantId}`)
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse removeParticipantFromUe:', response);
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
+   * Récupérer les statistiques des participants d'une UE
+   */
+  getParticipantsStats(ueId: string): Observable<any> {
+    console.log('📊 UesService.getParticipantsStats appelé pour UE:', ueId);
+
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/${ueId}/participants/stats`)
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse getParticipantsStats:', response);
+          return response.data;
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  // ===============================
+  // MÉTHODES ALTERNATIVES (JSON)
+  // ===============================
+
+  /**
+   * Créer une UE avec JSON (sans fichier)
+   */
+  createUeWithJSON(ueData: any): Observable<Ue> {
+    console.log('🚀 UesService.createUeWithJSON appelé');
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
-    return this.http.delete<any>(url, { headers }).pipe(
-        catchError(error => {
-          console.error('Erreur lors du retrait du participant:', error);
-          return throwError(() => new Error(
-              error.error?.message ||
-              'Erreur lors du retrait du participant de l\'UE'
-          ));
-        })
-    );
+    return this.http.post<CreateUeResponse>(`${this.apiUrl}`, ueData, { headers })
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse createUeWithJSON:', response);
+          if (response.success && response.ue) {
+            return response.ue;
+          } else {
+            throw new Error(response.message || 'Erreur lors de la création de l\'UE');
+          }
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
-   * Upload d'une photo pour une UE
-   * @param ueCode - Code de l'UE
-   * @param image - Fichier image
-   * @returns Observable<any>
+   * Mettre à jour une UE avec JSON (sans fichier)
    */
-  uploadUePhoto(ueCode: string, image: File): Observable<any> {
-    const url = `${this.apiUrl}/${ueCode}/upload-photo`;
+  updateUeWithJSON(id: string, ueData: any): Observable<Ue> {
+    console.log('🔄 UesService.updateUeWithJSON appelé');
 
-    const formData = new FormData();
-    formData.append('image', image);
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
 
-    return this.http.post<any>(url, formData).pipe(
-        catchError(error => {
-          console.error('Erreur lors de l\'upload de l\'image:', error);
-          return throwError(() => new Error(
-              error.error?.message ||
-              'Erreur lors de l\'upload de l\'image'
-          ));
-        })
-    );
+    return this.http.put<UpdateUeResponse>(`${this.apiUrl}/${id}`, ueData, { headers })
+      .pipe(
+        map(response => {
+          console.log('✅ Réponse updateUeWithJSON:', response);
+          if (response.success && response.ue) {
+            return response.ue;
+          } else {
+            throw new Error(response.message || 'Erreur lors de la mise à jour de l\'UE');
+          }
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  // ===============================
+  // MÉTHODES UTILITAIRES
+  // ===============================
+
+  /**
+   * Logger le contenu d'un FormData pour debug
+   */
+  private logFormData(formData: FormData): any {
+    const obj: any = {};
+    formData.forEach((value, key) => {
+      if (value instanceof File) {
+        obj[key] = `[File: ${value.name}, ${value.size} bytes]`;
+      } else {
+        obj[key] = value;
+      }
+    });
+    return obj;
   }
 
   /**
-   * Formate et normalise les données d'une UE selon votre interface
-   * @param ue - Données brutes de l'UE
-   * @returns Ue - UE formatée selon votre interface
+   * Gestionnaire d'erreur centralisé
    */
-  private formatUe(ue: any): Ue {
-    if (!ue) {
-      throw new Error('Données UE invalides');
+  private handleError = (error: HttpErrorResponse): Observable<never> => {
+    let errorMessage = 'Une erreur inconnue s\'est produite';
+
+    if (error.error instanceof ErrorEvent) {
+      // Erreur côté client
+      errorMessage = `Erreur: ${error.error.message}`;
+    } else {
+      // Erreur côté serveur
+      if (error.error && error.error.message) {
+        errorMessage = error.error.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = `Erreur ${error.status}: ${error.statusText}`;
+      }
     }
 
+    console.error('🔴 Erreur HTTP:', error);
+    console.error('📝 Message d\'erreur:', errorMessage);
+
+    return throwError(() => new Error(errorMessage));
+  };
+
+  // ===============================
+  // MÉTHODES DE VALIDATION
+  // ===============================
+
+  /**
+   * Valider les données d'une UE avant envoi
+   */
+  validateUeData(ueData: any): string[] {
+    const errors: string[] = [];
+
+    if (!ueData.code || !ueData.code.trim()) {
+      errors.push('Le code UE est requis');
+    }
+
+    if (!ueData.intitule || !ueData.intitule.trim()) {
+      errors.push('L\'intitulé est requis');
+    }
+
+    if (!ueData.ects || ueData.ects < 1 || ueData.ects > 30) {
+      errors.push('Les ECTS doivent être entre 1 et 30');
+    }
+
+    return errors;
+  }
+
+  /**
+   * Formater les données d'UE pour l'affichage
+   */
+  formatUeForDisplay(ue: Ue): {
+    id: string;
+    code: string | undefined;
+    intitule: string;
+    image?: string;
+    description?: string;
+    ects: number;
+    participants?: string[];
+    departementId?: string;
+    departementNom?: string;
+    createdAt: Date | undefined;
+    updatedAt: Date | undefined
+  } {
     return {
-      id: ue.id || ue._id,
-      code: ue.code || ue.codeUE || '',
-      intitule: ue.intitule || ue.nom || ue.name || ue.titre || '',
-      image: ue.image || ue.imageUrl || ue.photo,
-      description: ue.description || ue.desc,
-      ects: ue.ects || ue.credits || ue.creditsECTS || 0,
-      participants: ue.participants || ue.participantIds || ue.inscrits || [],
-      departementId: ue.departement_id || ue.departementId,
-      departementNom: ue.departement_nom || ue.departementNom,
-      createdAt: ue.createdAt || ue.created_at,
-      updatedAt: ue.updatedAt || ue.updated_at
+      ...ue,
+      code: ue.code?.toUpperCase(),
+      createdAt: ue.createdAt ? new Date(ue.createdAt) : undefined,
+      updatedAt: ue.updatedAt ? new Date(ue.updatedAt) : undefined
     };
   }
 }

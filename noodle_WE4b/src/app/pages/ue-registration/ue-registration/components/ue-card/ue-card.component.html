@@ -1,1 +1,68 @@
-<p>ue-card works!</p>
+<div class="ue-card" [class.editing]="isEditing">
+  <div class="ue-card-header">
+    <div class="ue-image">
+      <img
+        *ngIf="ue.image"
+        [src]="getImageUrl(ue.image)"
+        [alt]="ue.intitule"
+        class="ue-image-img"
+      />
+      <div *ngIf="!ue.image" class="ue-image-placeholder">
+        <span class="image-icon">📚</span>
+      </div>
+    </div>
+    <div class="ue-actions">
+      <button
+        (click)="onEdit()"
+        class="btn-edit"
+        title="Modifier cette UE"
+        [class.active]="isEditing"
+      >
+        <i class="icon">✏️</i>
+      </button>
+      <button
+        (click)="onDelete()"
+        class="btn-delete"
+        title="Supprimer cette UE"
+      >
+        <i class="icon">🗑️</i>
+      </button>
+    </div>
+  </div>
+
+  <div class="ue-card-body">
+    <div class="ue-code">{{ ue.code }}</div>
+    <h3 class="ue-title">{{ ue.intitule }}</h3>
+
+    <div class="ue-meta">
+      <span class="ue-ects">
+        <i class="icon">⭐</i>
+        {{ ue.ects }} ECTS
+      </span>
+      <span class="ue-participants" *ngIf="getParticipantCount() > 0">
+        <i class="icon">👥</i>
+        {{ getParticipantCount() }} participant{{ getParticipantCount() > 1 ? 's' : '' }}
+      </span>
+      <span class="ue-departement" *ngIf="ue.departementNom">
+        <i class="icon">🏢</i>
+        {{ ue.departementNom }}
+      </span>
+    </div>
+
+    <p class="ue-description" *ngIf="ue.description">
+      {{ truncateDescription(ue.description, 120) }}
+    </p>
+
+    <div class="ue-footer" *ngIf="ue.createdAt">
+      <small class="creation-date">
+        <i class="icon">📅</i>
+        Créée le {{ formatCreatedDate() }}
+      </small>
+    </div>
+  </div>
+
+  <!-- Badge d'édition -->
+  <div class="editing-badge" *ngIf="isEditing">
+    <span>✏️ En cours d'édition</span>
+  </div>
+</div>
