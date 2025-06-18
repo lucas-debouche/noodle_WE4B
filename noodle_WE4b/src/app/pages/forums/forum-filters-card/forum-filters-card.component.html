@@ -1,0 +1,55 @@
+<div class="filters-card">
+  <div class="card-icon">🔍</div>
+  <div class="card-content">
+    <div class="filters-header">
+      <h3>Rechercher et filtrer</h3>
+      <div class="results-count" *ngIf="forumsCount > 0">
+        {{ forumsCount }} résultat{{ forumsCount > 1 ? 's' : '' }}
+      </div>
+    </div>
+
+    <div class="search-section">
+      <div class="search-input-wrapper">
+        <i class="search-icon">🔍</i>
+        <input
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="Rechercher un forum..."
+          class="search-input"
+        />
+        <button
+          *ngIf="searchTerm"
+          (click)="onClearSearch()"
+          class="clear-btn"
+          title="Effacer"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-controls">
+      <div class="sort-group">
+        <label>Trier par :</label>
+        <select
+          [(ngModel)]="sortBy"
+          (change)="onSortChange()"
+          class="sort-select"
+        >
+          <option *ngFor="let option of sortOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <button
+        (click)="onResetFilters()"
+        class="btn-reset"
+        *ngIf="searchTerm || sortBy !== 'recent'"
+      >
+        <i class="icon">🔄</i>
+        Réinitialiser
+      </button>
+    </div>
+  </div>
+</div>

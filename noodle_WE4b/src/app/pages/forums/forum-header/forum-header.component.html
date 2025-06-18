@@ -1,0 +1,50 @@
+<div class="forum-header">
+  <div class="header-content">
+    <h1 *ngIf="!editingForumTitle" (dblclick)="canModerate && startEditForumTitle()">
+      {{ forumDetail?.title }}
+      <button *ngIf="canModerate"
+              class="btn-edit-title"
+              (click)="startEditForumTitle()"
+              title="Modifier le titre">
+        ✏️
+      </button>
+    </h1>
+
+    <!-- Formulaire d'édition du titre -->
+    <div *ngIf="editingForumTitle" class="title-edit-form">
+      <input [(ngModel)]="newForumTitle"
+             (ngModelChange)="onTitleChange()"
+             class="title-input"
+             placeholder="Nouveau titre du forum"
+             (keyup.enter)="onSaveForumTitle()"
+             (keyup.escape)="onCancelEditForumTitle()">
+      <div class="title-actions">
+        <button class="btn-save" (click)="onSaveForumTitle()" [disabled]="!newForumTitle.trim()">
+          ✅ Sauvegarder
+        </button>
+        <button class="btn-cancel" (click)="onCancelEditForumTitle()">
+          ❌ Annuler
+        </button>
+      </div>
+    </div>
+
+    <!-- Actions administrateur -->
+    <div class="admin-actions" *ngIf="canDeleteForum">
+      <button class="btn-delete-forum" (click)="onDeleteForum()" title="Supprimer le forum">
+        🗑️ Supprimer le forum
+      </button>
+    </div>
+  </div>
+
+  <div class="forum-info">
+    <span class="info-item messages">
+      {{ messagesCount }} message{{ messagesCount > 1 ? 's' : '' }}
+    </span>
+    <span class="info-item created">
+      Créé le {{ forumDetail?.createdAt | date:'medium' }}
+    </span>
+    <span *ngIf="forumDetail?.updatedAt" class="info-item updated">
+      Modifié le {{ forumDetail?.updatedAt | date:'medium' }}
+    </span>
+  </div>
+</div>

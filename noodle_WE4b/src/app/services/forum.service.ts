@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import {catchError, tap} from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 @Injectable({
@@ -105,6 +105,14 @@ export class ForumService {
 
     return this.http.put<any>(`${this.baseUrl}/${forumId}/messages/${messageId}`, body, { headers })
       .pipe(catchError(this.handleError));
+  }
+
+  updateReply(forumId: string, messageId:string,replyId: string, message: string): Observable<any> {
+    const headers = this.getAuthHeaders();
+    const body = { message };
+    return this.http.put<any>(`${this.baseUrl}/${forumId}/messages/${messageId}/replies/${replyId}`, body, { headers })
+      .pipe(catchError(this.handleError));
+
   }
 
   // Supprimer un message
