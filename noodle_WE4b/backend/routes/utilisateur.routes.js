@@ -109,4 +109,14 @@ router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
   }
 });
 
+// Ajoute ceci dans backend/routes/utilisateur.routes.js
+router.get('/ue/:ueId', async (req, res) => {
+  try {
+    const utilisateurs = await Utilisateur.find({ ues: req.params.ueId });
+    res.json(utilisateurs);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs par UE.' });
+  }
+});
+
 module.exports = router;

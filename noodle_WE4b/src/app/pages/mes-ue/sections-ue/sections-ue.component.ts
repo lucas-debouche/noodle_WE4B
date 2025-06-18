@@ -1,6 +1,8 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { PostsService } from '../../../services/posts.service';
 import { Post } from '../../../models/post.model';
+import { UtilisateurService } from "../../../services/utilisateur.service";
+import { User } from "../../../models/user.model";
 
 @Component({
   selector: 'app-sections-ue',
@@ -17,14 +19,33 @@ export class SectionsUeComponent implements OnInit, OnChanges {
   opened = true;
   posts: Post[] = [];
   faitStates: boolean[] = [];
+  currentUser!: User;
+  totalUsers: number = 0;
 
-  constructor(private postsService: PostsService) { }
+  constructor(
+    private postsService: PostsService,
+    private utilisateurService: UtilisateurService
+  ) { }
 
   ngOnInit(): void {
+    this.utilisateurService.getUtilisateurActuel().subscribe({
+      next: (user: User) => {
+        this.currentUser = user;
+        // Récupère le nombre total d'utilisateurs assignés à l'UE
+        if (this.ueId) {
+          this.utilisateurService.getUtilisateursByUe(this.ueId).subscribe((users: User[]) => {
+            this.totalUsers = users.length;
+            if (this.sectionTitle) {
+              this.loadPosts();
+            }
+          });
+        }
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (this.ueId && this.sectionTitle) {
+    if (this.ueId && this.sectionTitle && this.currentUser) {
       this.loadPosts();
     }
   }
@@ -34,7 +55,10 @@ export class SectionsUeComponent implements OnInit, OnChanges {
       this.posts = posts.filter(post =>
         post.categorie && post.categorie.trim().toLowerCase() === this.sectionTitle.trim().toLowerCase()
       );
-      this.faitStates = this.posts.map(() => false);
+      const userId = (this.currentUser && (this.currentUser as any)._id) ? (this.currentUser as any)._id : '';
+      this.faitStates = this.posts.map(post =>
+        !!(post.faitPar && Array.isArray(post.faitPar) && userId && post.faitPar.includes(userId))
+      );
       this.postsLoaded.emit(this.posts);
     });
   }

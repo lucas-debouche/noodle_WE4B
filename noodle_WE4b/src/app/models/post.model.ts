@@ -17,4 +17,5 @@ export interface Post {
   fichier_taille: number | null;
   date_publication: string | Date;
   date_rendu: string | Date | null;
+  faitPar?: string[]; // tableau d'id utilisateur ayant marqué "fait"
 }

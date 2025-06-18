@@ -3,7 +3,7 @@
     <div class="post-type-icon">
       <ng-container [ngSwitch]="getTypeNom(post)">
         <span *ngSwitchCase="'message'" title="Message">💬</span>
-        <span *ngSwitchCase="'fichier'" title="Fichier">&#128206;</span>
+        <span *ngSwitchCase="'fichier'" title="Fichier">📎</span>
         <span *ngSwitchCase="'devoir'" title="Devoir">📝</span>
         <span *ngSwitchDefault>📄</span>
       </ng-container>
@@ -23,6 +23,9 @@
     <button class="fait-btn" [ngClass]="{fait: fait}" (click)="toggleFait()">
       {{ fait ? 'Fait' : 'À faire' }}
     </button>
+    <span class="fait-count" *ngIf="totalUsers > 0">
+      ({{ faitCount }}/{{ totalUsers }} utilisateur{{ totalUsers > 1 ? 's' : '' }} ont fait)
+    </span>
   </div>
 
   <ng-container [ngSwitch]="getTypeNom(post)">

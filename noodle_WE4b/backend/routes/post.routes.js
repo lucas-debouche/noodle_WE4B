@@ -56,4 +56,27 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Mettre à jour le statut "fait" pour un utilisateur sur un post
+router.patch('/:id/fait', async (req, res) => {
+  const { utilisateurId, fait } = req.body;
+  if (!utilisateurId) {
+    return res.status(400).json({ error: 'utilisateurId requis' });
+  }
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+
+    const index = post.faitPar.findIndex(id => id.toString() === utilisateurId);
+    if (fait && index === -1) {
+      post.faitPar.push(utilisateurId);
+    } else if (!fait && index !== -1) {
+      post.faitPar.splice(index, 1);
+    }
+    await post.save();
+    res.json({ success: true, faitPar: post.faitPar });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

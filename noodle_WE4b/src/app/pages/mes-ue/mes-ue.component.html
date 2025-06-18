@@ -1,6 +1,6 @@
 <div class="mes-ue-layout">
   <app-sidebar-mes-ue [ueId]="selectedUeId" class="sidebar"></app-sidebar-mes-ue>
-  <div class="mes-ue-sections">
+  <div class="mes-ue-sections" *ngIf="selectedUeId">
     <div class="progress-bar-container" *ngIf="nbPosts">
       <div class="progress-bar-label">
         Progression : {{ nbFaits }} / {{ nbPosts }} posts faits

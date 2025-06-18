@@ -4,6 +4,8 @@ import { NavbarService } from "../../services/navbar.service";
 import { UesService } from "../../services/ues.service";
 import { Ue } from "../../models/ue.model";
 import { Post } from "../../models/post.model";
+import { UtilisateurService } from "../../services/utilisateur.service";
+import { User } from "../../models/user.model";
 
 
 @Component({
@@ -14,6 +16,7 @@ import { Post } from "../../models/post.model";
 export class MesUeComponent implements OnInit {
   currentUe!: Ue;
   selectedUeId: any;
+  currentUser!: User;
 
   // Pour la progression globale
   allPosts: Post[] = [];
@@ -29,30 +32,40 @@ export class MesUeComponent implements OnInit {
     private navbarService: NavbarService,
     private route: ActivatedRoute,
     private uesService: UesService,
+    private utilisateurService: UtilisateurService
   ) {}
 
   ngOnInit(): void {
-    const ueId = this.route.snapshot.paramMap.get('id');
-    if (typeof ueId === 'string') {
-      this.uesService.getUeById(ueId).subscribe((ue: Ue) => {
-        this.currentUe = ue;
-        this.navbarService.setTitle(this.currentUe.intitule);
-        this.selectedUeId = ueId;
-        // Initialisation
-        this.sections.forEach(section => {
-          this.sectionPosts[section] = [];
-          this.sectionFaitStates[section] = [];
-        });
-        this.allPosts = [];
-        this.allFaitStates = [];
-      });
-    }
+    this.utilisateurService.getUtilisateurActuel().subscribe({
+      next: (user: User) => {
+        this.currentUser = user;
+        const ueId = this.route.snapshot.paramMap.get('id');
+        if (typeof ueId === 'string') {
+          this.uesService.getUeById(ueId).subscribe((ue: Ue) => {
+            this.currentUe = ue;
+            this.navbarService.setTitle(this.currentUe.intitule);
+            this.selectedUeId = ueId;
+            // Initialisation
+            this.sections.forEach(section => {
+              this.sectionPosts[section] = [];
+              this.sectionFaitStates[section] = [];
+            });
+            this.allPosts = [];
+            this.allFaitStates = [];
+          });
+        }
+      }
+    });
   }
 
   // Appelé par chaque section quand ses posts sont chargés
   onPostsLoaded(section: string, posts: Post[]) {
     this.sectionPosts[section] = posts;
-    this.sectionFaitStates[section] = posts.map(() => false);
+    // Initialise les états "fait" à partir du champ faitPar et de l'utilisateur courant
+    const userId = (this.currentUser as any)._id || (this.currentUser as any).id;
+    this.sectionFaitStates[section] = posts.map(post =>
+      !!(post.faitPar && Array.isArray(post.faitPar) && userId && post.faitPar.includes(userId))
+    );
     this.updateAllPostsAndFaits();
   }
 

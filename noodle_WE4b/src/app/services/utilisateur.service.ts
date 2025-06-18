@@ -26,4 +26,8 @@ export class UtilisateurService {
     return this.http.put(`${this.apiUrl}/update_photo/${nom}`, formData); // Modifiez l'URL si nécessaire
   }
 
+  // Récupérer tous les utilisateurs assignés à une UE
+  getUtilisateursByUe(ueId: string) {
+    return this.http.get<User[]>(`${this.apiUrl}/ue/${ueId}`);
+  }
 }

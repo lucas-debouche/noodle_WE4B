@@ -19,4 +19,11 @@ export class PostsService {
   getPostsByUe(ueId: string): Observable<Post[]> {
     return this.http.get<Post[]>(`${this.apiUrl}/ue/${ueId}`);
   }
+
+  setFait(postId: string, utilisateurId: string, fait: boolean) {
+    return this.http.patch<{success: boolean, faitPar: string[]}>(`${this.apiUrl}/${postId}/fait`, {
+      utilisateurId,
+      fait
+    });
+  }
 }
