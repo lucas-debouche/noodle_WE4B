@@ -6,16 +6,19 @@
     <h2>{{ sectionTitle }}</h2>
   </div>
   <div *ngIf="opened">
-    <div *ngIf="posts.length === 0" class="no-posts">Aucun post dans cette section.</div>
     <ul *ngIf="posts.length > 0" class="posts-list">
       <li *ngFor="let post of posts; let i = index">
         <app-post-mes-ue
           [post]="post"
           [fait]="faitStates[i]"
           [totalUsers]="totalUsers"
+          [utilisateursUeIds]="utilisateursUeIds"
           (faitChange)="onFaitChange(i, $event)">
         </app-post-mes-ue>
       </li>
     </ul>
+    <div *ngIf="posts.length === 0" class="no-posts">
+      Aucun post dans cette section.
+    </div>
   </div>
 </div>

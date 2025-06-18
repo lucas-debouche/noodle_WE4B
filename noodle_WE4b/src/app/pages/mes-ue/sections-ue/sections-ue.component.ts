@@ -21,6 +21,8 @@ export class SectionsUeComponent implements OnInit, OnChanges {
   faitStates: boolean[] = [];
   currentUser!: User;
   totalUsers: number = 0;
+  utilisateursUeIds: string[] = [];
+
 
   constructor(
     private postsService: PostsService,
@@ -35,6 +37,7 @@ export class SectionsUeComponent implements OnInit, OnChanges {
         if (this.ueId) {
           this.utilisateurService.getUtilisateursByUe(this.ueId).subscribe((users: User[]) => {
             this.totalUsers = users.length;
+            this.utilisateursUeIds = users.map(u => (u as any)._id || (u as any).id);
             if (this.sectionTitle) {
               this.loadPosts();
             }

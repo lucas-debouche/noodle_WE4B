@@ -67,6 +67,38 @@
         color: #8d6e63;
       }
     }
+    .fait-btn-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+      .fait-count {
+        font-size: 1.08rem;
+        color: #ff9800;
+        font-weight: 600;
+        min-width: 54px;
+        text-align: right;
+        .fait-ratio {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+        }
+        .fait-nb {
+          color: #388e3c;
+          font-weight: bold;
+          font-size: 1.13em;
+        }
+        .fait-sep {
+          color: #bdbdbd;
+          font-size: 1.05em;
+          margin: 0 2px;
+        }
+        .fait-total {
+          color: #888;
+          font-size: 1em;
+        }
+      }
+    }
   }
 
   .post-content {
@@ -127,7 +159,6 @@
   }
 
   .fait-btn {
-    margin-left: auto;
     align-self: flex-start;
     padding: 7px 22px;
     border-radius: 22px;

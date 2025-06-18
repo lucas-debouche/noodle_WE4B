@@ -20,12 +20,23 @@
         • Utilisateur inconnu
       </span>
     </div>
-    <button class="fait-btn" [ngClass]="{fait: fait}" (click)="toggleFait()">
-      {{ fait ? 'Fait' : 'À faire' }}
-    </button>
-    <span class="fait-count" *ngIf="totalUsers > 0">
-      ({{ faitCount }}/{{ totalUsers }} utilisateur{{ totalUsers > 1 ? 's' : '' }} ont fait)
-    </span>
+    <div class="fait-btn-container">
+      <button class="fait-btn" [ngClass]="{fait: fait}" (click)="toggleFait()">
+        {{ fait ? 'Fait' : 'À faire' }}
+      </button>
+      <span class="fait-count">
+        <ng-container *ngIf="totalUsers > 0; else aucunUser">
+          <span class="fait-ratio">
+            <span class="fait-nb">{{ faitCount }}</span>
+            <span class="fait-sep">/</span>
+            <span class="fait-total">{{ totalUsers }}</span>
+          </span>
+        </ng-container>
+        <ng-template #aucunUser>
+          Aucun utilisateur assigné à l'UE
+        </ng-template>
+      </span>
+    </div>
   </div>
 
   <ng-container [ngSwitch]="getTypeNom(post)">
@@ -35,7 +46,7 @@
     <div *ngSwitchCase="'fichier'" class="post-content">
       <div class="post-file">
         <strong>
-          <span class="file-icon">&#128206;</span> Fichier :
+          <span class="file-icon">📎</span> Fichier :
         </strong>
         <span *ngIf="post.fichier_nom" class="file-name">{{ post.fichier_nom }}</span>
         <span *ngIf="!post.fichier_nom" class="file-none">Aucun fichier</span>
@@ -50,7 +61,7 @@
       <div *ngIf="post.contenu" class="post-message">{{ post.contenu }}</div>
       <div *ngIf="post.fichier_nom" class="post-file">
         <strong>
-          <span class="file-icon">&#128206;</span> Fichier à rendre :
+          <span class="file-icon">📎</span> Fichier à rendre :
         </strong>
         <span class="file-name">{{ post.fichier_nom }}</span>
       </div>

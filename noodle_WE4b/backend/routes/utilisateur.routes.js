@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Utilisateur = require('../models/utilisateur.model');
+const UtilisateurUe = require('../models/utilisateur_ue.model'); // Crée ce modèle si besoin
 const authMiddleware = require('../security/middleware_auth');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -109,10 +110,14 @@ router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
   }
 });
 
-// Ajoute ceci dans backend/routes/utilisateur.routes.js
 router.get('/ue/:ueId', async (req, res) => {
   try {
-    const utilisateurs = await Utilisateur.find({ ues: req.params.ueId });
+    // Récupère les liaisons pour cette UE
+    const liaisons = await UtilisateurUe.find({ ue_id: req.params.ueId });
+    const utilisateurIds = liaisons.map(liaison => liaison.utilisateur_id);
+
+    // Récupère les utilisateurs correspondants
+    const utilisateurs = await Utilisateur.find({ _id: { $in: utilisateurIds } });
     res.json(utilisateurs);
   } catch (err) {
     res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs par UE.' });

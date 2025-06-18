@@ -12,7 +12,8 @@ import { PostsService } from "../../../services/posts.service";
 export class PostMesUeComponent implements OnInit {
   @Input() post!: Post;
   @Input() fait: boolean = false;
-  @Input() totalUsers: number = 0; // Ajouté
+  @Input() totalUsers: number = 0;
+  @Input() utilisateursUeIds: string[] = []; // Liste des ids des utilisateurs assignés à l'UE
   @Output() faitChange = new EventEmitter<boolean>();
   currentUser!: User;
   faitCount: number = 0;
@@ -29,7 +30,7 @@ export class PostMesUeComponent implements OnInit {
         const userId = (this.currentUser as any)._id || (this.currentUser as any).id;
         if (this.post.faitPar && Array.isArray(this.post.faitPar)) {
           this.fait = this.post.faitPar.includes(userId);
-          this.faitCount = this.post.faitPar.length;
+          this.updateFaitCount();
         } else {
           this.faitCount = 0;
         }
@@ -38,6 +39,15 @@ export class PostMesUeComponent implements OnInit {
         console.error('Erreur lors de la récupération de l\'utilisateur :', err);
       }
     });
+  }
+
+  updateFaitCount() {
+    // Ne compte que les utilisateurs assignés à l'UE
+    if (this.post.faitPar && Array.isArray(this.post.faitPar) && Array.isArray(this.utilisateursUeIds)) {
+      this.faitCount = this.post.faitPar.filter((id: string) => this.utilisateursUeIds.includes(id)).length;
+    } else {
+      this.faitCount = 0;
+    }
   }
 
   isUtilisateurObj(utilisateur: any): utilisateur is { nom?: string; prenom?: string } {
@@ -59,10 +69,11 @@ export class PostMesUeComponent implements OnInit {
     this.postsService.setFait(this.post._id, userId, newFait).subscribe({
       next: (res) => {
         this.fait = newFait;
-        // Met à jour le nombre d'utilisateurs ayant fait ce post
         if (res && res.faitPar) {
-          this.faitCount = res.faitPar.length;
           this.post.faitPar = res.faitPar;
+          this.updateFaitCount();
+        } else {
+          this.faitCount = 0;
         }
         this.faitChange.emit(this.fait);
       },
