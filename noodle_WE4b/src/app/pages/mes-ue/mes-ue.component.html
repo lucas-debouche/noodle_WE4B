@@ -1,14 +1,23 @@
 <div class="mes-ue-layout">
   <app-sidebar-mes-ue [ueId]="selectedUeId" class="sidebar"></app-sidebar-mes-ue>
   <div class="mes-ue-sections" *ngIf="selectedUeId">
-    <div class="progress-bar-container" *ngIf="nbPosts">
-      <div class="progress-bar-label">
-        Progression : {{ nbFaits }} / {{ nbPosts }} posts faits
+    <div class="progress-bar-container-flex" *ngIf="nbPosts">
+      <div class="progress-bar-container-main">
+        <div class="progress-bar-label">
+          Progression : {{ nbFaits }} / {{ nbPosts }} posts faits
+        </div>
+        <div class="progress-bar">
+          <div class="progress-bar-inner" [style.width.%]="(nbFaits / nbPosts) * 100"></div>
+        </div>
       </div>
-      <div class="progress-bar">
-        <div class="progress-bar-inner" [style.width.%]="(nbFaits / nbPosts) * 100"></div>
-      </div>
+      <button class="create-post-btn" (click)="openCreatePostModal()">Créer un post</button>
     </div>
+    <app-create-post-ue
+      *ngIf="showCreatePostModal"
+      [ueId]="selectedUeId"
+      (close)="closeCreatePostModal()"
+      (postCreated)="onPostCreated($event)">
+    </app-create-post-ue>
     <div id="info">
       <app-sections-ue [sectionTitle]="'info'" [ueId]="selectedUeId"
         (postsLoaded)="onPostsLoaded('info', $event)"

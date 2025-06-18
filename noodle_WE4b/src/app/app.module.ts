@@ -17,6 +17,7 @@ import { MesUeComponent } from "./pages/mes-ue/mes-ue.component";
 import { SectionsUeComponent } from './pages/mes-ue/sections-ue/sections-ue.component';
 import { SidebarMesUeComponent } from './pages/mes-ue/sidebar-mes-ue/sidebar-mes-ue.component';
 import { PostMesUeComponent } from './pages/mes-ue/post-mes-ue/post-mes-ue.component';
+import { CreatePostUeComponent } from './pages/mes-ue/create-post-ue/create-post-ue.component';
 
 @NgModule({
   declarations: [
@@ -32,6 +33,7 @@ import { PostMesUeComponent } from './pages/mes-ue/post-mes-ue/post-mes-ue.compo
     SectionsUeComponent,
     SidebarMesUeComponent,
     PostMesUeComponent,
+    CreatePostUeComponent,
   ],
   imports: [
     BrowserModule,

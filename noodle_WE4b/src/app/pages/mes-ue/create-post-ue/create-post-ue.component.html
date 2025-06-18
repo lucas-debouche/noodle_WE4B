@@ -1,0 +1,57 @@
+<div class="modal-backdrop" (click)="closeModal()"></div>
+<div class="modal">
+  <button class="close-btn" (click)="closeModal()" aria-label="Fermer">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <h2>
+    Créer un post
+  </h2>
+  <form [formGroup]="postForm" (ngSubmit)="submit()" enctype="multipart/form-data" autocomplete="off">
+    <div class="form-group">
+      <label for="titre">Titre</label>
+      <input id="titre" formControlName="titre" required maxlength="100" placeholder="Titre du post" />
+    </div>
+    <div class="form-group">
+      <label for="type">Type</label>
+      <select id="type" formControlName="type">
+        <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="contenu">Contenu</label>
+      <textarea id="contenu" formControlName="contenu" placeholder="Votre message..."></textarea>
+    </div>
+    <div class="form-group">
+      <label for="fichier">Fichier (optionnel)</label>
+      <input id="fichier" type="file" (change)="onFileChange($event)" />
+    </div>
+    <div class="form-group">
+      <label for="priorite">Priorité</label>
+      <select id="priorite" formControlName="priorite" required>
+        <option *ngFor="let p of priorites" [value]="p._id">{{ p.nom }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="date_rendu">Date de rendu (optionnel)</label>
+      <input id="date_rendu" type="datetime-local" formControlName="date_rendu" />
+    </div>
+    <div class="form-group">
+      <label for="categorie">Catégorie</label>
+      <select id="categorie" formControlName="categorie" required>
+        <option value="TP">TP</option>
+        <option value="TD">TD</option>
+        <option value="CM">CM</option>
+        <option value="info">info</option>
+      </select>
+    </div>
+    <hr class="modal-separator" />
+    <div class="modal-actions">
+      <button type="button" (click)="closeModal()">Annuler</button>
+      <button type="submit" [disabled]="postForm.invalid || uploading">
+        <span *ngIf="uploading" class="spinner"></span>
+        Créer
+      </button>
+    </div>
+    <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
+  </form>
+</div>

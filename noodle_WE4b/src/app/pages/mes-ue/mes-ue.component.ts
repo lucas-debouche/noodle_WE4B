@@ -17,14 +17,12 @@ export class MesUeComponent implements OnInit {
   currentUe!: Ue;
   selectedUeId: any;
   currentUser!: User;
-
-  // Pour la progression globale
   allPosts: Post[] = [];
   allFaitStates: boolean[] = [];
-
-  // Pour suivre les posts et états par section
   sectionPosts: { [section: string]: Post[] } = {};
   sectionFaitStates: { [section: string]: boolean[] } = {};
+  showCreatePostModal = false;
+
 
   sections = ['info', 'CM', 'TD', 'TP'];
 
@@ -91,4 +89,28 @@ export class MesUeComponent implements OnInit {
   get nbPosts(): number {
     return this.allPosts.length;
   }
+
+  openCreatePostModal() {
+    this.showCreatePostModal = true;
+  }
+
+  closeCreatePostModal() {
+    this.showCreatePostModal = false;
+  }
+
+  // Rafraîchit la section concernée après création
+  onPostCreated(newPost: Post) {
+    let section = 'info';
+    if (newPost.type_id && typeof newPost.type_id === 'object' && 'nom' in newPost.type_id) {
+      section = (newPost.type_id as any).nom;
+    }
+    if (this.sectionPosts[section]) {
+      this.sectionPosts[section].push(newPost);
+      this.sectionFaitStates[section].push(false);
+      this.updateAllPostsAndFaits();
+    }
+    this.closeCreatePostModal();
+  }
 }
+
+

@@ -11,10 +11,18 @@
   min-width: 0;
 }
 
-.progress-bar-container {
-  margin: 18px 0 24px 0;
+.progress-bar-container-flex {
+  display: flex;
+  align-items: center;
   width: 100%;
   max-width: 700px;
+  margin: 18px 0 24px 0;
+  gap: 24px;
+}
+
+.progress-bar-container-main {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .progress-bar-label {
@@ -37,4 +45,21 @@
   height: 100%;
   background: linear-gradient(90deg, #ff9800 60%, #81c784 100%);
   transition: width 0.3s;
+}
+
+.create-post-btn {
+  float: right;
+  margin-left: 18px;
+  background: #ff9800;
+  color: #fff;
+  border: none;
+  border-radius: 22px;
+  padding: 7px 22px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover {
+    background: #fb8c00;
+  }
 }

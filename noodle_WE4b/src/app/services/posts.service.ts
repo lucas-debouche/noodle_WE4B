@@ -26,4 +26,8 @@ export class PostsService {
       fait
     });
   }
+
+  createPost(formData: FormData): Observable<Post> {
+    return this.http.post<Post>(`${this.apiUrl}`, formData);
+  }
 }

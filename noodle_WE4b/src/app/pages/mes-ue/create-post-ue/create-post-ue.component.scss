@@ -1,0 +1,188 @@
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fffdfa;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(255, 140, 0, 0.18);
+  padding: 36px 32px 28px 32px;
+  min-width: 340px;
+  max-width: 95vw;
+  z-index: 1001;
+  min-height: 0;
+  animation: modalIn 0.18s cubic-bezier(.4,1.6,.6,1) both;
+  position: fixed;
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: translate(-50%, -60%) scale(0.95);}
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1);}
+  }
+
+  h2 {
+    margin-top: 0;
+    color: #e65100;
+    font-size: 1.5rem;
+    margin-bottom: 18px;
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    .modal-title-icon {
+      font-size: 1.6em;
+      vertical-align: middle;
+    }
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    .form-group {
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+
+      label {
+        font-weight: 600;
+        color: #e65100;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .icon {
+          font-size: 1.1em;
+        }
+      }
+
+      input[type="text"],
+      input[type="datetime-local"],
+      input[type="file"],
+      select,
+      textarea {
+        border: 1.5px solid #ffe0b2;
+        border-radius: 7px;
+        padding: 7px 10px;
+        font-size: 1.08rem;
+        background: #fff;
+        color: #4e342e;
+        transition: border 0.18s, box-shadow 0.18s;
+
+        &:focus {
+          border-color: #ff9800;
+          box-shadow: 0 0 0 2px #ffe0b2;
+          outline: none;
+        }
+      }
+
+      textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
+    }
+
+    .modal-separator {
+      border: none;
+      border-top: 1.5px solid #ffe0b2;
+      margin: 10px 0 0 0;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 14px;
+      margin-top: 10px;
+
+      button {
+        border-radius: 22px;
+        padding: 7px 22px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+
+      button[type="button"] {
+        background: #ffe0b2;
+        color: #ff9800;
+
+        &:hover {
+          background: #ffecb3;
+        }
+      }
+
+      button[type="submit"] {
+        background: #ff9800;
+        color: #fff;
+
+        &:hover {
+          background: #fb8c00;
+        }
+
+        .spinner {
+          display: inline-block;
+          width: 18px;
+          height: 18px;
+          border: 2px solid #fff;
+          border-top: 2px solid #ff9800;
+          border-radius: 50%;
+          margin-right: 7px;
+          animation: spin 0.7s linear infinite;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    .error {
+      color: #d32f2f;
+      margin-top: 10px;
+      text-align: center;
+      font-size: 1.05rem;
+    }
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.22);
+  z-index: 1000;
+}
+
+.close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #ff9800;
+  cursor: pointer;
+  transition: color 0.18s;
+
+  &:hover {
+    color: #e65100;
+  }
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg);}
+}
+
+@media (max-width: 500px) {
+  .modal {
+    min-width: 0;
+    width: 98vw;
+    padding: 18px 4vw 18px 4vw;
+  }
+}
