@@ -164,15 +164,18 @@ export class ForumDetailComponent implements OnInit {
       this.selectedReplyFiles = null;
       this.selectedReplyFilesArray = [];
     }
+    console.log(`Toggle reply form for ${messageId}:`, this.showReplyForm[messageId]);
   }
 
   toggleReplies(messageId: string) {
     this.showReplies[messageId] = !this.showReplies[messageId];
+    console.log(`Toggle replies for ${messageId}:`, this.showReplies[messageId]);
   }
 
   addReply(messageId: string, text: string) {
     const forumId = this.route.snapshot.paramMap.get('forumId');
     if (forumId && text.trim() !== '') {
+      console.log(`Adding reply to message ${messageId}:`, text);
       this.forumService.addReply(forumId, messageId, text, this.selectedReplyFiles || undefined).subscribe(
         () => {
           this.replyText = '';
@@ -190,22 +193,43 @@ export class ForumDetailComponent implements OnInit {
 
   // Méthodes d'édition
   startEditMessage(message: any) {
+    console.log('Starting edit for message:', message._id);
+    this.cancelEdit(); // Annuler toute édition en cours
     this.editingMessage = message;
     this.editText = message.message;
   }
 
   startEditReply(reply: any) {
+    console.log('Starting edit for reply:', reply._id);
+    this.cancelEdit(); // Annuler toute édition en cours
     this.editingReply = reply;
-    this.editText = reply.message;
+    this.editText = reply.message; // ✅ CORRECTION : Initialiser editText avec le contenu actuel
   }
 
   saveMessageEdit(event: {messageId: string, text: string}) {
+    console.log('Saving message edit:', event);
     const forumId = this.route.snapshot.paramMap.get('forumId');
     if (forumId && event.text.trim() !== '') {
       this.forumService.updateMessage(forumId, event.messageId, event.text).subscribe(
         () => {
+          console.log('Message edit saved successfully');
+
+          // Mise à jour locale immédiate pour éviter le délai
+          if (this.forumDetail?.messages) {
+            const messageIndex = this.forumDetail.messages.findIndex((msg: any) => msg._id === event.messageId);
+            if (messageIndex !== -1) {
+              this.forumDetail.messages[messageIndex].message = event.text;
+              this.forumDetail.messages[messageIndex].isEdited = true;
+              console.log('Message updated locally:', this.forumDetail.messages[messageIndex]);
+            }
+          }
+
           this.cancelEdit();
-          this.loadForumDetail();
+
+          // Recharger quand même pour être sûr
+          setTimeout(() => {
+            this.loadForumDetail();
+          }, 100);
         },
         (error) => {
           console.error('Erreur lors de la modification du message:', error);
@@ -214,16 +238,50 @@ export class ForumDetailComponent implements OnInit {
     }
   }
 
-  saveReplyEdit() {
+  // ✅ CORRECTION : Nouvelle signature pour saveReplyEdit
+  saveReplyEdit(event: {messageId: string, replyId: string, text: string}) {
+    console.log('Saving reply edit:', event);
     const forumId = this.route.snapshot.paramMap.get('forumId');
-    if (forumId && this.editingReply && this.editText.trim() !== '') {
-      console.log('Édition de réponse non encore implémentée côté serveur');
-      this.cancelEdit();
-      alert('L\'édition des réponses sera disponible dans une prochaine version.');
+    if (forumId && event.text.trim() !== '') {
+      console.log('Reply content to save:', event.text);
+      this.forumService.updateReply(forumId, event.messageId, event.replyId, event.text).subscribe(
+        () => {
+          console.log('Reply edit saved successfully');
+
+          // Mise à jour locale immédiate pour éviter le délai
+          if (this.forumDetail?.messages) {
+            const message = this.forumDetail.messages.find((msg: any) => msg._id === event.messageId);
+            if (message && message.replies) {
+              const replyIndex = message.replies.findIndex((reply: any) => reply._id === event.replyId);
+              if (replyIndex !== -1) {
+                message.replies[replyIndex].message = event.text;
+                message.replies[replyIndex].isEdited = true;
+                message.replies[replyIndex].updatedAt = new Date().toISOString();
+                console.log('Reply updated locally:', message.replies[replyIndex]);
+              }
+            }
+          }
+
+          this.cancelEdit();
+          setTimeout(() => {
+            this.loadForumDetail();
+          }, 100);
+        },
+        (error) => {
+          console.error('Erreur lors de la modification de la réponse:', error);
+
+          if (error.status === 403) {
+            alert('Erreur 403: Vous n\'avez pas les permissions pour modifier cette réponse. Vérifiez que vous êtes bien l\'auteur de la réponse.');
+          } else {
+            alert(`Erreur lors de la modification: ${error.message || 'Erreur inconnue'}`);
+          }
+        }
+      );
     }
   }
 
   cancelEdit() {
+    console.log('Cancelling edit');
     this.editingMessage = null;
     this.editingReply = null;
     this.editText = '';
@@ -264,14 +322,18 @@ export class ForumDetailComponent implements OnInit {
 
   // Méthodes pour la gestion du forum
   startEditForumTitle() {
+    console.log('Starting forum title edit');
     this.editingForumTitle = true;
+    this.newForumTitle = this.forumDetail.title; // S'assurer qu'on a le bon titre
   }
 
   saveForumTitle() {
+    console.log('Saving forum title:', this.newForumTitle);
     const forumId = this.route.snapshot.paramMap.get('forumId');
     if (forumId && this.newForumTitle.trim() !== '') {
       this.forumService.updateForumTitle(forumId, this.newForumTitle.trim()).subscribe(
         () => {
+          console.log('Forum title saved successfully');
           this.editingForumTitle = false;
           this.loadForumDetail();
         },
@@ -283,6 +345,7 @@ export class ForumDetailComponent implements OnInit {
   }
 
   cancelEditForumTitle() {
+    console.log('Cancelling forum title edit');
     this.editingForumTitle = false;
     this.newForumTitle = this.forumDetail.title;
   }
@@ -435,7 +498,8 @@ export class ForumDetailComponent implements OnInit {
 
   getCurrentUserId(): string {
     const user = this.authService.getCurrentUserValue();
-    return user?._id || '';
+    const userId = user?._id || '';
+    return userId;
   }
 
   private loadCurrentUser() {
@@ -460,19 +524,52 @@ export class ForumDetailComponent implements OnInit {
   }
 
   getShowReplyFormId(messageId: string): string {
-    return this.showReplyForm[messageId] ? messageId : '';
+    const result = this.showReplyForm[messageId] ? messageId : '';
+    return result;
   }
 
   getShowRepliesId(messageId: string): string {
-    return this.showReplies[messageId] ? messageId : '';
+    const result = this.showReplies[messageId] ? messageId : '';
+    return result;
   }
 
-  // Méthodes de vérification des permissions
+  // Méthodes de vérification des permissions (ajoutées à la fin)
   canModerate(): boolean {
     return this.authService.canModerate();
   }
 
   canDeleteForum(): boolean {
     return this.authService.canDeleteForum();
+  }
+
+  canEditMessage(message: any): boolean {
+    const currentUserId = this.getCurrentUserId();
+    console.log('Checking edit permission:', {
+      messageUserId: message.userId,
+      currentUserId: currentUserId,
+      isAuthor: message.userId === currentUserId,
+      canModerate: this.canModerate()
+    });
+
+    // Seul l'auteur peut modifier son message (tous les rôles)
+    return message.userId === currentUserId && !!currentUserId;
+  }
+
+  canDeleteMessage(message: any): boolean {
+    const currentUserId = this.getCurrentUserId();
+    // L'auteur peut supprimer son propre message OU les profs/admins peuvent supprimer tous les messages
+    return (message.userId === currentUserId && !!currentUserId) || this.canModerate();
+  }
+
+  canEditReply(reply: any): boolean {
+    const currentUserId = this.getCurrentUserId();
+    // Seul l'auteur peut modifier sa réponse (tous les rôles)
+    return reply.userId === currentUserId && !!currentUserId;
+  }
+
+  canDeleteReply(reply: any): boolean {
+    const currentUserId = this.getCurrentUserId();
+    // L'auteur peut supprimer sa propre réponse OU les profs/admins peuvent supprimer toutes les réponses
+    return (reply.userId === currentUserId && !!currentUserId) || this.canModerate();
   }
 }

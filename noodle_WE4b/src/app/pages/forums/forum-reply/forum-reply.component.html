@@ -19,6 +19,7 @@
         ✏️
       </button>
       <button class="btn-action delete"
+              *ngIf="canModerate || isAuthor"
               (click)="onDeleteReply()"
               title="Supprimer">
         🗑️
@@ -42,6 +43,7 @@
   <!-- Formulaire d'édition de la réponse -->
   <div class="edit-form" *ngIf="isEditing">
     <textarea [(ngModel)]="editText"
+              (ngModelChange)="onEditTextChange($event)"
               class="edit-textarea"
               placeholder="Modifier la réponse..."
               (keyup.escape)="onCancelEdit()"></textarea>

@@ -514,6 +514,71 @@ exports.updateMessage = async (req, res) => {
   }
 };
 
+// PUT /api/forums/:forumId/messages/:messageId/replies/:replyId → modifier une réponse
+exports.updateReply = async (req, res) => {
+  const { forumId, messageId, replyId } = req.params;
+  const { message } = req.body;
+  console.log("Message to update:", message);
+  console.log(`forums.controller.js → updateReply | forumId = ${forumId}, messageId = ${messageId}, replyId = ${replyId}`);
+  console.log('User from token:', req.user);
+
+  try {
+    const forum = await Forum.findById(forumId);
+    if (!forum) {
+      return res.status(404).json({ message: 'Forum non trouvé' });
+    }
+
+    const messageToUpdate = forum.messages.find(msg => msg._id.toString() === messageId);
+    if (!messageToUpdate) {
+      return res.status(404).json({ message: 'Message non trouvé' });
+    }
+
+    const replyToUpdate = messageToUpdate.replies.find(reply => reply._id.toString() === replyId);
+    if (!replyToUpdate) {
+      return res.status(404).json({ message: 'Réponse non trouvée' });
+    }
+
+    // Vérification des permissions : Seul l'auteur ou un modérateur peut modifier
+    const userRoles = req.user.roles || [req.user.role] || [];
+    const isAuthor = replyToUpdate.userId === req.user.userId;
+    const isModerator = userRoles.some(role => ['ROLE_PROF', 'ROLE_ADMIN'].includes(role));
+
+    console.log('Permission check for reply:', {
+      replyUserId: replyToUpdate.userId,
+      currentUserId: req.user.userId,
+      isAuthor,
+      userRoles,
+      isModerator
+    });
+
+    if (!isAuthor && !isModerator) {
+      return res.status(403).json({
+        message: 'Vous ne pouvez modifier que vos propres réponses'
+      });
+    }
+    const oldMessage = replyToUpdate.message;
+    replyToUpdate.message = message;
+    replyToUpdate.updatedAt = new Date();
+    replyToUpdate.isEdited = true;
+    console.log('Updating reply:', replyToUpdate);
+    await forum.save();
+    console.log('Reply updated successfully');
+
+    await logAction({
+      action: 'update_reply',
+      category: 'forum',
+      userId: req.user.userId,
+      targetId: forumId,
+      details: { messageId, replyId, oldMessage, newMessage: message }
+    });
+
+    res.json({ message: 'Réponse mise à jour avec succès', updatedReply: replyToUpdate });
+  } catch (err) {
+    console.error('Error in updateReply:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
 // GET /api/forums/download/:filename → télécharger un fichier
 exports.downloadFile = async (req, res) => {
   const filename = req.params.filename;

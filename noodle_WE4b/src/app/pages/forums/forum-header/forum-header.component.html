@@ -13,6 +13,7 @@
     <!-- Formulaire d'édition du titre -->
     <div *ngIf="editingForumTitle" class="title-edit-form">
       <input [(ngModel)]="newForumTitle"
+             (ngModelChange)="onTitleChange()"
              class="title-input"
              placeholder="Nouveau titre du forum"
              (keyup.enter)="onSaveForumTitle()"

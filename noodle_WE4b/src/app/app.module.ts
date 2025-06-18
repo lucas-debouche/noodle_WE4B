@@ -29,6 +29,10 @@ import { ForumReplyComponent } from './pages/forums/forum-reply/forum-reply.comp
 import { ForumMessageFormComponent } from './pages/forums/forum-message-form/forum-message-form.component';
 import { ForumFileAttachmentComponent } from './pages/forums/forum-file-attachment/forum-file-attachment.component';
 import { ForumEmojiPickerComponent } from './pages/forums/forum-emoji-picker/forum-emoji-picker.component';
+import { UeHeaderComponent } from './pages/partipants-ue/participants-list/ue-header/ue-header.component';
+import { ParticipantsFiltersComponent } from './pages/partipants-ue/participants-list/participants-filters/participants-filters.component';
+import { ParticipantsGridComponent } from './pages/partipants-ue/participants-list/participants-grid/participants-grid.component';
+import { ParticipantCardComponent } from './pages/partipants-ue/participants-list/participant-card/participant-card.component';
 
 @NgModule({
   declarations: [
@@ -53,6 +57,10 @@ import { ForumEmojiPickerComponent } from './pages/forums/forum-emoji-picker/for
     ForumMessageFormComponent,
     ForumFileAttachmentComponent,
     ForumEmojiPickerComponent,
+    UeHeaderComponent,
+    ParticipantsFiltersComponent,
+    ParticipantsGridComponent,
+    ParticipantCardComponent,
   ],
   imports: [
     BrowserModule,

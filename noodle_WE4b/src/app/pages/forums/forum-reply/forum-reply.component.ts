@@ -12,40 +12,48 @@ export class ForumReplyComponent implements OnInit, OnChanges {
   @Input() canModerate: boolean = false;
   @Input() currentUserId: string = '';
   @Input() editingReplyId: string = '';
+  @Input() editText: string = '';
 
   @Output() editReply = new EventEmitter<any>();
   @Output() deleteReply = new EventEmitter<{replyId: string}>();
   @Output() downloadFile = new EventEmitter<{filename: string, originalName: string}>();
   @Output() cancelEdit = new EventEmitter<void>();
   @Output() saveEdit = new EventEmitter<{replyId: string, text: string}>();
+  @Output() editTextChange = new EventEmitter<string>();
 
   authorName: string = '';
   relativeTime: string = '';
   isEditing: boolean = false;
   isAuthor: boolean = false;
-  editText: string = '';
 
   ngOnInit() {
     this.calculateRelativeTime();
-    this.isAuthor = this.reply.userId === this.currentUserId;
-    this.isEditing = this.editingReplyId === this.reply._id;
-
-    if (this.isEditing) {
-      this.editText = this.reply.message;
-    }
-
+    this.updateAuthorStatus();
+    this.updateEditingState();
     this.updateAuthorName();
+
   }
 
   ngOnChanges() {
     this.updateAuthorName();
+    this.updateAuthorStatus();
+    this.updateEditingState();
+  }
+
+  private updateAuthorStatus() {
+    this.isAuthor = this.reply.userId === this.currentUserId && !!this.currentUserId;
+  }
+
+  private updateEditingState() {
+    const wasEditing = this.isEditing;
+    this.isEditing = this.editingReplyId === this.reply._id;
+
   }
 
   private updateAuthorName() {
     this.authorName = this.userCache[this.reply.userId] || 'Utilisateur anonyme';
 
     if (this.authorName === 'Utilisateur anonyme' && this.reply.userId) {
-      console.log(`Nom d'utilisateur manquant pour la réponse: ${this.reply.userId}`);
     }
   }
 
@@ -78,12 +86,10 @@ export class ForumReplyComponent implements OnInit, OnChanges {
   }
 
   onStartEdit() {
-    this.editText = this.reply.message;
     this.editReply.emit(this.reply);
   }
 
   onCancelEdit() {
-    this.editText = '';
     this.cancelEdit.emit();
   }
 
@@ -104,6 +110,11 @@ export class ForumReplyComponent implements OnInit, OnChanges {
 
   onDownloadFile(event: {filename: string, originalName: string}) {
     this.downloadFile.emit(event);
+  }
+
+
+  onEditTextChange(newText: string) {
+    this.editTextChange.emit(newText);
   }
 
   hasEditContent(): boolean {

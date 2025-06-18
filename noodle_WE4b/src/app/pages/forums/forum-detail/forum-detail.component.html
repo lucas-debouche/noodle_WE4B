@@ -32,6 +32,8 @@
           [canModerate]="canModerate()"
           [currentUserId]="getCurrentUserId()"
           [editingMessageId]="editingMessage?._id || ''"
+          [editingReplyId]="editingReply?._id || ''"
+          [editText]="editText"
           [showReplyFormId]="getShowReplyFormId(msg._id)"
           [showRepliesId]="getShowRepliesId(msg._id)"
           (startEdit)="startEditMessage($event)"
@@ -43,7 +45,10 @@
           (addReply)="addReply($event.messageId, $event.text)"
           (editReply)="startEditReply($event)"
           (deleteReply)="deleteReply($event.messageId, $event.replyId)"
-          (downloadFile)="downloadFile($event.filename, $event.originalName)">
+          (downloadFile)="downloadFile($event.filename, $event.originalName)"
+          (cancelReplyEdit)="cancelEdit()"
+          (saveReplyEdit)="saveReplyEdit($event)"
+          (editTextChange)="editText = $event">
         </app-forum-message>
 
         <!-- État vide -->

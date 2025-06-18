@@ -19,7 +19,7 @@
               title="Modifier">
         ✏️
       </button>
-      <button *ngIf="canModerate"
+      <button *ngIf="canModerate || isAuthor"
               class="btn-action delete"
               (click)="onDeleteMessage()"
               title="Supprimer">
@@ -30,7 +30,7 @@
 
   <!-- Contenu du message -->
   <div class="message-content" *ngIf="!isEditing">
-    {{ message.message }}
+    <div class="message-text">{{ message.message }}</div>
 
     <!-- Fichiers attachés au message -->
     <app-forum-file-attachment
@@ -44,6 +44,7 @@
   <!-- Formulaire d'édition du message -->
   <div class="edit-form" *ngIf="isEditing">
     <textarea [(ngModel)]="editText"
+              (ngModelChange)="onEditTextChange($event)"
               class="edit-textarea"
               placeholder="Modifier le message..."
               (keyup.escape)="onCancelEdit()"></textarea>
@@ -82,7 +83,8 @@
   <div class="reply-form" *ngIf="showReplyForm">
     <textarea [(ngModel)]="replyText"
               placeholder="Écrivez votre réponse..."
-              class="reply-textarea"></textarea>
+              class="reply-textarea"
+              (keyup)="onReplyKeyUp($event)"></textarea>
     <div class="reply-actions">
       <button class="btn-send-reply"
               (click)="onAddReply()"
@@ -104,9 +106,14 @@
       [userCache]="userCache"
       [canModerate]="canModerate"
       [currentUserId]="currentUserId"
+      [editingReplyId]="getEditingReplyId(reply._id)"
+      [editText]="editText"
       (editReply)="onEditReply($event)"
       (deleteReply)="onDeleteReply($event)"
-      (downloadFile)="onDownloadFile($event)">
+      (downloadFile)="onDownloadFile($event)"
+      (cancelEdit)="onCancelReplyEdit()"
+      (saveEdit)="onSaveReplyEdit($event)"
+      (editTextChange)="onEditTextChange($event)">
     </app-forum-reply>
   </div>
 </div>

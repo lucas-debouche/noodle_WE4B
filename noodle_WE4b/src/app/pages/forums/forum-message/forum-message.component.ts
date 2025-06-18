@@ -11,6 +11,8 @@ export class ForumMessageComponent implements OnInit, OnChanges {
   @Input() canModerate: boolean = false;
   @Input() currentUserId: string = '';
   @Input() editingMessageId: string = '';
+  @Input() editingReplyId: string = '';
+  @Input() editText: string = ''; // ✅ AJOUT : Pour synchroniser le texte d'édition
   @Input() showReplyFormId: string = '';
   @Input() showRepliesId: string = '';
 
@@ -24,6 +26,9 @@ export class ForumMessageComponent implements OnInit, OnChanges {
   @Output() editReply = new EventEmitter<any>();
   @Output() deleteReply = new EventEmitter<{messageId: string, replyId: string}>();
   @Output() downloadFile = new EventEmitter<{filename: string, originalName: string}>();
+  @Output() cancelReplyEdit = new EventEmitter<void>();
+  @Output() saveReplyEdit = new EventEmitter<{messageId: string, replyId: string, text: string}>(); // ✅ CORRECTION
+  @Output() editTextChange = new EventEmitter<string>(); // ✅ AJOUT
 
   authorName: string = '';
   relativeTime: string = '';
@@ -31,35 +36,74 @@ export class ForumMessageComponent implements OnInit, OnChanges {
   showReplyForm: boolean = false;
   showReplies: boolean = false;
   isAuthor: boolean = false;
-  editText: string = '';
   replyText: string = '';
 
   ngOnInit() {
     this.calculateRelativeTime();
-    this.isAuthor = this.message.userId === this.currentUserId;
-    this.isEditing = this.editingMessageId === this.message._id;
+    this.updateAuthorStatus();
+    this.updateEditingState();
     this.showReplyForm = this.showReplyFormId === this.message._id;
     this.showReplies = this.showRepliesId === this.message._id;
 
-    if (this.isEditing) {
-      this.editText = this.message.message;
-    }
-
-    // Mise à jour du nom d'auteur à chaque changement
     this.updateAuthorName();
+
+    console.log(`Message ${this.message._id} initialized:`, {
+      isAuthor: this.isAuthor,
+      currentUserId: this.currentUserId,
+      messageUserId: this.message.userId,
+      isEditing: this.isEditing,
+      showReplyForm: this.showReplyForm,
+      showReplies: this.showReplies,
+      repliesCount: this.message.replies?.length || 0
+    });
   }
 
   ngOnChanges() {
-    // Mettre à jour le nom d'auteur quand userCache change
     this.updateAuthorName();
+    this.updateAuthorStatus();
+    this.updateEditingState();
+    this.showReplyForm = this.showReplyFormId === this.message._id;
+    this.showReplies = this.showRepliesId === this.message._id;
+
+    // Log pour vérifier que le contenu du message est bien mis à jour
+    console.log(`Message ${this.message._id} content update:`, {
+      message: this.message.message,
+      isEdited: this.message.isEdited,
+      isEditing: this.isEditing
+    });
+  }
+
+  private updateAuthorStatus() {
+    this.isAuthor = this.message.userId === this.currentUserId && !!this.currentUserId;
+    console.log(`Author status for message ${this.message._id}:`, {
+      isAuthor: this.isAuthor,
+      messageUserId: this.message.userId,
+      currentUserId: this.currentUserId
+    });
+  }
+
+  private updateEditingState() {
+    const wasEditing = this.isEditing;
+    this.isEditing = this.editingMessageId === this.message._id;
+
+    if (this.isEditing && !wasEditing) {
+      console.log(`Started editing message ${this.message._id}`);
+    } else if (!this.isEditing && wasEditing) {
+      console.log(`Stopped editing message ${this.message._id}`);
+    }
   }
 
   private updateAuthorName() {
+    const previousName = this.authorName;
     this.authorName = this.userCache[this.message.userId] || 'Utilisateur anonyme';
+
+    // Debug: afficher les changements
+    if (previousName !== this.authorName) {
+      console.log(`Nom mis à jour pour ${this.message.userId}: ${previousName} → ${this.authorName}`);
+    }
 
     // Si le nom n'est pas encore chargé et qu'on a un userId valide
     if (this.authorName === 'Utilisateur anonyme' && this.message.userId) {
-      // Optionnel : émettre un événement pour demander le rechargement du nom
       console.log(`Nom d'utilisateur manquant pour: ${this.message.userId}`);
     }
   }
@@ -93,12 +137,10 @@ export class ForumMessageComponent implements OnInit, OnChanges {
   }
 
   onStartEdit() {
-    this.editText = this.message.message;
     this.startEdit.emit(this.message);
   }
 
   onCancelEdit() {
-    this.editText = '';
     this.cancelEdit.emit();
   }
 
@@ -116,20 +158,30 @@ export class ForumMessageComponent implements OnInit, OnChanges {
   }
 
   onToggleReplyForm() {
+    console.log(`Toggling reply form for message ${this.message._id}`);
     this.toggleReplyForm.emit(this.message._id);
   }
 
   onToggleReplies() {
+    console.log(`Toggling replies for message ${this.message._id}`);
     this.toggleReplies.emit(this.message._id);
   }
 
   onAddReply() {
     if (this.hasReplyContent()) {
+      console.log(`Adding reply to message ${this.message._id}:`, this.replyText);
       this.addReply.emit({
         messageId: this.message._id,
         text: this.replyText
       });
       this.replyText = '';
+    }
+  }
+
+  onReplyKeyUp(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.onAddReply();
     }
   }
 
@@ -148,8 +200,30 @@ export class ForumMessageComponent implements OnInit, OnChanges {
     this.downloadFile.emit(event);
   }
 
+  getEditingReplyId(replyId: string): string {
+    return this.editingReplyId === replyId ? replyId : '';
+  }
+
+  onCancelReplyEdit() {
+    this.cancelReplyEdit.emit();
+  }
+
+  onSaveReplyEdit(event: {replyId: string, text: string}) {
+    // ✅ CORRECTION : Passer le messageId avec l'événement
+    this.saveReplyEdit.emit({
+      messageId: this.message._id,
+      replyId: event.replyId,
+      text: event.text
+    });
+  }
+
+  // ✅ AJOUT : Méthode pour synchroniser editText
+  onEditTextChange(newText: string) {
+    this.editTextChange.emit(newText);
+  }
+
   hasEditContent(): boolean {
-    return this.editText.trim().length > 0;
+    return  this.editText.trim().length > 0;
   }
 
   hasReplyContent(): boolean {
