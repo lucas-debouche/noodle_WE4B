@@ -13,9 +13,22 @@ import { ProfilSidebarComponent } from './profil-sidebar/profil-sidebar.componen
 import { AuthInterceptor } from './services/auth.interceptor.service';
 import { LoginComponent } from './pages/login/login.component';
 import { UeBoxComponent } from './ue-box/ue-box.component';
+
+import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
+
+
 import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
 import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
-import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
+import { ForumHeaderComponent } from './pages/forums/forum-header/forum-header.component';
+import { ForumCreateCardComponent } from './pages/forums/forum-create-card/forum-create-card.component';
+import { ForumFiltersCardComponent } from './pages/forums/forum-filters-card/forum-filters-card.component';
+import { ForumDiscussionCardComponent } from './pages/forums/forum-discussion-card/forum-discussion-card.component';
+import { ForumEmptyStateComponent } from './pages/forums/forum-empty-state/forum-empty-state.component';
+import { ForumMessageComponent } from './pages/forums/forum-message/forum-message.component';
+import { ForumReplyComponent } from './pages/forums/forum-reply/forum-reply.component';
+import { ForumMessageFormComponent } from './pages/forums/forum-message-form/forum-message-form.component';
+import { ForumFileAttachmentComponent } from './pages/forums/forum-file-attachment/forum-file-attachment.component';
+import { ForumEmojiPickerComponent } from './pages/forums/forum-emoji-picker/forum-emoji-picker.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +43,16 @@ import { ParticipantsListComponent } from './pages/partipants-ue/participants-li
     ForumListComponent,
     ForumDetailComponent,
     ParticipantsListComponent,
+    ForumHeaderComponent,
+    ForumCreateCardComponent,
+    ForumFiltersCardComponent,
+    ForumDiscussionCardComponent,
+    ForumEmptyStateComponent,
+    ForumMessageComponent,
+    ForumReplyComponent,
+    ForumMessageFormComponent,
+    ForumFileAttachmentComponent,
+    ForumEmojiPickerComponent,
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,33 @@
+<div class="discussion-card">
+  <a [routerLink]="['/forums', forum._id]" class="card-link">
+    <div class="card-header">
+      <div class="discussion-icon">💭</div>
+      <div class="card-badge">
+        <span class="message-count" [class.active]="messageCount > 0">
+          {{ messageCount }}
+        </span>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <h3 class="discussion-title">● {{ forum.title }}</h3>
+      <div class="discussion-meta">
+        <div class="meta-item">
+          <i class="icon">💬</i>
+          <span>{{ messageCount }} message{{ messageCount > 1 ? 's' : '' }}</span>
+        </div>
+        <div class="meta-item time">
+          <i class="icon">🕒</i>
+          <span>{{ relativeTime }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="activity-indicator" [class.active]="messageCount > 0">
+        <span *ngIf="messageCount === 0">Nouvelle discussion</span>
+        <span *ngIf="participantCount > 0">{{ participantCount }} participant{{ participantCount > 1 ? 's' : '' }}</span>
+      </div>
+    </div>
+  </a>
+</div>

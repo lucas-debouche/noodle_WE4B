@@ -1,0 +1,66 @@
+// État vide
+.empty-card {
+  background: var(--card-background);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--card-shadow);
+  padding: 60px 40px;
+  text-align: center;
+  border: 1px solid var(--card-border);
+
+  .empty-content {
+    max-width: 400px;
+    margin: 0 auto;
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.7;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    .btn-action {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 3px 12px rgba(255, 107, 65, 0.3);
+
+      .icon {
+        font-size: 14px;
+      }
+
+      &:hover {
+        background: linear-gradient(135deg, var(--primary-hover), #d84315);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(255, 107, 65, 0.4);
+      }
+    }
+
+    .empty-actions {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  }
+}

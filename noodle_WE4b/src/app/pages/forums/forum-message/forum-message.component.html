@@ -1,0 +1,112 @@
+<div class="message-item">
+  <!-- En-tête du message -->
+  <div class="message-header">
+    <div class="author-info">
+      <span class="author">
+        {{ authorName || 'Utilisateur anonyme' }}
+      </span>
+      <span class="timestamp">
+        {{ relativeTime }}
+        <span *ngIf="message.isEdited" class="edited-badge">(modifié)</span>
+      </span>
+    </div>
+
+    <!-- Actions sur le message -->
+    <div class="message-actions" *ngIf="canModerate || isAuthor">
+      <button *ngIf="isAuthor"
+              class="btn-action edit"
+              (click)="onStartEdit()"
+              title="Modifier">
+        ✏️
+      </button>
+      <button *ngIf="canModerate"
+              class="btn-action delete"
+              (click)="onDeleteMessage()"
+              title="Supprimer">
+        🗑️
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenu du message -->
+  <div class="message-content" *ngIf="!isEditing">
+    {{ message.message }}
+
+    <!-- Fichiers attachés au message -->
+    <app-forum-file-attachment
+      *ngIf="message.attachments && message.attachments.length > 0"
+      [attachments]="message.attachments"
+      [isReply]="false"
+      (downloadFile)="onDownloadFile($event)">
+    </app-forum-file-attachment>
+  </div>
+
+  <!-- Formulaire d'édition du message -->
+  <div class="edit-form" *ngIf="isEditing">
+    <textarea [(ngModel)]="editText"
+              class="edit-textarea"
+              placeholder="Modifier le message..."
+              (keyup.escape)="onCancelEdit()"></textarea>
+    <div class="edit-actions">
+      <button class="btn-save" (click)="onSaveEdit()" [disabled]="!hasEditContent()">
+        ✅ Sauvegarder
+      </button>
+      <button class="btn-cancel" (click)="onCancelEdit()">
+        ❌ Annuler
+      </button>
+    </div>
+  </div>
+
+  <!-- Bouton de réponse et affichage des réponses -->
+  <div class="message-footer">
+    <div class="reply-controls">
+      <button class="btn-reply" (click)="onToggleReplyForm()">
+        💬 {{ showReplyForm ? 'Masquer' : 'Répondre' }}
+      </button>
+
+      <button
+        *ngIf="message.replies?.length > 0"
+        class="btn-toggle-replies"
+        (click)="onToggleReplies()">
+        {{ showReplies ? '🔼' : '🔽' }}
+        {{ message.replies.length }} réponse{{ message.replies.length > 1 ? 's' : '' }}
+      </button>
+    </div>
+
+    <span class="reply-count" *ngIf="message.replies?.length > 0 && !showReplies">
+      {{ message.replies.length }} réponse{{ message.replies.length > 1 ? 's' : '' }}
+    </span>
+  </div>
+
+  <!-- Formulaire de réponse -->
+  <div class="reply-form" *ngIf="showReplyForm">
+    <textarea [(ngModel)]="replyText"
+              placeholder="Écrivez votre réponse..."
+              class="reply-textarea"></textarea>
+    <div class="reply-actions">
+      <button class="btn-send-reply"
+              (click)="onAddReply()"
+              [disabled]="!hasReplyContent()">
+        📤 Répondre
+      </button>
+      <button class="btn-cancel-reply" (click)="onToggleReplyForm()">
+        Annuler
+      </button>
+    </div>
+  </div>
+
+  <!-- Liste des réponses -->
+  <div class="replies-list" *ngIf="message.replies?.length > 0 && showReplies">
+    <app-forum-reply
+      *ngFor="let reply of message.replies; trackBy: trackByReplyId"
+      [reply]="reply"
+      [messageId]="message._id"
+      [userCache]="userCache"
+      [canModerate]="canModerate"
+      [currentUserId]="currentUserId"
+      (editReply)="onEditReply($event)"
+      (deleteReply)="onDeleteReply($event)"
+      (downloadFile)="onDownloadFile($event)">
+    </app-forum-reply>
+  </div>
+</div>
