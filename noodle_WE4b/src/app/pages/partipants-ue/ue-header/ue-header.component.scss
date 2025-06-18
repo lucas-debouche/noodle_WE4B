@@ -1,0 +1,170 @@
+.ue-header-card {
+  background: var(--card-background);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--card-shadow);
+  padding: 0;
+  margin-bottom: 30px;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--primary-color), var(--professor-color));
+  }
+
+  .card-icon {
+    position: absolute;
+    top: 30px;
+    left: 35px;
+    font-size: 2.5rem;
+    opacity: 0.7;
+    z-index: 1;
+  }
+
+  .card-content {
+    padding: 35px 35px 35px 100px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
+
+    .ue-info {
+      flex: 1;
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+        letter-spacing: -0.02em;
+      }
+
+      .ue-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 15px;
+
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: #f8f9fa;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          border: 1px solid #e9ecef;
+
+          .icon {
+            font-size: 16px;
+            opacity: 0.7;
+          }
+        }
+      }
+
+      .ue-description {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin: 0;
+      }
+    }
+
+    .participants-summary {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      border: 1px solid #e9ecef;
+
+      .summary-item {
+        text-align: center;
+
+        .summary-number {
+          font-size: 2rem;
+          font-weight: 800;
+          color: var(--primary-color);
+          line-height: 1;
+        }
+
+        .summary-label {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+
+      .summary-divider {
+        width: 2px;
+        height: 40px;
+        background: #dee2e6;
+        border-radius: 1px;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .ue-header-card .card-content {
+    flex-direction: column;
+    gap: 25px;
+
+    .participants-summary {
+      align-self: stretch;
+      justify-content: space-around;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .ue-header-card {
+    .card-icon {
+      display: none;
+    }
+
+    .card-content {
+      padding: 25px 20px;
+
+      .ue-info h1 {
+        font-size: 2rem;
+      }
+
+      .participants-summary {
+        flex-direction: column;
+        gap: 15px;
+
+        .summary-divider {
+          display: none;
+        }
+
+        .summary-item {
+          padding: 10px 0;
+          border-bottom: 1px solid #dee2e6;
+
+          &:last-child {
+            border-bottom: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .ue-header-card .card-content {
+    padding: 20px 15px;
+  }
+}

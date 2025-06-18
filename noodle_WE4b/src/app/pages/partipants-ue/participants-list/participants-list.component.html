@@ -2,169 +2,33 @@
   <div class="participants-content">
 
     <!-- En-tête avec informations de l'UE -->
-    <div class="ue-header-card">
-      <div class="card-icon">🎓</div>
-      <div class="card-content">
-        <div class="ue-info" *ngIf="ueInfo">
-          <h1>{{ ueInfo.intitule }}</h1>
-          <div class="ue-meta">
-            <span class="meta-item">
-              <i class="icon">📚</i>
-              Code: {{ ueInfo.code }}
-            </span>
-            <span class="meta-item">
-              <i class="icon">⭐</i>
-              {{ ueInfo.ects }} ECTS
-            </span>
-          </div>
-          <p class="ue-description" *ngIf="ueInfo.description">
-            {{ ueInfo.description }}
-          </p>
-        </div>
-        <div class="participants-summary">
-          <div class="summary-item">
-            <div class="summary-number">{{ getTotalParticipants() }}</div>
-            <div class="summary-label">Participants</div>
-          </div>
-          <div class="summary-divider"></div>
-          <div class="summary-item">
-            <div class="summary-number">{{ etudiants.length }}</div>
-            <div class="summary-label">Étudiants</div>
-          </div>
-          <div class="summary-divider"></div>
-          <div class="summary-item">
-            <div class="summary-number">{{ professeurs.length }}</div>
-            <div class="summary-label">Professeurs</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <app-ue-header
+      [ueInfo]="ueInfo"
+      [totalParticipants]="getTotalParticipants()"
+      [totalEtudiants]="etudiants.length"
+      [totalProfesseurs]="professeurs.length">
+    </app-ue-header>
 
     <!-- Card de filtres et recherche -->
-    <div class="filters-card">
-      <div class="card-icon">🔍</div>
-      <div class="card-content">
-        <div class="filters-header">
-          <h3>Rechercher et filtrer les participants</h3>
-          <div class="results-count" *ngIf="getTotalVisibleParticipants() > 0">
-            {{ getTotalVisibleParticipants() }} participant{{ getTotalVisibleParticipants() > 1 ? 's' : '' }}
-            <span *ngIf="searchTerm || roleFilter !== 'tous' || selectedPromotion !== 'toutes' || selectedStatut !== 'tous'">
-              sur {{ getTotalParticipants() }}
-            </span>
-          </div>
-        </div>
-
-        <div class="search-section">
-          <div class="search-input-wrapper">
-            <i class="search-icon">🔍</i>
-            <input
-              [(ngModel)]="searchTerm"
-              (input)="onSearchChange()"
-              placeholder="Rechercher par nom, prénom, email, promotion..."
-              class="search-input"
-            />
-            <button
-              *ngIf="searchTerm"
-              (click)="clearSearch()"
-              class="clear-btn"
-              title="Effacer"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-
-        <div class="filter-controls">
-          <div class="filter-row">
-            <div class="filter-group">
-              <label>Type :</label>
-              <select
-                [(ngModel)]="roleFilter"
-                (change)="onRoleFilterChange()"
-                class="filter-select"
-              >
-                <option *ngFor="let option of roleOptions" [value]="option.value">
-                  {{ option.icon }} {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label>Trier par :</label>
-              <select
-                [(ngModel)]="sortBy"
-                (change)="onSortChange()"
-                class="filter-select"
-              >
-                <option *ngFor="let option of sortOptions" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <button
-              (click)="toggleFilters()"
-              class="btn-toggle-filters"
-              [class.active]="showFilters"
-              title="Plus de filtres"
-            >
-              <i class="icon">⚙️</i>
-            </button>
-          </div>
-
-          <!-- Filtres avancés -->
-          <div class="advanced-filters" *ngIf="showFilters">
-            <div class="filter-row">
-              <div class="filter-group" *ngIf="promotions.length > 0">
-                <label>Promotion :</label>
-                <select
-                  [(ngModel)]="selectedPromotion"
-                  (change)="onPromotionChange()"
-                  class="filter-select"
-                >
-                  <option value="toutes">Toutes les promotions</option>
-                  <option *ngFor="let promotion of promotions" [value]="promotion">
-                    {{ promotion }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="filter-group">
-                <label>Statut :</label>
-                <select
-                  [(ngModel)]="selectedStatut"
-                  (change)="onStatutChange()"
-                  class="filter-select"
-                >
-                  <option *ngFor="let option of statutOptions" [value]="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="filter-actions">
-                <button
-                  (click)="resetFilters()"
-                  class="btn-reset"
-                  *ngIf="searchTerm || roleFilter !== 'tous' || selectedPromotion !== 'toutes' || selectedStatut !== 'tous'"
-                >
-                  <i class="icon">🔄</i>
-                  Réinitialiser
-                </button>
-
-                <button
-                  (click)="exportParticipants()"
-                  class="btn-export"
-                >
-                  <i class="icon">📊</i>
-                  Exporter
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <app-participants-filters
+      [searchTerm]="searchTerm"
+      [roleFilter]="roleFilter"
+      [sortBy]="sortBy"
+      [showFilters]="showFilters"
+      [selectedPromotion]="selectedPromotion"
+      [selectedStatut]="selectedStatut"
+      [promotions]="promotions"
+      [totalVisibleParticipants]="getTotalVisibleParticipants()"
+      [totalParticipants]="getTotalParticipants()"
+      (searchChange)="onSearchChange($event)"
+      (roleFilterChange)="onRoleFilterChange($event)"
+      (sortChange)="onSortChange($event)"
+      (toggleFiltersChange)="toggleFilters()"
+      (promotionChange)="onPromotionChange($event)"
+      (statutChange)="onStatutChange($event)"
+      (resetFilters)="resetFilters()"
+      (exportParticipants)="exportParticipants()">
+    </app-participants-filters>
 
     <!-- Section des participants -->
     <div class="participants-section">
@@ -178,172 +42,23 @@
         </button>
       </div>
 
-      <!-- Message de chargement -->
-      <div class="loading-card" *ngIf="loading">
-        <div class="loading-content">
-          <div class="loading-spinner-large"></div>
-          <h3>Chargement des participants...</h3>
-          <p>Veuillez patienter</p>
-        </div>
-      </div>
+      <!-- États de chargement, erreur et vide -->
+      <app-participants-empty-state
+        [loading]="loading"
+        [error]="error"
+        [totalVisibleParticipants]="getTotalVisibleParticipants()"
+        [hasActiveFilters]="hasActiveFilters()"
+        (refreshData)="refreshData()"
+        (resetFilters)="resetFilters()">
+      </app-participants-empty-state>
 
-      <!-- Message d'erreur -->
-      <div class="error-card" *ngIf="error && !loading">
-        <div class="error-content">
-          <div class="error-icon">⚠️</div>
-          <h3>Erreur de chargement</h3>
-          <p>{{ error }}</p>
-          <button (click)="refreshData()" class="btn-retry">
-            <i class="icon">🔄</i>
-            Réessayer
-          </button>
-        </div>
-      </div>
-
-      <!-- Contenu principal -->
-      <div class="participants-main" *ngIf="!loading && !error">
-
-        <!-- Section Professeurs -->
-        <div class="participants-group" *ngIf="getVisibleProfesseurs().length > 0">
-          <div class="group-header">
-            <h3>
-              <i class="icon">👨‍🏫</i>
-              Professeurs
-              <span class="count-badge">{{ getVisibleProfesseurs().length }}</span>
-            </h3>
-          </div>
-
-          <div class="participants-grid">
-            <div class="participant-card professor"
-                 *ngFor="let professeur of getVisibleProfesseurs(); trackBy: trackByParticipantId">
-              <div class="card-header">
-                <div class="participant-avatar" [class]="getParticipantBadgeColor(professeur)">
-                  <img
-                    *ngIf="professeur.photo && professeur.photo !== 'null'"
-                    [src]="getPhotoUrl(professeur.photo, professeur)"
-                    [alt]="professeur.prenom + ' ' + professeur.nom"
-                    class="avatar-image"
-                    (error)="onImageError($event, professeur)"
-                  />
-                  <span
-                    *ngIf="!professeur.photo || professeur.photo === 'null'"
-                    class="avatar-text">
-                    {{ getInitials(professeur) }}
-                  </span>
-                </div>
-                <div class="participant-status">
-                  <span class="status-badge" [class]="professeur.statut">
-                    {{ professeur.statut === 'actif' ? '✅' : '⏸️' }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="card-body">
-                <h4 class="participant-name">
-                  {{ professeur.prenom }} {{ professeur.nom }}
-                </h4>
-                <div class="participant-info">
-                  <div class="info-item">
-                    <i class="icon">📧</i>
-                    <span>{{ professeur.email }}</span>
-                  </div>
-                  <div class="info-item role">
-                    <i class="icon">{{ getRoleIcon(professeur.role) }}</i>
-                    <span>{{ getRoleLabel(professeur.role) }}</span>
-                  </div>
-                  <div class="info-item" *ngIf="professeur.specialite">
-                    <i class="icon">🔬</i>
-                    <span>{{ professeur.specialite }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section Étudiants -->
-        <div class="participants-group" *ngIf="getVisibleEtudiants().length > 0">
-          <div class="group-header">
-            <h3>
-              <i class="icon">🎓</i>
-              Étudiants
-              <span class="count-badge">{{ getVisibleEtudiants().length }}</span>
-            </h3>
-          </div>
-
-          <div class="participants-grid">
-            <div class="participant-card student"
-                 *ngFor="let etudiant of getVisibleEtudiants(); trackBy: trackByParticipantId">
-              <div class="card-header">
-                <div class="participant-avatar" [class]="getParticipantBadgeColor(etudiant)">
-                  <img
-                    *ngIf="etudiant.photo && etudiant.photo !== 'null'"
-                    [src]="getPhotoUrl(etudiant.photo, etudiant)"
-                    [alt]="etudiant.prenom + ' ' + etudiant.nom"
-                    class="avatar-image"
-                    (error)="onImageError($event, etudiant)"
-                  />
-                  <span
-                    *ngIf="!etudiant.photo || etudiant.photo === 'null'"
-                    class="avatar-text">
-                    {{ getInitials(etudiant) }}
-                  </span>
-                </div>
-                <div class="participant-status">
-                  <span class="status-badge" [class]="etudiant.statut">
-                    {{ etudiant.statut === 'actif' ? '✅' : '⏸️' }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="card-body">
-                <h4 class="participant-name">
-                  {{ etudiant.prenom }} {{ etudiant.nom }}
-                </h4>
-                <div class="participant-info">
-                  <div class="info-item">
-                    <i class="icon">📧</i>
-                    <span>{{ etudiant.email }}</span>
-                  </div>
-                  <div class="info-item" *ngIf="etudiant.promotion">
-                    <i class="icon">🎯</i>
-                    <span>{{ etudiant.promotion }}</span>
-                  </div>
-                  <div class="info-item" *ngIf="etudiant.specialite">
-                    <i class="icon">🔬</i>
-                    <span>{{ etudiant.specialite }}</span>
-                  </div>
-                  <div class="info-item" *ngIf="etudiant.dateInscription">
-                    <i class="icon">📅</i>
-                    <span>Inscrit le {{ formatDate(etudiant.dateInscription) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- État vide -->
-        <div class="empty-card" *ngIf="getTotalVisibleParticipants() === 0">
-          <div class="empty-content">
-            <div class="empty-icon">
-              {{ searchTerm || roleFilter !== 'tous' || selectedPromotion !== 'toutes' || selectedStatut !== 'tous' ? '🔍' : '👥' }}
-            </div>
-            <h3>
-              {{ searchTerm || roleFilter !== 'tous' || selectedPromotion !== 'toutes' || selectedStatut !== 'tous' ? 'Aucun participant trouvé' : 'Aucun participant inscrit' }}
-            </h3>
-            <p>
-              {{ searchTerm || roleFilter !== 'tous' || selectedPromotion !== 'toutes' || selectedStatut !== 'tous' ? 'Essayez de modifier vos critères de recherche' : 'Cette UE n\'a pas encore de participants inscrits' }}
-            </p>
-            <div class="empty-actions" *ngIf="searchTerm || roleFilter !== 'tous' || selectedPromotion !== 'toutes' || selectedStatut !== 'tous'">
-              <button (click)="resetFilters()" class="btn-action">
-                <i class="icon">🔄</i>
-                Réinitialiser les filtres
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Grille des participants -->
+      <app-participants-grid
+        *ngIf="!loading && !error"
+        [visibleEtudiants]="getVisibleEtudiants()"
+        [visibleProfesseurs]="getVisibleProfesseurs()"
+        (refreshData)="refreshData()">
+      </app-participants-grid>
     </div>
   </div>
 </div>

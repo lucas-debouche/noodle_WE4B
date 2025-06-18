@@ -14,9 +14,6 @@ import { AuthInterceptor } from './services/auth.interceptor.service';
 import { LoginComponent } from './pages/login/login.component';
 import { UeBoxComponent } from './ue-box/ue-box.component';
 
-import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
-
-
 import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
 import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
 import { ForumHeaderComponent } from './pages/forums/forum-header/forum-header.component';
@@ -29,10 +26,13 @@ import { ForumReplyComponent } from './pages/forums/forum-reply/forum-reply.comp
 import { ForumMessageFormComponent } from './pages/forums/forum-message-form/forum-message-form.component';
 import { ForumFileAttachmentComponent } from './pages/forums/forum-file-attachment/forum-file-attachment.component';
 import { ForumEmojiPickerComponent } from './pages/forums/forum-emoji-picker/forum-emoji-picker.component';
-import { UeHeaderComponent } from './pages/partipants-ue/participants-list/ue-header/ue-header.component';
-import { ParticipantsFiltersComponent } from './pages/partipants-ue/participants-list/participants-filters/participants-filters.component';
-import { ParticipantsGridComponent } from './pages/partipants-ue/participants-list/participants-grid/participants-grid.component';
-import { ParticipantCardComponent } from './pages/partipants-ue/participants-list/participant-card/participant-card.component';
+
+import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
+import { UeHeaderComponent } from './pages/partipants-ue/ue-header/ue-header.component';
+import { ParticipantsFiltersComponent } from './pages/partipants-ue/participants-filters/participants-filters.component';
+import { ParticipantsGridComponent } from './pages/partipants-ue/participants-grid/participants-grid.component';
+import { ParticipantCardComponent } from './pages/partipants-ue/participant-card/participant-card.component';
+import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participants-empty-state/participants-empty-state.component';
 
 @NgModule({
   declarations: [
@@ -61,6 +61,7 @@ import { ParticipantCardComponent } from './pages/partipants-ue/participants-lis
     ParticipantsFiltersComponent,
     ParticipantsGridComponent,
     ParticipantCardComponent,
+    ParticipantsEmptyStateComponent,
   ],
   imports: [
     BrowserModule,
