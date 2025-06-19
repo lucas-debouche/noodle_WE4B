@@ -12,7 +12,7 @@ export class ForumMessageComponent implements OnInit, OnChanges {
   @Input() currentUserId: string = '';
   @Input() editingMessageId: string = '';
   @Input() editingReplyId: string = '';
-  @Input() editText: string = ''; // ✅ AJOUT : Pour synchroniser le texte d'édition
+  @Input() editText: string = '';
   @Input() showReplyFormId: string = '';
   @Input() showRepliesId: string = '';
 
@@ -27,8 +27,8 @@ export class ForumMessageComponent implements OnInit, OnChanges {
   @Output() deleteReply = new EventEmitter<{messageId: string, replyId: string}>();
   @Output() downloadFile = new EventEmitter<{filename: string, originalName: string}>();
   @Output() cancelReplyEdit = new EventEmitter<void>();
-  @Output() saveReplyEdit = new EventEmitter<{messageId: string, replyId: string, text: string}>(); // ✅ CORRECTION
-  @Output() editTextChange = new EventEmitter<string>(); // ✅ AJOUT
+  @Output() saveReplyEdit = new EventEmitter<{messageId: string, replyId: string, text: string}>();
+  @Output() editTextChange = new EventEmitter<string>();
 
   authorName: string = '';
   relativeTime: string = '';
@@ -209,7 +209,6 @@ export class ForumMessageComponent implements OnInit, OnChanges {
   }
 
   onSaveReplyEdit(event: {replyId: string, text: string}) {
-    // ✅ CORRECTION : Passer le messageId avec l'événement
     this.saveReplyEdit.emit({
       messageId: this.message._id,
       replyId: event.replyId,
@@ -217,7 +216,6 @@ export class ForumMessageComponent implements OnInit, OnChanges {
     });
   }
 
-  // ✅ AJOUT : Méthode pour synchroniser editText
   onEditTextChange(newText: string) {
     this.editTextChange.emit(newText);
   }

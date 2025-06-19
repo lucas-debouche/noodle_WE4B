@@ -83,12 +83,11 @@ export class UeFormComponent implements OnChanges {
     try {
       console.log('👥 Chargement des utilisateurs assignés pour UE:', this.editingUe.id);
 
-      // ✅ CORRECTION: Typage explicite pour éviter l'erreur TypeScript
+      console.log('🔍 Récupération des participants pour l\'UE:', this.editingUe.id);
       const participants: any = await this.uesService.getParticipantsByUe(this.editingUe.id).toPromise();
 
       console.log('📥 Participants reçus:', participants);
 
-      // ✅ CORRECTION: Vérification de type avec casting approprié
       if (Array.isArray(participants)) {
         this.assignedUsers = participants as User[];
       } else if (participants && typeof participants === 'object' && 'data' in participants && Array.isArray(participants.data)) {
@@ -104,7 +103,7 @@ export class UeFormComponent implements OnChanges {
       console.error('❌ Erreur lors du chargement des utilisateurs assignés:', error);
       this.assignedUsers = [];
 
-      // ✅ FALLBACK: Essayer de récupérer depuis les données de l'UE elle-même
+      //  Essayer de récupérer depuis les données de l'UE elle-même
       if (this.editingUe.participants && Array.isArray(this.editingUe.participants)) {
         console.log('🔄 Utilisation des participants depuis les données UE');
         this.tryLoadUsersFromIds(this.editingUe.participants);
@@ -112,7 +111,6 @@ export class UeFormComponent implements OnChanges {
     }
   }
 
-  // ✅ MÉTHODE: Fallback pour charger les utilisateurs depuis leurs IDs
   private async tryLoadUsersFromIds(participantIds: string[]) {
     try {
       console.log('🔍 Tentative de chargement des utilisateurs depuis les IDs:', participantIds);
@@ -145,7 +143,6 @@ export class UeFormComponent implements OnChanges {
     this.submitting = true;
 
     try {
-      // ✅ CORRECTION: Créer FormData selon le besoin du service
       const formData = this.prepareFormData();
 
       console.log('📤 Données préparées pour envoi:', formData);
@@ -167,7 +164,7 @@ export class UeFormComponent implements OnChanges {
     }
   }
 
-  // ✅ CORRECTION: Retourner FormData pour les uploads de fichiers
+
   private prepareFormData(): FormData {
     const formValue = this.ueForm.value;
     const formData = new FormData();

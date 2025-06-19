@@ -82,7 +82,6 @@ export class UesService {
     console.log('🚀 UesService.createUe appelé avec FormData');
     console.log('📤 Données envoyées:', this.logFormData(ueData));
 
-    // ✅ IMPORTANT: Ne pas définir Content-Type pour FormData
     // Le navigateur le fera automatiquement avec la boundary correcte
     return this.http.post<CreateUeResponse>(`${this.apiUrl}`, ueData)
       .pipe(
@@ -191,7 +190,7 @@ export class UesService {
         map(response => {
           console.log('✅ Réponse getParticipantsByUe brute:', response);
 
-          // ✅ CORRECTION: Gestion de différents formats de réponse
+
           if (Array.isArray(response)) {
             console.log('📋 Format tableau direct');
             return response;

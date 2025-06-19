@@ -3,7 +3,6 @@ const router = express.Router();
 const Departement = require('../models/departement.model');
 const { logAction } = require('../utils/logActions');
 
-// ✅ IMPORTANT: La route /search DOIT être AVANT /:id
 // GET /api/departements/search - Rechercher des départements
 router.get('/search', async (req, res) => {
   try {
@@ -82,7 +81,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ✅ La route /:id DOIT être APRÈS les routes spécifiques
 // GET /api/departements/:id - Récupérer un département par ID
 router.get('/:id', async (req, res) => {
   try {

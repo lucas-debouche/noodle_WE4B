@@ -91,7 +91,6 @@ export class UeRegistrationComponent implements OnInit {
     ];
   }
 
-  // ✅ CORRECTION: Actualisation après création
   async onUeCreated(ue: Ue) {
     console.log('🎉 UE créée, actualisation des données...');
     this.success = 'UE créée avec succès !';

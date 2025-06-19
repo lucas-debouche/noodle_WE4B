@@ -119,7 +119,6 @@ app.use((error, req, res, next) => {
   });
 });
 
-// ✅ CORRECTION: Route 404 pour les APIs (pattern corrigé)
 app.use('/api', (req, res) => {
   console.log('❌ Route API non trouvée:', req.method, req.path);
   res.status(404).json({

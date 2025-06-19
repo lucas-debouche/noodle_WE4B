@@ -3,7 +3,6 @@ const router = express.Router();
 const forumsController = require('../controllers/forums.controller');
 const authMiddleware = require('../security/middleware_auth');
 
-// ✅ IMPORTANT: Routes spécifiques AVANT les routes avec paramètres
 
 // Routes spécifiques (sans paramètres) - DOIVENT être en premier
 router.get('/download/:filename', forumsController.downloadFile);
@@ -71,7 +70,6 @@ router.delete(
   forumsController.deleteForum
 );
 
-// ✅ Route générale avec paramètre - DOIT être en dernier
 router.get('/:ueId', forumsController.getForumsByUe);
 
 module.exports = router;
