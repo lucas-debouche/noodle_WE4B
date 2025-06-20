@@ -3,11 +3,7 @@ const mongoose = require('mongoose');
 const postSchema = new mongoose.Schema({
   utilisateur_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur', required: true },
   type_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Type', required: true },
-  priorite_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Priorite',
-    required: true,
-  },
+  priorite_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Priorite', required: true },
   ue_id: { type: mongoose.Schema.Types.ObjectId, ref: 'UE', required: true },
   titre: { type: String, required: true },
   contenu: { type: String, required: true },

@@ -14,4 +14,8 @@ export class PrioriteService {
   getPriorites(): Observable<Priorite[]> {
     return this.http.get<Priorite[]>(this.apiUrl);
   }
+
+  getPrioriteById(id: string): Observable<Priorite> {
+    return this.http.get<Priorite>(`${this.apiUrl}/${id}`);
+  }
 }

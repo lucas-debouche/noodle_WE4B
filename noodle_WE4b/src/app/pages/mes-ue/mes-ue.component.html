@@ -15,6 +15,7 @@
     <app-create-post-ue
       *ngIf="showCreatePostModal"
       [ueId]="selectedUeId"
+      [currentUser]="currentUser"
       (close)="closeCreatePostModal()"
       (postCreated)="onPostCreated($event)">
     </app-create-post-ue>

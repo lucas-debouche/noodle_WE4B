@@ -58,6 +58,8 @@ export class MesUeComponent implements OnInit {
 
   // Appelé par chaque section quand ses posts sont chargés
   onPostsLoaded(section: string, posts: Post[]) {
+    // Trie les posts par date_publication décroissante (plus récent en premier)
+    posts = posts.slice().sort((a, b) => new Date(b.date_publication).getTime() - new Date(a.date_publication).getTime());
     this.sectionPosts[section] = posts;
     // Initialise les états "fait" à partir du champ faitPar et de l'utilisateur courant
     const userId = (this.currentUser as any)._id || (this.currentUser as any).id;
@@ -112,5 +114,3 @@ export class MesUeComponent implements OnInit {
     this.closeCreatePostModal();
   }
 }
-
-

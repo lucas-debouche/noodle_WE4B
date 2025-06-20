@@ -27,7 +27,13 @@ export class PostsService {
     });
   }
 
-  createPost(formData: FormData): Observable<Post> {
-    return this.http.post<Post>(`${this.apiUrl}`, formData);
+  createPost(data: any, isFormData = false): Observable<Post> {
+    if (isFormData) {
+      return this.http.post<Post>(`${this.apiUrl}`, data);
+    } else {
+      return this.http.post<Post>(`${this.apiUrl}`, data, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }
 }

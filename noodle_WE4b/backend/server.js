@@ -8,6 +8,7 @@ const ueRoutes = require('./routes/ue.routes');
 const postRoutes = require('./routes/post.routes');
 const authRoutes = require('./routes/auth.routes');
 const prioriteRoutes = require('./routes/priorite.routes');
+const typeRoutes = require('./routes/type.routes');
 const path = require('path');
 
 
@@ -27,6 +28,7 @@ app.use('/api/ue', ueRoutes);
 app.use('/api/post', postRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/priorite', prioriteRoutes);
+app.use('/api/type', typeRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 

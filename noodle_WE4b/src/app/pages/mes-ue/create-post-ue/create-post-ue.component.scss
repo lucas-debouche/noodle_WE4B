@@ -12,7 +12,8 @@
   z-index: 1001;
   min-height: 0;
   animation: modalIn 0.18s cubic-bezier(.4,1.6,.6,1) both;
-  position: fixed;
+  max-height: 90vh;
+  overflow-y: auto;
 
   @keyframes modalIn {
     from { opacity: 0; transform: translate(-50%, -60%) scale(0.95);}
@@ -22,7 +23,7 @@
   h2 {
     margin-top: 0;
     color: #e65100;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     margin-bottom: 18px;
     text-align: center;
     font-weight: 700;
@@ -33,8 +34,9 @@
     gap: 10px;
 
     .modal-title-icon {
-      font-size: 1.6em;
+      font-size: 1.7em;
       vertical-align: middle;
+      margin-right: 6px;
     }
   }
 
@@ -57,7 +59,7 @@
         gap: 6px;
 
         .icon {
-          font-size: 1.1em;
+          font-size: 1.15em;
         }
       }
 
@@ -65,7 +67,8 @@
       input[type="datetime-local"],
       input[type="file"],
       select,
-      textarea {
+      textarea,
+      input#titre {
         border: 1.5px solid #ffe0b2;
         border-radius: 7px;
         padding: 7px 10px;
@@ -84,6 +87,13 @@
       textarea {
         min-height: 70px;
         resize: vertical;
+      }
+
+      .input-error {
+        color: #d32f2f;
+        font-size: 0.97em;
+        margin-top: 2px;
+        margin-left: 2px;
       }
     }
 
@@ -184,5 +194,6 @@
     min-width: 0;
     width: 98vw;
     padding: 18px 4vw 18px 4vw;
+    max-height: 98vh;
   }
 }

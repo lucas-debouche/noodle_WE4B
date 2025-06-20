@@ -9,7 +9,12 @@
       </ng-container>
     </div>
     <div class="post-meta">
-      <span class="post-title">{{ post.titre }}</span>
+      <span class="post-title">
+        {{ post.titre }}
+      </span>
+      <ng-container *ngIf="getPrioriteNom(post) === 'important'">
+        <span class="important-icon" title="Important">&#9888;</span>
+      </ng-container>
       <span class="post-date">{{ post.date_publication | date:'dd/MM/yyyy HH:mm' }}</span>
       <span class="post-user"
             *ngIf="post.utilisateur_id && isUtilisateurObj(post.utilisateur_id) && post.utilisateur_id.prenom && post.utilisateur_id.nom">
