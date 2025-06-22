@@ -26,7 +26,10 @@
       </span>
     </div>
     <div class="fait-btn-container">
-      <button class="fait-btn" [ngClass]="{fait: fait}" (click)="toggleFait()">
+      <button class="fait-btn"
+              *ngIf="currentUser?.role?.includes('ROLE_USER')"
+              [ngClass]="{fait: fait}"
+              (click)="toggleFait()">
         {{ fait ? 'Fait' : 'À faire' }}
       </button>
       <span class="fait-count">
@@ -68,17 +71,49 @@
       <div *ngIf="post.contenu" class="post-message">{{ post.contenu }}</div>
     </div>
     <div *ngSwitchCase="'devoir'" class="post-content">
-      <div class="post-devoir">
-        <strong>Devoir à rendre</strong>
-        <span *ngIf="post.date_rendu" class="devoir-date">• À rendre pour le {{ post.date_rendu | date:'dd/MM/yyyy HH:mm' }}</span>
+      <div *ngIf="isUser()">
+        <div class="post-devoir">
+          <span *ngIf="post.date_rendu" class="devoir-date">Devoir à rendre pour le {{ post.date_rendu | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div *ngIf="post.contenu" class="post-message">{{ post.contenu }}</div>
+        <div *ngIf="post.fichier_nom" class="post-file">
+          <strong>
+            <span class="file-icon">📎</span> Fichier à rendre :
+          </strong>
+          <span class="file-name">{{ post.fichier_nom }}</span>
+        </div>
+        <!-- Bloc de soumission de devoir -->
+        <div class="devoir-submit-block">
+          <label *ngIf="!fait" class="devoir-upload-label">
+            <input type="file" (change)="onDevoirFileChange($event)" [disabled]="fait" />
+          </label>
+          <button
+            *ngIf="!fait"
+            class="devoir-submit-btn"
+            [disabled]="!devoirFile"
+            (click)="submitDevoir()"
+          >
+            Soumettre
+          </button>
+          <button
+            *ngIf="fait"
+            class="devoir-submit-btn"
+            (click)="enableModifyDevoir()"
+          >
+            Modifier le fichier
+          </button>
+          <span *ngIf="fait" class="devoir-fait-label">Fichier soumis</span>
+          <span *ngIf="devoirFileName" class="devoir-file-name">{{ devoirFileName }}</span>
+        </div>
       </div>
-      <div *ngIf="post.contenu" class="post-message">{{ post.contenu }}</div>
-      <div *ngIf="post.fichier_nom" class="post-file">
-        <strong>
-          <span class="file-icon">📎</span> Fichier à rendre :
-        </strong>
-        <span class="file-name">{{ post.fichier_nom }}</span>
+      <div *ngIf="isProf()">
+        <div *ngFor="let rendu of post.rendus">
+          <a [href]="'/uploads/' + rendu.fichier_chemin" target="_blank">{{ rendu.fichier_nom }}</a>
+          par {{ rendu.utilisateur_id.prenom }} {{ rendu.utilisateur_id.nom }} le {{ rendu.date_rendu | date:'dd/MM/yyyy HH:mm' }}
+        </div>
       </div>
+
+
     </div>
     <div *ngSwitchDefault class="post-content">
       <div class="post-message">{{ post.contenu }}</div>

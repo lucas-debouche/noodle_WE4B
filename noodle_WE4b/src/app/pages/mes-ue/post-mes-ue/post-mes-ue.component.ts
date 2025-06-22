@@ -17,6 +17,8 @@ export class PostMesUeComponent implements OnInit {
   @Output() faitChange = new EventEmitter<boolean>();
   currentUser!: User;
   faitCount: number = 0;
+  devoirFile: File | null = null;
+  devoirFileName: string = '';
 
   constructor(
     private utilisateurService: UtilisateurService,
@@ -89,5 +91,36 @@ export class PostMesUeComponent implements OnInit {
       return (post.priorite_id as any).nom;
     }
     return undefined;
+  }
+
+  onDevoirFileChange(event: any) {
+    const file = event.target.files[0];
+    this.devoirFile = file ? file : null;
+    this.devoirFileName = file ? file.name : '';
+  }
+
+  isProf(): boolean {
+    return this.currentUser?.role?.includes('ROLE_PROF');
+  }
+  isUser(): boolean {
+    return this.currentUser?.role?.includes('ROLE_USER');
+  }
+
+  submitDevoir() {
+    if (!this.devoirFile) return;
+    const formData = new FormData();
+    formData.append('rendu', this.devoirFile);
+    formData.append('utilisateur_id', this.currentUser._id);
+    this.postsService.uploadRendu(this.post._id, formData).subscribe({
+      next: () => {
+        this.fait = true;
+      }
+    });
+  }
+
+  enableModifyDevoir() {
+    this.fait = false;
+    this.devoirFile = null;
+    this.devoirFileName = '';
   }
 }

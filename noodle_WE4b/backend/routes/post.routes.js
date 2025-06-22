@@ -39,6 +39,27 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+const renduStorage = multer.diskStorage({
+  destination: async function (req, file, cb) {
+    try {
+      const post = await Post.findById(req.params.id).populate('ue_id');
+      if (!post) return cb(new Error('Post non trouvé'));
+      const ue = post.ue_id;
+      const categorie = post.categorie;
+      const uploadPath = path.join(__dirname, '..', 'uploads', 'ue', ue.code, 'posts', categorie, 'rendu');
+      fs.mkdirSync(uploadPath, { recursive: true });
+      cb(null, uploadPath);
+    } catch (err) {
+      cb(err);
+    }
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+const uploadRendu = multer({ storage: renduStorage });
+
 // Obtenir tous les posts
 router.get('/', async (req, res) => {
   try {
@@ -147,6 +168,30 @@ router.patch('/:id/fait', async (req, res) => {
     res.json({ success: true, faitPar: post.faitPar });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/rendu', uploadRendu.single('rendu'), async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post non trouvé' });
+    const userId = req.body.utilisateur_id;
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'Aucun fichier reçu' });
+
+    // Ajoute le rendu
+    post.rendus.push({
+      utilisateur_id: userId,
+      fichier_nom: file.originalname,
+      fichier_type: file.mimetype,
+      fichier_taille: file.size,
+      fichier_chemin: path.relative(path.join(__dirname, '..'), file.path).replace(/\\/g, '/'),
+      date_rendu: new Date()
+    });
+    await post.save();
+    res.status(201).json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 

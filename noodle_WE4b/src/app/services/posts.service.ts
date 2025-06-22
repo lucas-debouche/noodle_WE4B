@@ -36,4 +36,8 @@ export class PostsService {
       });
     }
   }
+
+  uploadRendu(postId: string, formData: FormData) {
+    return this.http.post(`${this.apiUrl}/${postId}/rendu`, formData);
+  }
 }

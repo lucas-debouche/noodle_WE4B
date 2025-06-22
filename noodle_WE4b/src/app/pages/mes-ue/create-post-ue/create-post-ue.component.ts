@@ -63,12 +63,13 @@ export class CreatePostUeComponent implements OnInit {
       categorie: ['TP', Validators.required]
     });
 
-    this.postForm.get('type')?.valueChanges.subscribe(value => {
-      this.type = value;
-    });
+    if (this.selectedTypeNom === 'devoir') {
+      this.postForm.get('date_rendu')?.setValidators([Validators.required]);
+    }
 
     this.postForm.get('type')?.valueChanges.subscribe(val => {
       this.type = val;
+      console.log(val);
       if (val === 'devoir') {
         this.postForm.get('date_rendu')?.setValidators([Validators.required]);
       } else {
@@ -117,10 +118,12 @@ export class CreatePostUeComponent implements OnInit {
       date_publication: new Date().toISOString(),
     };
 
-    if (this.type === 'devoir') {
-      payload.date_rendu = this.postForm.value.date_rendu;
+    if (this.selectedTypeNom === 'devoir') {
+      const dateRendu = this.postForm.value.date_rendu;
+      // Conversion en ISO string si non vide
+      payload.date_rendu = dateRendu ? new Date(dateRendu).toISOString() : null;
     }
-    if (this.selectedTypeNom === 'fichier' || this.selectedTypeNom === 'devoir') {
+    if (this.selectedTypeNom === 'fichier') {
       const formData = new FormData();
       Object.keys(payload).forEach(key => formData.append(key, payload[key]));
       if (this.file) {

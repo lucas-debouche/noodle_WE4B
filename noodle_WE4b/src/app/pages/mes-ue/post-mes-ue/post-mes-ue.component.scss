@@ -184,4 +184,48 @@
     margin-left: 8px;
     vertical-align: middle;
   }
+
+  .devoir-submit-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+
+    .devoir-upload-label input[type="file"] {
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .devoir-submit-btn {
+      background: #ff9800;
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      padding: 6px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      &:hover {
+        background: #fb8c00;
+      }
+      &:disabled {
+        background: #ffe0b2;
+        color: #bdbdbd;
+        cursor: not-allowed;
+      }
+    }
+
+    .devoir-fait-label {
+      color: #388e3c;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .devoir-file-name {
+      color: #1976d2;
+      font-size: 1.05em;
+      margin-left: 8px;
+      font-weight: 500;
+    }
+  }
 }

@@ -1,3 +1,12 @@
+export interface Rendu {
+  utilisateur_id: string;
+  fichier_nom: string;
+  fichier_type: string;
+  fichier_taille: number;
+  fichier_chemin: string;
+  date_rendu: string | Date;
+}
+
 export interface Post {
   _id: string;
   utilisateur_id: {
@@ -19,5 +28,6 @@ export interface Post {
   date_publication: string | Date;
   date_rendu?: string | Date | null;
   faitPar?: string[];
+  rendus?: Rendu[];
 }
 

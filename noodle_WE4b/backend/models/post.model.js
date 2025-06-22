@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+const renduSchema = new mongoose.Schema({
+  utilisateur_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur', required: true },
+  fichier_nom: String,
+  fichier_type: String,
+  fichier_taille: Number,
+  fichier_chemin: String,
+  date_rendu: { type: Date, default: Date.now }
+}, { _id: false });
+
 const postSchema = new mongoose.Schema({
   utilisateur_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur', required: true },
   type_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Type', required: true },
@@ -15,6 +24,7 @@ const postSchema = new mongoose.Schema({
   date_rendu: { type: Date, default: null },
   faitPar: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur' }],
   fichier_chemin: { type: String, default: null },
+  rendus: [renduSchema]
 }, {
   timestamps: true,
 });

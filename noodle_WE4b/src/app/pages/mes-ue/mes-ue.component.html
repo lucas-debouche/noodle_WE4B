@@ -10,7 +10,13 @@
           <div class="progress-bar-inner" [style.width.%]="(nbFaits / nbPosts) * 100"></div>
         </div>
       </div>
-      <button class="create-post-btn" (click)="openCreatePostModal()">Créer un post</button>
+      <button
+        class="create-post-btn"
+        *ngIf="currentUser?.role?.includes('ROLE_USER')"
+        (click)="openCreatePostModal()"
+      >
+        Créer un post
+      </button>
     </div>
     <app-create-post-ue
       *ngIf="showCreatePostModal"
