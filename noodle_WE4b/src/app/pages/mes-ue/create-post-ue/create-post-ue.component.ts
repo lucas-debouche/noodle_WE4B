@@ -120,8 +120,7 @@ export class CreatePostUeComponent implements OnInit {
     if (this.type === 'devoir') {
       payload.date_rendu = this.postForm.value.date_rendu;
     }
-
-    if (this.type === 'fichier' || this.type === 'devoir') {
+    if (this.selectedTypeNom === 'fichier' || this.selectedTypeNom === 'devoir') {
       const formData = new FormData();
       Object.keys(payload).forEach(key => formData.append(key, payload[key]));
       if (this.file) {

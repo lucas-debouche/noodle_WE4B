@@ -1,30 +1,40 @@
 const express = require('express');
 const router = express.Router();
 const Post = require('../models/post.model');
-const Type = require('../models/type.model');
+const UE = require('../models/ue.model');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
 // Multer storage dynamique selon l'UE et la catégorie
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Pour multer, req.body n'est rempli qu'après le parsing du fichier,
-    // donc on utilise une astuce pour récupérer les champs depuis le FormData :
-    // Multer place les champs dans req.body mais sous forme de tableau si plusieurs valeurs
-    let ueId = req.body.ue_id || 'unknownUE';
-    let categorie = req.body.categorie || 'info';
-    if (Array.isArray(ueId)) ueId = ueId[0];
-    if (Array.isArray(categorie)) categorie = categorie[0];
-    // ../uploads/ue/[ueId]/posts/[categorie]
-    const dir = path.join(__dirname, '../uploads/ue', ueId, 'posts', categorie);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+  destination: async function (req, file, cb) {
+    try {
+      // Récupère l'ID de l'UE depuis le body (FormData)
+      const ueId = req.body.ue_id;
+      if (!ueId) return cb(new Error('ue_id manquant dans le formulaire'));
+
+      // Va chercher le code de l'UE en base
+      const ue = await UE.findById(ueId).exec();
+      if (!ue || !ue.code) return cb(new Error('UE non trouvée'));
+
+      // Catégorie (TP, TD, etc.)
+      const categorie = req.body.categorie || 'TP';
+
+      // Dossier cible : uploads/ue/[codeUe]/posts/[categorie]
+      const uploadPath = path.join(__dirname, '..', 'uploads', 'ue', ue.code, 'posts', categorie);
+
+      // Crée le dossier si besoin
+      fs.mkdirSync(uploadPath, { recursive: true });
+
+      cb(null, uploadPath);
+    } catch (err) {
+      cb(err);
     }
-    cb(null, dir);
   },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
   }
 });
 const upload = multer({ storage });
@@ -101,6 +111,7 @@ router.post('/', uploadFields, async (req, res) => {
       postData.fichier_taille = null;
       postData.fichier_chemin = null;
       // Pour debug
+      console.log('req.files:', req.files);
       console.log("Aucun fichier reçu pour ce post.");
     }
 
