@@ -14,6 +14,7 @@ const postSchema = new mongoose.Schema({
   date_publication: { type: Date, required: true },
   date_rendu: { type: Date, default: null },
   faitPar: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur' }],
+  fichier_chemin: { type: String, default: null },
 }, {
   timestamps: true,
 });

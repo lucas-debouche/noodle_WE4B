@@ -102,13 +102,14 @@ export class MesUeComponent implements OnInit {
 
   // Rafraîchit la section concernée après création
   onPostCreated(newPost: Post) {
+    // Utilise la catégorie pour déterminer la section
     let section = 'info';
-    if (newPost.type_id && typeof newPost.type_id === 'object' && 'nom' in newPost.type_id) {
-      section = (newPost.type_id as any).nom;
+    if (newPost.categorie && this.sections.includes(newPost.categorie)) {
+      section = newPost.categorie;
     }
     if (this.sectionPosts[section]) {
-      this.sectionPosts[section].push(newPost);
-      this.sectionFaitStates[section].push(false);
+      this.sectionPosts[section].unshift(newPost); // Ajoute en haut (ordre décroissant)
+      this.sectionFaitStates[section].unshift(false);
       this.updateAllPostsAndFaits();
     }
     this.closeCreatePostModal();

@@ -84,6 +84,7 @@ export class PostMesUeComponent implements OnInit {
   }
 
   getPrioriteNom(post: Post): string | undefined {
+    //console.log(post);
     if (typeof post.priorite_id === 'object' && post.priorite_id !== null && 'nom' in post.priorite_id) {
       return (post.priorite_id as any).nom;
     }
