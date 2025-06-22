@@ -19,6 +19,11 @@ export class PostMesUeComponent implements OnInit {
   faitCount: number = 0;
   devoirFile: File | null = null;
   devoirFileName: string = '';
+  showRendusModal = false;
+  showNoteInputIndex: number | null = null;
+  noteInputs: { [index: number]: number } = {};
+  renduUtilisateur: any = null;
+  etatRendu: string = '';
 
   constructor(
     private utilisateurService: UtilisateurService,
@@ -36,11 +41,23 @@ export class PostMesUeComponent implements OnInit {
         } else {
           this.faitCount = 0;
         }
+        // Recherche du rendu de l'utilisateur connecté pour ce devoir
+        if (this.post.rendus && Array.isArray(this.post.rendus)) {
+          this.renduUtilisateur = this.post.rendus.find(
+            r => (r.utilisateur_id && (r.utilisateur_id._id || r.utilisateur_id) === userId)
+          );
+          if (this.renduUtilisateur) {
+            this.fait = true;
+            this.devoirFileName = this.renduUtilisateur.fichier_nom;
+            this.etatRendu = this.renduUtilisateur.etat_rendu;
+          }
+        }
       },
       error: (err) => {
         console.error('Erreur lors de la récupération de l\'utilisateur :', err);
       }
     });
+    console.log(this.post.rendus);
   }
 
   updateFaitCount() {
@@ -113,7 +130,20 @@ export class PostMesUeComponent implements OnInit {
     formData.append('utilisateur_id', this.currentUser._id);
     this.postsService.uploadRendu(this.post._id, formData).subscribe({
       next: () => {
+        // Recharge le rendu utilisateur après soumission
         this.fait = true;
+        this.devoirFileName = this.devoirFile?.name || '';
+        // Optionnel : recharger le post ou juste ajouter le rendu localement
+        if (!this.post.rendus) this.post.rendus = [];
+        this.post.rendus.push({
+          utilisateur_id: { _id: this.currentUser._id, nom: this.currentUser.nom, prenom: this.currentUser.prenom },
+          fichier_nom: this.devoirFileName,
+          fichier_type: this.devoirFile?.type,
+          fichier_taille: this.devoirFile?.size,
+          fichier_chemin: '', // Peut être mis à jour par un refresh ou une nouvelle requête
+          date_rendu: new Date()
+        });
+        this.renduUtilisateur = this.post.rendus[this.post.rendus.length - 1];
       }
     });
   }
@@ -122,5 +152,43 @@ export class PostMesUeComponent implements OnInit {
     this.fait = false;
     this.devoirFile = null;
     this.devoirFileName = '';
+    this.renduUtilisateur = null;
+  }
+
+  openRendusModal() {
+    this.showRendusModal = true;
+  }
+
+  closeRendusModal() {
+    this.showRendusModal = false;
+  }
+
+  toggleNoteInput(index: number) {
+    if (this.showNoteInputIndex === index) {
+      this.showNoteInputIndex = null;
+    } else {
+      this.showNoteInputIndex = index;
+      const note = this.post.rendus && this.post.rendus[index]?.note;
+      this.noteInputs[index] = note !== null && note !== undefined ? note : 0;
+    }
+  }
+
+  validerNote(rendu: any, index: number) {
+    const note = this.noteInputs[index];
+    if (note === null || note === undefined || isNaN(note) || note < 0 || note > 20) {
+      alert('Veuillez saisir une note valide entre 0 et 20.');
+      return;
+    }
+    this.postsService.attribuerNote(this.post._id, rendu.utilisateur_id._id, note).subscribe({
+      next: (res: any) => {
+        if (this.post.rendus && this.post.rendus[index]) {
+          this.post.rendus[index].note = note;
+        }
+        this.showNoteInputIndex = null;
+      },
+      error: () => {
+        alert('Erreur lors de l\'attribution de la note.');
+      }
+    });
   }
 }

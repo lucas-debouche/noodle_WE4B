@@ -66,7 +66,8 @@ router.get('/', async (req, res) => {
     const posts = await Post.find()
       .populate('utilisateur_id', 'nom prenom email')
       .populate('type_id', 'nom')
-      .populate('priorite_id', 'nom');
+      .populate('priorite_id', 'nom')
+      .populate('rendus.utilisateur_id', 'nom prenom');
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -79,7 +80,8 @@ router.get('/ue/:ueId', async (req, res) => {
     const posts = await Post.find({ ue_id: req.params.ueId })
       .populate('utilisateur_id', 'nom prenom email')
       .populate('type_id', 'nom')
-      .populate('priorite_id', 'nom');
+      .populate('priorite_id', 'nom')
+      .populate('rendus.utilisateur_id', 'nom prenom');
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -92,7 +94,8 @@ router.get('/:id', async (req, res) => {
     const post = await Post.findById(req.params.id)
       .populate('utilisateur_id', 'nom prenom email')
       .populate('type_id', 'nom')
-      .populate('priorite_id', 'nom');
+      .populate('priorite_id', 'nom')
+      .populate('rendus.utilisateur_id', 'nom prenom');
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
@@ -141,7 +144,8 @@ router.post('/', uploadFields, async (req, res) => {
     const populatedPost = await Post.findById(post._id)
       .populate('utilisateur_id', 'nom prenom email')
       .populate('type_id', 'nom')
-      .populate('priorite_id', 'nom');
+      .populate('priorite_id', 'nom')
+      .populate('rendus.utilisateur_id', 'nom prenom');
     res.status(201).json(populatedPost);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -186,10 +190,33 @@ router.post('/:id/rendu', uploadRendu.single('rendu'), async (req, res) => {
       fichier_type: file.mimetype,
       fichier_taille: file.size,
       fichier_chemin: path.relative(path.join(__dirname, '..'), file.path).replace(/\\/g, '/'),
-      date_rendu: new Date()
+      date_rendu: new Date(),
+      etat_rendu: 'en attente'
     });
+
     await post.save();
     res.status(201).json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.patch('/:postId/rendu/:userId/note', async (req, res) => {
+  const { note } = req.body;
+  if (typeof note !== 'number' || note < 0 || note > 20) {
+    return res.status(400).json({ error: 'Note invalide' });
+  }
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) return res.status(404).json({ error: 'Post non trouvé' });
+    const rendu = post.rendus.find(r => r.utilisateur_id.toString() === req.params.userId);
+    if (!rendu) return res.status(404).json({ error: 'Rendu non trouvé' });
+    rendu.note = note;
+
+    rendu.etat_rendu = 'corrigé';
+
+    await post.save();
+    res.json({ success: true, rendu });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

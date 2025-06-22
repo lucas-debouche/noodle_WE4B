@@ -82,41 +82,95 @@
           </strong>
           <span class="file-name">{{ post.fichier_nom }}</span>
         </div>
-        <!-- Bloc de soumission de devoir -->
         <div class="devoir-submit-block">
-          <label *ngIf="!fait" class="devoir-upload-label">
-            <input type="file" (change)="onDevoirFileChange($event)" [disabled]="fait" />
-          </label>
-          <button
-            *ngIf="!fait"
-            class="devoir-submit-btn"
-            [disabled]="!devoirFile"
-            (click)="submitDevoir()"
-          >
-            Soumettre
-          </button>
-          <button
-            *ngIf="fait"
-            class="devoir-submit-btn"
-            (click)="enableModifyDevoir()"
-          >
-            Modifier le fichier
-          </button>
-          <span *ngIf="fait" class="devoir-fait-label">Fichier soumis</span>
-          <span *ngIf="devoirFileName" class="devoir-file-name">{{ devoirFileName }}</span>
+          <ng-container *ngIf="renduUtilisateur; else soumissionDevoir">
+            <span class="devoir-fait-label">Fichier soumis :</span>
+            <a
+              *ngIf="renduUtilisateur.fichier_chemin"
+              [href]="'http://localhost:3000/' + renduUtilisateur.fichier_chemin"
+              [attr.download]="renduUtilisateur.fichier_nom"
+              class="devoir-file-name"
+              target="_blank"
+              rel="noopener"
+            >{{ renduUtilisateur.fichier_nom }}</a>
+            <span *ngIf="!renduUtilisateur.fichier_chemin" class="devoir-file-name">{{ renduUtilisateur.fichier_nom }}</span>
+            <button class="devoir-submit-btn" (click)="enableModifyDevoir()">Modifier le fichier</button>
+          </ng-container>
+          <ng-template #soumissionDevoir>
+            <label *ngIf="!fait" class="devoir-upload-label">
+              <input type="file" (change)="onDevoirFileChange($event)" [disabled]="fait" />
+            </label>
+            <button
+              *ngIf="!fait"
+              class="devoir-submit-btn"
+              [disabled]="!devoirFile"
+              (click)="submitDevoir()"
+            >
+              Soumettre
+            </button>
+            <span *ngIf="devoirFileName" class="devoir-file-name">{{ devoirFileName }}</span>
+          </ng-template>
+          <div  class="etat-rendu" *ngIf=isUser()>
+            <button class="consulter-rendu-btn" *ngIf="renduUtilisateur && renduUtilisateur.fichier_chemin && etatRendu === 'corrigé'" >
+              Consulter le rendu
+            </button>
+            <span class="devoir-progress-label">
+            <span *ngIf="etatRendu === 'en_attente'">En attente</span>
+            <span *ngIf="etatRendu === 'corrigé'">Corrigé</span>
+            <span *ngIf="etatRendu === 'non_rendu'">Non rendu</span>
+          </span>
+          </div>
         </div>
       </div>
       <div *ngIf="isProf()">
-        <div *ngFor="let rendu of post.rendus">
-          <a [href]="'/uploads/' + rendu.fichier_chemin" target="_blank">{{ rendu.fichier_nom }}</a>
-          par {{ rendu.utilisateur_id.prenom }} {{ rendu.utilisateur_id.nom }} le {{ rendu.date_rendu | date:'dd/MM/yyyy HH:mm' }}
-        </div>
+        <button class="rendus-btn" (click)="openRendusModal()" *ngIf="post.rendus && post.rendus.length > 0">
+          Accéder aux rendus
+        </button>
       </div>
-
-
     </div>
     <div *ngSwitchDefault class="post-content">
       <div class="post-message">{{ post.contenu }}</div>
     </div>
   </ng-container>
+
+  <!-- Modal rendus -->
+  <div class="rendus-modal-backdrop" *ngIf="showRendusModal">
+    <div class="rendus-modal">
+      <div class="rendus-modal-header">
+        <span>Rendus du devoir</span>
+        <button class="close-modal-btn" (click)="closeRendusModal()">✕</button>
+      </div>
+      <div class="rendus-modal-content">
+        <div *ngIf="post.rendus && post.rendus.length > 0; else aucunRendu">
+          <div *ngFor="let rendu of post.rendus; let i = index" class="rendu-item">
+            <a [href]="'/uploads/' + rendu.fichier_chemin" target="_blank">{{ rendu.fichier_nom }}</a>
+            par {{ rendu.utilisateur_id?.prenom }} {{ rendu.utilisateur_id?.nom }}
+            <span class="rendu-date">({{ rendu.date_rendu | date:'dd/MM/yyyy HH:mm' }})</span>
+            <span class="rendu-note" *ngIf="rendu.note !== null && rendu.note !== undefined">
+              - Note : <strong>{{ rendu.note }}/20</strong>
+            </span>
+            <ng-container *ngIf="isProf()">
+              <button class="attribuer-note-btn" (click)="toggleNoteInput(i)">
+                {{ showNoteInputIndex === i ? 'Annuler' : (rendu.note !== null && rendu.note !== undefined ? 'Modifier la note' : 'Attribuer une note') }}
+              </button>
+              <div class="note-input-block" *ngIf="showNoteInputIndex === i">
+                <input
+                  type="number"
+                  min="0"
+                  max="20"
+                  [(ngModel)]="noteInputs[i]"
+                  class="note-input"
+                  placeholder="Note sur 20"
+                />
+                <button class="valider-note-btn" (click)="validerNote(rendu, i)">Valider</button>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+        <ng-template #aucunRendu>
+          <div class="aucun-rendu">Aucun rendu pour ce devoir.</div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
 </div>

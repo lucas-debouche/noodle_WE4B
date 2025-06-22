@@ -1,10 +1,16 @@
 export interface Rendu {
-  utilisateur_id: string;
+  utilisateur_id: {
+    _id?: string;
+    nom?: string;
+    prenom?: string;
+  }
   fichier_nom: string;
-  fichier_type: string;
-  fichier_taille: number;
+  fichier_type: string | undefined;
+  fichier_taille: number | undefined;
   fichier_chemin: string;
   date_rendu: string | Date;
+  note?: number | null;
+  etat_rendu?: 'non rendu' | 'en attente' | 'corrigé';
 }
 
 export interface Post {

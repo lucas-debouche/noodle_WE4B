@@ -187,9 +187,10 @@
 
   .devoir-submit-block {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 10px;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 2px;
+    position: relative;
 
     .devoir-upload-label input[type="file"] {
       display: inline-block;
@@ -227,5 +228,175 @@
       margin-left: 8px;
       font-weight: 500;
     }
+
+    .etat-rendu {
+      margin-left: auto;
+
+      .devoir-progress-label {
+        color: #ff9800;
+        border: 1px solid #ffb74d;
+        border-radius: 14px;
+        padding: 3px 14px;
+        font-weight: 600;
+        font-size: 1.01rem;
+        margin-left: 12px;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-align: right;
+
+        .note-icon {
+          font-size: 1.15rem;
+          margin-right: 4px;
+        }
+
+        .note-label {
+          font-size: 1.01rem;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .rendus-btn {
+    background: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    padding: 6px 18px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.15s;
+    &:hover {
+      background: #1565c0;
+    }
+  }
+
+  .rendus-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rendus-modal {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(33, 150, 243, 0.18);
+    padding: 28px 32px 22px 32px;
+    min-width: 320px;
+    max-width: 95vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .rendus-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: #1976d2;
+    margin-bottom: 18px;
+  }
+
+  .close-modal-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.15s;
+    &:hover {
+      color: #d32f2f;
+    }
+  }
+
+  .rendus-modal-content {
+    .rendu-item {
+      margin-bottom: 12px;
+      font-size: 1.08rem;
+      a {
+        color: #1976d2;
+        font-weight: 600;
+        margin-right: 8px;
+        text-decoration: underline;
+      }
+      .rendu-date {
+        color: #888;
+        font-size: 0.98em;
+        margin-left: 8px;
+      }
+    }
+    .aucun-rendu {
+      color: #bdbdbd;
+      font-style: italic;
+      font-size: 1.05rem;
+    }
+  }
+
+  .attribuer-note-btn {
+    background: #fff3e0;
+    color: #ff9800;
+    border: 1px solid #ffb74d;
+    border-radius: 14px;
+    padding: 3px 14px;
+    font-weight: 600;
+    font-size: 1.01rem;
+    margin-left: 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    &:hover {
+      background: #ffb74d;
+      color: #fff;
+    }
+  }
+
+  .note-input-block {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+  }
+
+  .note-input {
+    width: 60px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    border: 1px solid #ffb74d;
+    font-size: 1.01rem;
+    margin-right: 4px;
+  }
+
+  .valider-note-btn {
+    background: #81c784;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 3px 14px;
+    font-weight: 600;
+    font-size: 1.01rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    &:hover {
+      background: #388e3c;
+    }
+  }
+
+  .rendu-note {
+    margin-left: 10px;
+    color: #388e3c;
+    font-weight: 600;
+    font-size: 1.07em;
   }
 }

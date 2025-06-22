@@ -40,4 +40,8 @@ export class PostsService {
   uploadRendu(postId: string, formData: FormData) {
     return this.http.post(`${this.apiUrl}/${postId}/rendu`, formData);
   }
+
+  attribuerNote(postId: string, userId: string, note: number) {
+    return this.http.patch(`${this.apiUrl}/${postId}/rendu/${userId}/note`, { note });
+  }
 }

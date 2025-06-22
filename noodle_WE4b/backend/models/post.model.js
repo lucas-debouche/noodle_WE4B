@@ -6,7 +6,9 @@ const renduSchema = new mongoose.Schema({
   fichier_type: String,
   fichier_taille: Number,
   fichier_chemin: String,
-  date_rendu: { type: Date, default: Date.now }
+  date_rendu: { type: Date, default: Date.now },
+  note: { type: Number, min: 0, max: 20, default: null },
+  etat_rendu: { type: String, enum: ['non rendu', 'en attente', 'corrigé'], default: 'en_attente' },
 }, { _id: false });
 
 const postSchema = new mongoose.Schema({
