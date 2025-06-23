@@ -44,4 +44,8 @@ export class PostsService {
   attribuerNote(postId: string, userId: string, note: number) {
     return this.http.patch(`${this.apiUrl}/${postId}/rendu/${userId}/note`, { note });
   }
+
+  enregistrerCommentaire(postId: string, userId: string, commentaire: string) {
+    return this.http.patch(`${this.apiUrl}/${postId}/rendu/${userId}/commentaire`, { commentaire });
+  }
 }

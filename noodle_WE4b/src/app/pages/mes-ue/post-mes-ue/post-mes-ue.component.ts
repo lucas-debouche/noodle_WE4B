@@ -24,6 +24,8 @@ export class PostMesUeComponent implements OnInit {
   noteInputs: { [index: number]: number } = {};
   renduUtilisateur: any = null;
   etatRendu: string = '';
+  showCorrectionModal = false;
+
 
   constructor(
     private utilisateurService: UtilisateurService,
@@ -190,5 +192,25 @@ export class PostMesUeComponent implements OnInit {
         alert('Erreur lors de l\'attribution de la note.');
       }
     });
+  }
+
+  enregistrerCommentaire(rendu: any) {
+    if (!rendu.commentaire) return;
+    this.postsService.enregistrerCommentaire(this.post._id, rendu.utilisateur_id._id, rendu.commentaire).subscribe({
+      next: () => {
+        console.log('Commentaire enregistré avec succès');
+      },
+      error: (err) => {
+        console.error('Erreur lors de l\'enregistrement du commentaire :', err);
+      }
+    });
+  }
+
+  openCorrectionModal() {
+    this.showCorrectionModal = true;
+  }
+
+  closeCorrectionModal() {
+    this.showCorrectionModal = false;
   }
 }

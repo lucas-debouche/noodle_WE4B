@@ -9,9 +9,7 @@
       </ng-container>
     </div>
     <div class="post-meta">
-      <span class="post-title">
-        {{ post.titre }}
-      </span>
+      <span class="post-title">{{ post.titre }}</span>
       <ng-container *ngIf="getPrioriteNom(post) === 'important'">
         <span class="important-icon" title="Important">&#9888;</span>
       </ng-container>
@@ -20,157 +18,43 @@
             *ngIf="post.utilisateur_id && isUtilisateurObj(post.utilisateur_id) && post.utilisateur_id.prenom && post.utilisateur_id.nom">
         • {{ post.utilisateur_id.prenom }} {{ post.utilisateur_id.nom }}
       </span>
-      <span class="post-user"
-            *ngIf="post.utilisateur_id && (!isUtilisateurObj(post.utilisateur_id) || !post.utilisateur_id.prenom || !post.utilisateur_id.nom)">
-        • Utilisateur inconnu
-      </span>
     </div>
-    <div class="fait-btn-container">
-      <button class="fait-btn"
-              *ngIf="currentUser?.role?.includes('ROLE_USER')"
-              [ngClass]="{fait: fait}"
-              (click)="toggleFait()">
+    <div class="fait-btn-container" *ngIf="isUser()">
+      <button class="fait-btn" [ngClass]="{fait: fait}" (click)="toggleFait()">
         {{ fait ? 'Fait' : 'À faire' }}
       </button>
       <span class="fait-count">
-        <ng-container *ngIf="totalUsers > 0; else aucunUser">
-          <span class="fait-ratio">
-            <span class="fait-nb">{{ faitCount }}</span>
-            <span class="fait-sep">/</span>
-            <span class="fait-total">{{ totalUsers }}</span>
-          </span>
-        </ng-container>
-        <ng-template #aucunUser>
-          Aucun utilisateur assigné à l'UE
-        </ng-template>
+        {{ faitCount }} / {{ totalUsers }}
       </span>
     </div>
   </div>
 
   <ng-container [ngSwitch]="getTypeNom(post)">
-    <div *ngSwitchCase="'message'" class="post-content">
-      <div class="post-message">{{ post.contenu }}</div>
-    </div>
-    <div *ngSwitchCase="'fichier'" class="post-content">
-      <div class="post-file">
-        <strong>
-          <span class="file-icon">📎</span> Fichier :
-        </strong>
-        <span *ngIf="post.fichier_nom" class="file-name">
-          <a
-            [href]="'http://localhost:3000/' + post.fichier_chemin"
-            [attr.download]="post.fichier_nom"
-            class="file-name"
-            target="_blank"
-            rel="noopener"
-          >{{ post.fichier_nom }}
-          </a>
-        </span>
-        <span *ngIf="!post.fichier_nom" class="file-none">Aucun fichier</span>
-      </div>
-      <div *ngIf="post.contenu" class="post-message">{{ post.contenu }}</div>
-    </div>
-    <div *ngSwitchCase="'devoir'" class="post-content">
-      <div *ngIf="isUser()">
-        <div class="post-devoir">
-          <span *ngIf="post.date_rendu" class="devoir-date">Devoir à rendre pour le {{ post.date_rendu | date:'dd/MM/yyyy HH:mm' }}</span>
-        </div>
-        <div *ngIf="post.contenu" class="post-message">{{ post.contenu }}</div>
-        <div *ngIf="post.fichier_nom" class="post-file">
-          <strong>
-            <span class="file-icon">📎</span> Fichier à rendre :
-          </strong>
-          <span class="file-name">{{ post.fichier_nom }}</span>
-        </div>
-        <div class="devoir-submit-block">
-          <ng-container *ngIf="renduUtilisateur; else soumissionDevoir">
-            <span class="devoir-fait-label">Fichier soumis :</span>
-            <a
-              *ngIf="renduUtilisateur.fichier_chemin"
-              [href]="'http://localhost:3000/' + renduUtilisateur.fichier_chemin"
-              [attr.download]="renduUtilisateur.fichier_nom"
-              class="devoir-file-name"
-              target="_blank"
-              rel="noopener"
-            >{{ renduUtilisateur.fichier_nom }}</a>
-            <span *ngIf="!renduUtilisateur.fichier_chemin" class="devoir-file-name">{{ renduUtilisateur.fichier_nom }}</span>
-            <button class="devoir-submit-btn" (click)="enableModifyDevoir()">Modifier le fichier</button>
-          </ng-container>
-          <ng-template #soumissionDevoir>
-            <label *ngIf="!fait" class="devoir-upload-label">
-              <input type="file" (change)="onDevoirFileChange($event)" [disabled]="fait" />
-            </label>
-            <button
-              *ngIf="!fait"
-              class="devoir-submit-btn"
-              [disabled]="!devoirFile"
-              (click)="submitDevoir()"
-            >
-              Soumettre
-            </button>
-            <span *ngIf="devoirFileName" class="devoir-file-name">{{ devoirFileName }}</span>
-          </ng-template>
-          <div  class="etat-rendu" *ngIf=isUser()>
-            <button class="consulter-rendu-btn" *ngIf="renduUtilisateur && renduUtilisateur.fichier_chemin && etatRendu === 'corrigé'" >
-              Consulter le rendu
-            </button>
-            <span class="devoir-progress-label">
-            <span *ngIf="etatRendu === 'en_attente'">En attente</span>
-            <span *ngIf="etatRendu === 'corrigé'">Corrigé</span>
-            <span *ngIf="etatRendu === 'non_rendu'">Non rendu</span>
-          </span>
-          </div>
-        </div>
-      </div>
-      <div *ngIf="isProf()">
-        <button class="rendus-btn" (click)="openRendusModal()" *ngIf="post.rendus && post.rendus.length > 0">
-          Accéder aux rendus
-        </button>
-      </div>
-    </div>
+    <app-fichier-content *ngSwitchCase="'fichier'" [post]="post"></app-fichier-content>
+    <app-devoir-content *ngSwitchCase="'devoir'"
+                        [post]="post"
+                        [currentUser]="currentUser"
+                        [renduUtilisateur]="renduUtilisateur"
+                        [etatRendu]="etatRendu"
+                        (openCorrection)="openCorrectionModal()"
+                        (openRendus)="openRendusModal()"
+    >
+    </app-devoir-content>
     <div *ngSwitchDefault class="post-content">
       <div class="post-message">{{ post.contenu }}</div>
     </div>
   </ng-container>
 
-  <!-- Modal rendus -->
-  <div class="rendus-modal-backdrop" *ngIf="showRendusModal">
-    <div class="rendus-modal">
-      <div class="rendus-modal-header">
-        <span>Rendus du devoir</span>
-        <button class="close-modal-btn" (click)="closeRendusModal()">✕</button>
-      </div>
-      <div class="rendus-modal-content">
-        <div *ngIf="post.rendus && post.rendus.length > 0; else aucunRendu">
-          <div *ngFor="let rendu of post.rendus; let i = index" class="rendu-item">
-            <a [href]="'/uploads/' + rendu.fichier_chemin" target="_blank">{{ rendu.fichier_nom }}</a>
-            par {{ rendu.utilisateur_id?.prenom }} {{ rendu.utilisateur_id?.nom }}
-            <span class="rendu-date">({{ rendu.date_rendu | date:'dd/MM/yyyy HH:mm' }})</span>
-            <span class="rendu-note" *ngIf="rendu.note !== null && rendu.note !== undefined">
-              - Note : <strong>{{ rendu.note }}/20</strong>
-            </span>
-            <ng-container *ngIf="isProf()">
-              <button class="attribuer-note-btn" (click)="toggleNoteInput(i)">
-                {{ showNoteInputIndex === i ? 'Annuler' : (rendu.note !== null && rendu.note !== undefined ? 'Modifier la note' : 'Attribuer une note') }}
-              </button>
-              <div class="note-input-block" *ngIf="showNoteInputIndex === i">
-                <input
-                  type="number"
-                  min="0"
-                  max="20"
-                  [(ngModel)]="noteInputs[i]"
-                  class="note-input"
-                  placeholder="Note sur 20"
-                />
-                <button class="valider-note-btn" (click)="validerNote(rendu, i)">Valider</button>
-              </div>
-            </ng-container>
-          </div>
-        </div>
-        <ng-template #aucunRendu>
-          <div class="aucun-rendu">Aucun rendu pour ce devoir.</div>
-        </ng-template>
-      </div>
-    </div>
-  </div>
+  <app-correction-modal
+    *ngIf="showCorrectionModal"
+    [rendu]="renduUtilisateur"
+    (close)="closeCorrectionModal()">
+  </app-correction-modal>
+
+  <app-rendus-modal
+    *ngIf="showRendusModal"
+    [rendus]="post.rendus"
+    [isProf]="isProf()"
+    (close)="closeRendusModal()">
+  </app-rendus-modal>
 </div>

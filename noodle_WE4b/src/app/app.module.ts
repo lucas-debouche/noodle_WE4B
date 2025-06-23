@@ -18,6 +18,11 @@ import { SectionsUeComponent } from './pages/mes-ue/sections-ue/sections-ue.comp
 import { SidebarMesUeComponent } from './pages/mes-ue/sidebar-mes-ue/sidebar-mes-ue.component';
 import { PostMesUeComponent } from './pages/mes-ue/post-mes-ue/post-mes-ue.component';
 import { CreatePostUeComponent } from './pages/mes-ue/create-post-ue/create-post-ue.component';
+import { DevoirRenduComponent } from './pages/mes-ue/post-mes-ue/devoir-rendu/devoir-rendu.component';
+import { CorrectionModalComponent } from './pages/mes-ue/post-mes-ue/correction-modal/correction-modal.component';
+import { RendusModalComponent } from './pages/mes-ue/post-mes-ue/rendus-modal/rendus-modal.component';
+import { FichierContentComponent } from './pages/mes-ue/post-mes-ue/fichier-content/fichier-content.component';
+import { DevoirContentComponent } from './pages/mes-ue/post-mes-ue/devoir-content/devoir-content.component';
 
 @NgModule({
   declarations: [
@@ -34,6 +39,11 @@ import { CreatePostUeComponent } from './pages/mes-ue/create-post-ue/create-post
     SidebarMesUeComponent,
     PostMesUeComponent,
     CreatePostUeComponent,
+    DevoirRenduComponent,
+    CorrectionModalComponent,
+    RendusModalComponent,
+    FichierContentComponent,
+    DevoirContentComponent,
   ],
   imports: [
     BrowserModule,

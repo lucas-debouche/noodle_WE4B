@@ -222,4 +222,20 @@ router.patch('/:postId/rendu/:userId/note', async (req, res) => {
   }
 });
 
+router.patch('/:postId/rendu/:userId/commentaire', async (req, res) => {
+  const { commentaire } = req.body;
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) return res.status(404).json({ error: 'Post non trouvé' });
+    const rendu = post.rendus.find(r => r.utilisateur_id.toString() === req.params.userId);
+    if (!rendu) return res.status(404).json({ error: 'Rendu non trouvé' });
+    rendu.commentaire = commentaire;
+
+    await post.save();
+    res.json({ success: true, rendu });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 module.exports = router;

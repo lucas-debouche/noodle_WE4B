@@ -1,0 +1,65 @@
+<div class="rendus-modal-backdrop">
+  <div class="rendus-modal">
+    <div class="rendus-modal-header">
+      <span>Rendus du devoir</span>
+      <button class="close-modal-btn" (click)="closeModal()">✕</button>
+    </div>
+    <div class="rendus-modal-content">
+      <table class="rendus-table" *ngIf="rendus && rendus.length > 0; else aucunRendu">
+        <thead>
+        <tr>
+          <th>Nom du fichier</th>
+          <th>Utilisateur</th>
+          <th>Date de rendu</th>
+          <th>Note</th>
+          <th>Commentaire</th>
+          <th *ngIf="isProf">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let rendu of rendus; let i = index">
+          <td>
+            <a [href]="'/uploads/' + rendu.fichier_chemin" target="_blank">{{ rendu.fichier_nom }}</a>
+          </td>
+          <td>{{ rendu.utilisateur_id?.prenom }} {{ rendu.utilisateur_id?.nom }}</td>
+          <td>{{ rendu.date_rendu | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+              <span *ngIf="rendu.note !== null && rendu.note !== undefined">
+                {{ rendu.note }}/20
+              </span>
+          </td>
+          <td>
+            <input
+              *ngIf="isProf"
+              type="text"
+              [(ngModel)]="rendu.commentaire"
+              placeholder="Ajouter un commentaire"
+              (blur)="enregistrerCommentaire(rendu)"
+            />
+            <span *ngIf="!isProf">{{ rendu.commentaire || 'Aucun commentaire' }}</span>
+          </td>
+          <td *ngIf="isProf">
+            <button class="attribuer-note-btn" (click)="toggleNoteInput(i)">
+              {{ showNoteInputIndex === i ? 'Annuler' : (rendu.note !== null && rendu.note !== undefined ? 'Modifier la note' : 'Attribuer une note') }}
+            </button>
+            <div class="note-input-block" *ngIf="showNoteInputIndex === i">
+              <input
+                type="number"
+                min="0"
+                max="20"
+                [(ngModel)]="noteInputs[i]"
+                class="note-input"
+                placeholder="Note sur 20"
+              />
+              <button class="valider-note-btn" (click)="validerNote(rendu, i)">Valider</button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <ng-template #aucunRendu>
+        <div class="aucun-rendu">Aucun rendu pour ce devoir.</div>
+      </ng-template>
+    </div>
+  </div>
+</div>

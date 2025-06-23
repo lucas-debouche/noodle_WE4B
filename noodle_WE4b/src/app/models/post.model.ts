@@ -11,6 +11,7 @@ export interface Rendu {
   date_rendu: string | Date;
   note?: number | null;
   etat_rendu?: 'non rendu' | 'en attente' | 'corrigé';
+  commentaire?: string;
 }
 
 export interface Post {
