@@ -1,0 +1,167 @@
+.participant-card {
+  background: var(--card-background);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+  transition: var(--transition);
+  overflow: hidden;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  &.professor {
+    border-left: 6px solid var(--professor-color);
+  }
+
+  &.student {
+    border-left: 6px solid var(--student-color);
+  }
+
+  .card-header {
+    padding: 25px 25px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #f1f3f4;
+
+    .participant-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: var(--transition);
+
+      .avatar-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+
+      &.professor {
+        background: linear-gradient(135deg, var(--professor-color), #7d3c98);
+      }
+
+      &.default,
+      &.promotion-0 {
+        background: linear-gradient(135deg, var(--student-color), var(--secondary-hover));
+      }
+
+      &.promotion-1 {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+      }
+
+      &.promotion-2 {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+      }
+
+      &.promotion-3 {
+        background: linear-gradient(135deg, var(--success-color), #229954);
+      }
+
+      &.promotion-4 {
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+      }
+
+      &.inactive {
+        background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+      }
+
+      .avatar-text {
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+      }
+    }
+
+    .participant-status {
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-size: 16px;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        transition: var(--transition);
+
+        &.actif {
+          background: #d4edda;
+          border-color: var(--success-color);
+        }
+
+        &.inactif {
+          background: #f8d7da;
+          border-color: var(--danger-color);
+        }
+      }
+    }
+  }
+
+  .card-body {
+    padding: 20px 25px 25px;
+
+    .participant-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 15px;
+      line-height: 1.3;
+    }
+
+    .participant-info {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+
+      .info-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+
+        .icon {
+          font-size: 14px;
+          opacity: 0.7;
+          min-width: 14px;
+        }
+
+        span {
+          word-break: break-word;
+        }
+
+        &.role {
+          background: #f8f9fa;
+          padding: 6px 12px;
+          border-radius: 20px;
+          border: 1px solid #e9ecef;
+          align-self: flex-start;
+          font-weight: 600;
+          font-size: 0.85rem;
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 480px) {
+  .participant-card {
+    .card-header,
+    .card-body {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+  }
+}

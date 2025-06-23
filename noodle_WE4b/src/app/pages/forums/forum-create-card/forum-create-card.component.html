@@ -1,0 +1,29 @@
+<div class="create-forum-card">
+  <div class="card-icon">✨</div>
+  <div class="card-content">
+    <h2>Créer un nouveau sujet</h2>
+    <div class="input-group">
+      <input
+        [(ngModel)]="newTitle"
+        placeholder="Titre du sujet de discussion..."
+        class="form-control"
+        (keyup.enter)="onCreateForum()"
+      />
+      <button
+        (click)="onCreateForum()"
+        class="btn-create"
+        [disabled]="!isValidTitle() || creating"
+        [class.loading]="creating"
+      >
+        <span *ngIf="!creating">
+          <i class="icon">➕</i>
+          Créer
+        </span>
+        <span *ngIf="creating">
+          <span class="loading-spinner"></span>
+          Création...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

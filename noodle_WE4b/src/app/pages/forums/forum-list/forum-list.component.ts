@@ -15,9 +15,9 @@ export class ForumListComponent implements OnInit {
   creating: boolean = false;
   error: string = '';
 
-  // Nouvelles propriétés pour les filtres
+  // Propriétés pour les filtres
   searchTerm: string = '';
-  sortBy: string = 'recent'; // 'recent', 'oldest', 'messages', 'title'
+  sortBy: string = 'recent';
   showFilters: boolean = false;
 
   sortOptions = [
@@ -72,7 +72,6 @@ export class ForumListComponent implements OnInit {
           console.log('Forum créé avec succès:', response);
           this.newTitle = '';
           this.creating = false;
-          // Recharge les forums après création
           this.loadForums();
         },
         error => {
@@ -84,11 +83,10 @@ export class ForumListComponent implements OnInit {
     }
   }
 
-  // Nouvelles méthodes pour les filtres et le tri
+  // Méthodes pour les filtres et le tri
   applyFiltersAndSort() {
     let filtered = [...this.forums];
 
-    // Appliquer le filtre de recherche
     if (this.searchTerm.trim()) {
       const search = this.searchTerm.toLowerCase().trim();
       filtered = filtered.filter(forum =>
@@ -96,9 +94,7 @@ export class ForumListComponent implements OnInit {
       );
     }
 
-    // Appliquer le tri
     filtered = this.applySorting(filtered);
-
     this.filteredForums = filtered;
   }
 
@@ -106,16 +102,12 @@ export class ForumListComponent implements OnInit {
     switch (this.sortBy) {
       case 'recent':
         return forums.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
       case 'oldest':
         return forums.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-
       case 'messages':
         return forums.sort((a, b) => this.getMessageCount(b) - this.getMessageCount(a));
-
       case 'title':
         return forums.sort((a, b) => a.title.localeCompare(b.title));
-
       default:
         return forums;
     }
@@ -148,7 +140,6 @@ export class ForumListComponent implements OnInit {
     return forum._id || index;
   }
 
-  // Méthode pour gérer l'appui sur Entrée dans l'input
   onKeyUp(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -156,29 +147,24 @@ export class ForumListComponent implements OnInit {
     }
   }
 
-  // Méthode pour formater les dates si nécessaire
   formatDate(date: string): string {
     if (!date) return '';
     return new Date(date).toLocaleDateString('fr-FR');
   }
 
-  // Méthode pour obtenir le nombre de forums
   getForumsCount(): number {
     return this.filteredForums ? this.filteredForums.length : 0;
   }
 
-  // Méthode pour obtenir le nombre total de forums
   getTotalForumsCount(): number {
     return this.forums ? this.forums.length : 0;
   }
 
-  // Méthode pour valider le titre
   isValidTitle(): boolean {
     return (this.newTitle.trim().length > 0);
   }
 
   getParticipantCount(forum: any): number {
-    // On récup^ère tout les messages du forum, on compte les utilisateurs uniques
     const participants = new Set();
     forum.messages?.forEach((message: any) => {
       if (message.userId) {
@@ -188,22 +174,18 @@ export class ForumListComponent implements OnInit {
     return participants.size;
   }
 
-  // Méthode pour obtenir le nombre de messages d'un forum
   getMessageCount(forum: any): number {
     return forum.messages?.length || forum.messageCount || 0;
   }
 
-  // Méthode pour vider le message d'erreur
   clearError() {
     this.error = '';
   }
 
-  // Méthode pour rafraîchir la liste
   refreshForums() {
     this.loadForums();
   }
 
-  // Méthode pour obtenir le temps relatif
   getRelativeTime(date: string): string {
     if (!date) return '';
 

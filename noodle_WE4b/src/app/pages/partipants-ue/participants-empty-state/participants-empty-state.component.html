@@ -1,0 +1,42 @@
+<!-- Message de chargement -->
+<div class="loading-card" *ngIf="loading">
+  <div class="loading-content">
+    <div class="loading-spinner-large"></div>
+    <h3>Chargement des participants...</h3>
+    <p>Veuillez patienter</p>
+  </div>
+</div>
+
+<!-- Message d'erreur -->
+<div class="error-card" *ngIf="error && !loading">
+  <div class="error-content">
+    <div class="error-icon">⚠️</div>
+    <h3>Erreur de chargement</h3>
+    <p>{{ error }}</p>
+    <button (click)="onRefreshData()" class="btn-retry">
+      <i class="icon">🔄</i>
+      Réessayer
+    </button>
+  </div>
+</div>
+
+<!-- État vide -->
+<div class="empty-card" *ngIf="!loading && !error && totalVisibleParticipants === 0">
+  <div class="empty-content">
+    <div class="empty-icon">
+      {{ hasActiveFilters ? '🔍' : '👥' }}
+    </div>
+    <h3>
+      {{ hasActiveFilters ? 'Aucun participant trouvé' : 'Aucun participant inscrit' }}
+    </h3>
+    <p>
+      {{ hasActiveFilters ? 'Essayez de modifier vos critères de recherche' : 'Cette UE n\'a pas encore de participants inscrits' }}
+    </p>
+    <div class="empty-actions" *ngIf="hasActiveFilters">
+      <button (click)="onResetFilters()" class="btn-action">
+        <i class="icon">🔄</i>
+        Réinitialiser les filtres
+      </button>
+    </div>
+  </div>
+</div>
