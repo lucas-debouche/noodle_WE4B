@@ -1,0 +1,57 @@
+<div *ngIf="isUser()">
+  <div class="post-devoir">
+    <span *ngIf="post.date_rendu" class="devoir-date">Devoir à rendre pour le {{ post.date_rendu | date:'dd/MM/yyyy HH:mm' }}</span>
+  </div>
+  <div *ngIf="post.contenu" class="post-message">{{ post.contenu }}</div>
+  <div *ngIf="post.fichier_nom" class="post-file">
+    <strong>
+      <span class="file-icon">📎</span> Fichier à rendre :
+    </strong>
+    <span class="file-name">{{ post.fichier_nom }}</span>
+  </div>
+  <div class="devoir-submit-block">
+    <ng-container *ngIf="renduUtilisateur; else soumissionDevoir">
+      <span class="devoir-fait-label">Fichier soumis :</span>
+      <a
+        *ngIf="renduUtilisateur.fichier_chemin"
+        [href]="'http://localhost:3000/' + renduUtilisateur.fichier_chemin"
+        [attr.download]="renduUtilisateur.fichier_nom"
+        class="devoir-file-name"
+        target="_blank"
+        rel="noopener"
+      >{{ renduUtilisateur.fichier_nom }}</a>
+      <span *ngIf="!renduUtilisateur.fichier_chemin" class="devoir-file-name">{{ renduUtilisateur.fichier_nom }}</span>
+      <button class="devoir-submit-btn" (click)="enableModifyDevoir()">Modifier le fichier</button>
+    </ng-container>
+    <ng-template #soumissionDevoir>
+      <label class="devoir-upload-label">
+        <input type="file" (change)="onDevoirFileChange($event)" />
+        <span class="upload-icon">Choisir un fichier 📁</span>
+      </label>
+      <button
+        class="devoir-submit-btn"
+        [disabled]="!devoirFile"
+        (click)="submitDevoir()"
+      >
+        Soumettre
+      </button>
+      <span *ngIf="devoirFileName" class="devoir-file-name">{{ devoirFileName }}</span>
+    </ng-template>
+    <div class="etat-rendu">
+      <button class="consulter-rendu-btn" *ngIf="renduUtilisateur && renduUtilisateur.fichier_chemin && etatRendu === 'corrigé'" (click)="openCorrection.emit()">
+        Consulter la correction
+      </button>
+      <span class="devoir-progress-label">
+        <span *ngIf="etatRendu === 'en attente'">En attente</span>
+        <span *ngIf="etatRendu === 'corrigé'">Corrigé</span>
+        <span *ngIf="etatRendu !== 'en attente' && etatRendu !== 'corrigé'">Non rendu</span>
+      </span>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isProf()">
+  <button class="rendus-btn" (click)="openRendus.emit()" *ngIf="post.rendus && post.rendus.length > 0">
+    Accéder aux rendus
+  </button>
+</div>

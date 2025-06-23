@@ -1,0 +1,17 @@
+<div class="post-file">
+  <strong>
+    <span class="file-icon">📎</span> Fichier :
+  </strong>
+  <span *ngIf="post.fichier_nom" class="file-name">
+    <a
+      [href]="'http://localhost:3000/' + post.fichier_chemin"
+      [attr.download]="post.fichier_nom"
+      class="file-name"
+      target="_blank"
+      rel="noopener"
+    >{{ post.fichier_nom }}
+    </a>
+  </span>
+  <span *ngIf="!post.fichier_nom" class="file-none">Aucun fichier</span>
+</div>
+<div *ngIf="post.contenu" class="post-message">{{ post.contenu }}</div>

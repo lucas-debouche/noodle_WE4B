@@ -17,11 +17,11 @@ export class UesService {
     return this.http.get<Ue[]>(this.apiUrl);
   }
 
-  /**
-   * Récupère les informations détaillées d'une UE
-   * @param ueId - Identifiant de l'UE
-   * @returns Observable<Ue>
-   */
+  // Récupérer une UE par son ID
+  getUeById(id: string): Observable<Ue> {
+    return this.http.get<Ue>(`${this.apiUrl}/${id}`);
+  }
+
   /**
    * Récupère les informations détaillées d'une UE
    * @param ueId - Identifiant de l'UE
@@ -270,6 +270,4 @@ export class UesService {
       participants: ue.participants || ue.participantIds || ue.inscrits || []
     };
   }
-
-
 }

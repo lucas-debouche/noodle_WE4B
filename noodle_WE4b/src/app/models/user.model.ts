@@ -1,5 +1,5 @@
 export interface User {
-  id: string;           // Identifiant unique de l'utilisateur
+  _id: string;           // Identifiant unique de l'utilisateur
   nom: string;          // Nom de l'utilisateur
   prenom: string;       // Prénom de l'utilisateur
   email: string;        // Adresse email de l'utilisateur

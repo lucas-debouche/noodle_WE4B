@@ -1,0 +1,120 @@
+.post-devoir {
+  margin-bottom: 15px;
+
+  .devoir-date {
+    font-weight: bold;
+    color: #dc3545;
+  }
+}
+
+.post-message {
+  margin-bottom: 15px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.post-file {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+
+  strong {
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+
+    .file-icon {
+      margin-right: 5px;
+    }
+  }
+
+  .file-name {
+    font-style: italic;
+  }
+}
+
+.devoir-submit-block {
+  margin-top: 20px;
+
+  .devoir-fait-label {
+    font-weight: bold;
+    margin-right: 10px;
+  }
+
+  .devoir-file-name {
+    margin-left: 10px;
+    font-style: italic;
+  }
+
+  .devoir-upload-label {
+    cursor: pointer;
+    padding: 8px 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    display: inline-block;
+    margin-right: 10px;
+
+    &:hover {
+      background-color: #e9ecef;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+  }
+
+  .devoir-submit-btn {
+    padding: 8px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 20px;
+
+    &:hover {
+      background-color: #0056b3;
+    }
+
+    &:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.etat-rendu {
+  margin-top: 15px;
+
+  .consulter-rendu-btn {
+    padding: 8px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #218838;
+    }
+  }
+
+  .devoir-progress-label {
+    margin-left: 10px;
+    font-style: italic;
+  }
+}
+
+.rendus-btn {
+  padding: 8px 15px;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #138496;
+  }
+}
