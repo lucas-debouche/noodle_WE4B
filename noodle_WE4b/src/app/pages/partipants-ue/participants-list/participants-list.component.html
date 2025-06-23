@@ -1,0 +1,64 @@
+<div class="participants-container">
+  <div class="participants-content">
+
+    <!-- En-tête avec informations de l'UE -->
+    <app-ue-header
+      [ueInfo]="ueInfo"
+      [totalParticipants]="getTotalParticipants()"
+      [totalEtudiants]="etudiants.length"
+      [totalProfesseurs]="professeurs.length">
+    </app-ue-header>
+
+    <!-- Card de filtres et recherche -->
+    <app-participants-filters
+      [searchTerm]="searchTerm"
+      [roleFilter]="roleFilter"
+      [sortBy]="sortBy"
+      [showFilters]="showFilters"
+      [selectedPromotion]="selectedPromotion"
+      [selectedStatut]="selectedStatut"
+      [promotions]="promotions"
+      [totalVisibleParticipants]="getTotalVisibleParticipants()"
+      [totalParticipants]="getTotalParticipants()"
+      (searchChange)="onSearchChange($event)"
+      (roleFilterChange)="onRoleFilterChange($event)"
+      (sortChange)="onSortChange($event)"
+      (toggleFiltersChange)="toggleFilters()"
+      (promotionChange)="onPromotionChange($event)"
+      (statutChange)="onStatutChange($event)"
+      (resetFilters)="resetFilters()"
+      (exportParticipants)="exportParticipants()">
+    </app-participants-filters>
+
+    <!-- Section des participants -->
+    <div class="participants-section">
+      <div class="section-header">
+        <h2>
+          <i class="icon">👥</i>
+          Liste des participants
+        </h2>
+        <button (click)="refreshData()" class="btn-refresh" title="Actualiser">
+          <i class="icon">🔄</i>
+        </button>
+      </div>
+
+      <!-- États de chargement, erreur et vide -->
+      <app-participants-empty-state
+        [loading]="loading"
+        [error]="error"
+        [totalVisibleParticipants]="getTotalVisibleParticipants()"
+        [hasActiveFilters]="hasActiveFilters()"
+        (refreshData)="refreshData()"
+        (resetFilters)="resetFilters()">
+      </app-participants-empty-state>
+
+      <!-- Grille des participants -->
+      <app-participants-grid
+        *ngIf="!loading && !error"
+        [visibleEtudiants]="getVisibleEtudiants()"
+        [visibleProfesseurs]="getVisibleProfesseurs()"
+        (refreshData)="refreshData()">
+      </app-participants-grid>
+    </div>
+  </div>
+</div>

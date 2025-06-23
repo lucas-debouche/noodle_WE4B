@@ -6,6 +6,7 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { UtilisateurComponent } from './utilisateurs/utilisateurs.component';
+import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
 import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { FooterComponent } from './footer/footer.component';
@@ -24,9 +25,31 @@ import { RendusModalComponent } from './pages/mes-ue/post-mes-ue/rendus-modal/re
 import { FichierContentComponent } from './pages/mes-ue/post-mes-ue/fichier-content/fichier-content.component';
 import { DevoirContentComponent } from './pages/mes-ue/post-mes-ue/devoir-content/devoir-content.component';
 
+import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
+import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
+import { ForumHeaderComponent } from './pages/forums/forum-header/forum-header.component';
+import { ForumCreateCardComponent } from './pages/forums/forum-create-card/forum-create-card.component';
+import { ForumFiltersCardComponent } from './pages/forums/forum-filters-card/forum-filters-card.component';
+import { ForumDiscussionCardComponent } from './pages/forums/forum-discussion-card/forum-discussion-card.component';
+import { ForumEmptyStateComponent } from './pages/forums/forum-empty-state/forum-empty-state.component';
+import { ForumMessageComponent } from './pages/forums/forum-message/forum-message.component';
+import { ForumReplyComponent } from './pages/forums/forum-reply/forum-reply.component';
+import { ForumMessageFormComponent } from './pages/forums/forum-message-form/forum-message-form.component';
+import { ForumFileAttachmentComponent } from './pages/forums/forum-file-attachment/forum-file-attachment.component';
+import { ForumEmojiPickerComponent } from './pages/forums/forum-emoji-picker/forum-emoji-picker.component';
+
+import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
+import { UeHeaderComponent } from './pages/partipants-ue/ue-header/ue-header.component';
+import { ParticipantsFiltersComponent } from './pages/partipants-ue/participants-filters/participants-filters.component';
+import { ParticipantsGridComponent } from './pages/partipants-ue/participants-grid/participants-grid.component';
+import { ParticipantCardComponent } from './pages/partipants-ue/participant-card/participant-card.component';
+import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participants-empty-state/participants-empty-state.component';
+
 @NgModule({
   declarations: [
     AppComponent,
+    UtilisateurComponent,
+    Admin_panelComponent,
     UtilisateurComponent,
     ChoixUeComponent,
     NavbarComponent,
@@ -44,11 +67,30 @@ import { DevoirContentComponent } from './pages/mes-ue/post-mes-ue/devoir-conten
     RendusModalComponent,
     FichierContentComponent,
     DevoirContentComponent,
+    ForumListComponent,
+    ForumDetailComponent,
+    ParticipantsListComponent,
+    ForumHeaderComponent,
+    ForumCreateCardComponent,
+    ForumFiltersCardComponent,
+    ForumDiscussionCardComponent,
+    ForumEmptyStateComponent,
+    ForumMessageComponent,
+    ForumReplyComponent,
+    ForumMessageFormComponent,
+    ForumFileAttachmentComponent,
+    ForumEmojiPickerComponent,
+    UeHeaderComponent,
+    ParticipantsFiltersComponent,
+    ParticipantsGridComponent,
+    ParticipantCardComponent,
+    ParticipantsEmptyStateComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
+    FormsModule,
     FormsModule,
     ReactiveFormsModule,
   ],
@@ -62,3 +104,4 @@ import { DevoirContentComponent } from './pages/mes-ue/post-mes-ue/devoir-conten
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+

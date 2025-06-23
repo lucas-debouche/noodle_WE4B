@@ -1,0 +1,37 @@
+<div class="ue-header-card">
+  <div class="card-icon">🎓</div>
+  <div class="card-content">
+    <div class="ue-info" *ngIf="ueInfo">
+      <h1>{{ ueInfo.intitule }}</h1>
+      <div class="ue-meta">
+        <span class="meta-item">
+          <i class="icon">📚</i>
+          Code: {{ ueInfo.code }}
+        </span>
+        <span class="meta-item">
+          <i class="icon">⭐</i>
+          {{ ueInfo.ects }} ECTS
+        </span>
+      </div>
+      <p class="ue-description" *ngIf="ueInfo.description">
+        {{ ueInfo.description }}
+      </p>
+    </div>
+    <div class="participants-summary">
+      <div class="summary-item">
+        <div class="summary-number">{{ totalParticipants }}</div>
+        <div class="summary-label">Participants</div>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <div class="summary-number">{{ totalEtudiants }}</div>
+        <div class="summary-label">Étudiants</div>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <div class="summary-number">{{ totalProfesseurs }}</div>
+        <div class="summary-label">Professeurs</div>
+      </div>
+    </div>
+  </div>
+</div>

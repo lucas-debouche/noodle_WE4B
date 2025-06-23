@@ -1,0 +1,59 @@
+<div class="reply-item">
+  <!-- En-tête de la réponse -->
+  <div class="reply-header">
+    <div class="reply-author-info">
+      <span class="reply-author">
+        {{ authorName || 'Utilisateur anonyme' }}
+      </span>
+      <span class="reply-timestamp">
+        {{ relativeTime }}
+        <span *ngIf="reply.isEdited" class="edited-badge">(modifié)</span>
+      </span>
+    </div>
+
+    <!-- Actions sur la réponse -->
+    <div class="reply-actions" *ngIf="canModerate || isAuthor">
+      <button class="btn-action edit" *ngIf="isAuthor"
+              (click)="onStartEdit()"
+              title="Modifier">
+        ✏️
+      </button>
+      <button class="btn-action delete"
+              *ngIf="canModerate || isAuthor"
+              (click)="onDeleteReply()"
+              title="Supprimer">
+        🗑️
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenu de la réponse -->
+  <div class="reply-content" *ngIf="!isEditing">
+    {{ reply.message }}
+
+    <!-- Fichiers attachés à la réponse -->
+    <app-forum-file-attachment
+      *ngIf="reply.attachments && reply.attachments.length > 0"
+      [attachments]="reply.attachments"
+      [isReply]="true"
+      (downloadFile)="onDownloadFile($event)">
+    </app-forum-file-attachment>
+  </div>
+
+  <!-- Formulaire d'édition de la réponse -->
+  <div class="edit-form" *ngIf="isEditing">
+    <textarea [(ngModel)]="editText"
+              (ngModelChange)="onEditTextChange($event)"
+              class="edit-textarea"
+              placeholder="Modifier la réponse..."
+              (keyup.escape)="onCancelEdit()"></textarea>
+    <div class="edit-actions">
+      <button class="btn-save" (click)="onSaveEdit()" [disabled]="!hasEditContent()">
+        ✅ Sauvegarder
+      </button>
+      <button class="btn-cancel" (click)="onCancelEdit()">
+        ❌ Annuler
+      </button>
+    </div>
+  </div>
+</div>

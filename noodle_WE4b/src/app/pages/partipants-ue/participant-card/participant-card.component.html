@@ -1,0 +1,59 @@
+<div class="participant-card" [ngClass]="isProfesseur ? 'professor' : 'student'">
+  <div class="card-header">
+    <div class="participant-avatar" [class]="getParticipantBadgeColor()">
+      <img
+        *ngIf="participant.photo && participant.photo !== 'null'"
+        [src]="getPhotoUrl()"
+        [alt]="participant.prenom + ' ' + participant.nom"
+        class="avatar-image"
+        (error)="onImageError($event)"
+      />
+      <span
+        *ngIf="!participant.photo || participant.photo === 'null'"
+        class="avatar-text">
+        {{ getInitials() }}
+      </span>
+    </div>
+    <div class="participant-status">
+      <span class="status-badge" [class]="participant.statut">
+        {{ participant.statut === 'actif' ? '✅' : '⏸️' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <h4 class="participant-name">
+      {{ participant.prenom }} {{ participant.nom }}
+    </h4>
+    <div class="participant-info">
+      <div class="info-item">
+        <i class="icon">📧</i>
+        <span>{{ participant.email }}</span>
+      </div>
+
+      <!-- Informations spécifiques aux professeurs -->
+      <div class="info-item role" *ngIf="isProfesseur">
+        <i class="icon">{{ getRoleIcon() }}</i>
+        <span>{{ getRoleLabel() }}</span>
+      </div>
+
+      <!-- Informations spécifiques aux étudiants -->
+      <div class="info-item" *ngIf="!isProfesseur && participant.promotion">
+        <i class="icon">🎯</i>
+        <span>{{ participant.promotion }}</span>
+      </div>
+
+      <!-- Spécialité (commune) -->
+      <div class="info-item" *ngIf="participant.specialite">
+        <i class="icon">🔬</i>
+        <span>{{ participant.specialite }}</span>
+      </div>
+
+      <!-- Date d'inscription (étudiants) -->
+      <div class="info-item" *ngIf="!isProfesseur && participant.dateInscription">
+        <i class="icon">📅</i>
+        <span>Inscrit le {{ formatDate(participant.dateInscription) }}</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,79 @@
+<div class="forum-detail-container">
+  <div class="forum-content">
+    <!-- En-tête du forum -->
+    <app-forum-header
+      [forumDetail]="forumDetail"
+      [editingForumTitle]="editingForumTitle"
+      [(newForumTitle)]="newForumTitle"
+      [canModerate]="canModerate()"
+      [canDeleteForum]="canDeleteForum()"
+      [messagesCount]="getMessagesCount()"
+      (startEditTitle)="startEditForumTitle()"
+      (saveForumTitle)="saveForumTitle()"
+      (cancelEditTitle)="cancelEditForumTitle()"
+      (deleteForum)="deleteForum()">
+    </app-forum-header>
+
+    <!-- Section des messages -->
+    <div class="messages-section">
+      <div class="section-header">
+        <h2>Messages</h2>
+        <span class="message-count" *ngIf="getMessagesCount() > 0">
+          {{ getMessagesCount() }}
+        </span>
+      </div>
+
+      <div class="messages-list">
+        <!-- Liste des messages -->
+        <app-forum-message
+          *ngFor="let msg of forumDetail?.messages; trackBy: trackByMessageId"
+          [message]="msg"
+          [userCache]="userCache"
+          [canModerate]="canModerate()"
+          [currentUserId]="getCurrentUserId()"
+          [editingMessageId]="editingMessage?._id || ''"
+          [editingReplyId]="editingReply?._id || ''"
+          [editText]="editText"
+          [showReplyFormId]="getShowReplyFormId(msg._id)"
+          [showRepliesId]="getShowRepliesId(msg._id)"
+          (startEdit)="startEditMessage($event)"
+          (cancelEdit)="cancelEdit()"
+          (saveEdit)="saveMessageEdit($event)"
+          (deleteMessage)="deleteMessage($event)"
+          (toggleReplyForm)="toggleReplyForm($event)"
+          (toggleReplies)="toggleReplies($event)"
+          (addReply)="addReply($event.messageId, $event.text)"
+          (editReply)="startEditReply($event)"
+          (deleteReply)="deleteReply($event.messageId, $event.replyId)"
+          (downloadFile)="downloadFile($event.filename, $event.originalName)"
+          (cancelReplyEdit)="cancelEdit()"
+          (saveReplyEdit)="saveReplyEdit($event)"
+          (editTextChange)="editText = $event">
+        </app-forum-message>
+
+        <!-- État vide -->
+        <div class="empty-messages" *ngIf="getMessagesCount() === 0">
+          <div class="empty-icon">💬</div>
+          <h3>Aucun message pour le moment</h3>
+          <p>Soyez le premier à participer à cette discussion !</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section d'ajout de message -->
+    <app-forum-message-form
+      [(newMessage)]="newMessage"
+      [isSending]="isSending"
+      [showEmojiPicker]="showEmojiPicker"
+      [currentUserName]="getCurrentUserName()"
+      [selectedFilesArray]="selectedFilesArray"
+      (submitMessage)="addMessage()"
+      (clearMessage)="clearMessage()"
+      (fileSelected)="onFileSelected($event)"
+      (removeFile)="removeSelectedFile($event)"
+      (toggleEmojiPicker)="toggleEmojiPicker()"
+      (addEmoji)="addEmoji($event)"
+      (updateCharCount)="updateCharCount()">
+    </app-forum-message-form>
+  </div>
+</div>

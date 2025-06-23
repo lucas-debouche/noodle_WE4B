@@ -1,0 +1,209 @@
+.forum-list-container {
+  background: var(--background-gradient);
+  min-height: 100vh;
+  padding: 40px 20px;
+
+  .forum-content {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  // En-tête élégant
+  .forum-header {
+    text-align: center;
+    margin-bottom: 50px;
+    padding: 40px 20px;
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 15px;
+      color : var(--text-primary);
+    }
+
+    .subtitle {
+      font-size: 1.3rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      opacity: 0.9;
+    }
+  }
+
+  // Section des discussions
+  .discussions-section {
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 0 10px;
+
+      h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+
+        .icon {
+          font-size: 2rem;
+          opacity: 0.8;
+        }
+      }
+
+      .btn-refresh {
+        padding: 12px;
+        background: linear-gradient(135deg, var(--secondary-color),var(--info-color));
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: var(--transition);
+        .icon {
+          font-size: 16px;
+        }
+
+        &:hover {
+          background: linear-gradient(135deg, var(--secondary-hover), var(--secondary-color));
+          transform: rotate(180deg) scale(1.1);
+        }
+      }
+    }
+
+    // Cards d'état (loading, error)
+    .loading-card,
+    .error-card {
+      background: var(--card-background);
+      border-radius: var(--border-radius-large);
+      box-shadow: var(--card-shadow);
+      padding: 60px 40px;
+      text-align: center;
+      border: 1px solid var(--card-border);
+
+      .loading-content,
+      .error-content {
+        max-width: 400px;
+        margin: 0 auto;
+
+        .loading-spinner-large {
+          display: inline-block;
+          width: 48px;
+          height: 48px;
+          border: 4px solid #e9ecef;
+          border-top: 4px solid var(--primary-color);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 25px;
+        }
+
+        .error-icon {
+          font-size: 4rem;
+          margin-bottom: 20px;
+          opacity: 0.7;
+        }
+
+        h3 {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 12px;
+        }
+
+        p {
+          font-size: 1.1rem;
+          color: var(--text-secondary);
+          margin-bottom: 25px;
+          line-height: 1.6;
+        }
+
+        .btn-retry {
+          padding: 12px 24px;
+          background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+          color: white;
+          border: none;
+          border-radius: var(--border-radius);
+          font-weight: 600;
+          cursor: pointer;
+          transition: var(--transition);
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 3px 12px rgba(255, 107, 65, 0.3);
+
+          .icon {
+            font-size: 14px;
+          }
+
+          &:hover {
+            background: linear-gradient(135deg, var(--primary-hover), #d84315);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(255, 107, 65, 0.4);
+          }
+        }
+      }
+    }
+
+    // Grille des discussions
+    .discussions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
+      margin-top: 20px;
+    }
+  }
+}
+
+// Animations
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .forum-list-container {
+    padding: 20px 15px;
+
+    .forum-header {
+      padding: 20px 10px;
+      margin-bottom: 30px;
+
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+      }
+    }
+
+    .discussions-section {
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+
+        .btn-refresh {
+          align-self: flex-end;
+        }
+      }
+
+      .discussions-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .forum-list-container {
+    padding: 15px 10px;
+
+    .forum-header h1 {
+      font-size: 2rem;
+    }
+  }
+}

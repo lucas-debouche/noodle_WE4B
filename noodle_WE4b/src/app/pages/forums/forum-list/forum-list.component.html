@@ -1,0 +1,80 @@
+<div class="forum-list-container">
+  <div class="forum-content">
+    <!-- En-tête de la page -->
+    <div class="forum-header">
+      <h1>Forums de Discussion</h1>
+      <p class="subtitle">Échangez avec vos collègues et professeurs</p>
+    </div>
+
+    <!-- Card de création de forum -->
+    <app-forum-create-card
+      [(newTitle)]="newTitle"
+      [creating]="creating"
+      (createForum)="createForum()">
+    </app-forum-create-card>
+
+    <!-- Card de filtres et recherche -->
+    <app-forum-filters-card
+      [(searchTerm)]="searchTerm"
+      [(sortBy)]="sortBy"
+      [forumsCount]="getForumsCount()"
+      (searchChange)="onSearchChange()"
+      (sortChange)="onSortChange()"
+      (clearSearch)="clearSearch()"
+      (resetFilters)="resetFilters()">
+    </app-forum-filters-card>
+
+    <!-- Section des discussions -->
+    <div class="discussions-section">
+      <div class="section-header">
+        <h2>
+          <i class="icon">💬</i>
+          Discussions actives
+        </h2>
+        <button (click)="refreshForums()" class="btn-refresh" title="Actualiser">
+          <i class="icon">🔄</i>
+        </button>
+      </div>
+
+      <!-- Message de chargement -->
+      <div class="loading-card" *ngIf="loading">
+        <div class="loading-content">
+          <div class="loading-spinner-large"></div>
+          <h3>Chargement des discussions...</h3>
+          <p>Veuillez patienter</p>
+        </div>
+      </div>
+
+      <!-- Message d'erreur -->
+      <div class="error-card" *ngIf="error && !loading">
+        <div class="error-content">
+          <div class="error-icon">⚠️</div>
+          <h3>Erreur de chargement</h3>
+          <p>{{ error }}</p>
+          <button (click)="refreshForums()" class="btn-retry">
+            <i class="icon">🔄</i>
+            Réessayer
+          </button>
+        </div>
+      </div>
+
+      <!-- Grille des discussions -->
+      <div class="discussions-grid" *ngIf="getForumsCount() > 0 && !loading && !error; else emptyState">
+        <app-forum-discussion-card
+          *ngFor="let forum of filteredForums; trackBy: trackByForumId"
+          [forum]="forum">
+        </app-forum-discussion-card>
+      </div>
+
+      <!-- État vide -->
+      <ng-template #emptyState>
+        <app-forum-empty-state
+          *ngIf="!loading && !error"
+          [searchTerm]="searchTerm"
+          (clearSearch)="clearSearch()"
+          (createFirstForum)="newTitle = ''; createForum()">
+        </app-forum-empty-state>
+      </ng-template>
+    </div>
+  </div>
+</div>
