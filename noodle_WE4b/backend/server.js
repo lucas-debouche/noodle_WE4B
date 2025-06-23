@@ -11,6 +11,8 @@ const forumsRoutes = require('./routes/forums.routes');
 
 const path = require('path');
 const fs = require('fs');
+const adminPanelRoutes = require('./routes/admin_panel.routes');
+
 
 const app = express();
 const PORT = 3000;
@@ -48,6 +50,9 @@ app.use('/api/ue', ueRoutes);
 app.use('/api/post', postRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/forums', forumsRoutes);
+app.use("/api/auth", authRoutes);
+app.use('/api/admin', adminPanelRoutes);
+
 
 // Servir les fichiers statiques
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

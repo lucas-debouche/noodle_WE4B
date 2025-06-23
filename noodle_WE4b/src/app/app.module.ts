@@ -6,6 +6,7 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { UtilisateurComponent } from './utilisateurs/utilisateurs.component';
+import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
 import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { FooterComponent } from './footer/footer.component';
@@ -38,6 +39,8 @@ import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participa
   declarations: [
     AppComponent,
     UtilisateurComponent,
+    Admin_panelComponent,
+    UtilisateurComponent,
     ChoixUeComponent,
     NavbarComponent,
     FooterComponent,
@@ -68,6 +71,7 @@ import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participa
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
+    FormsModule,
     ReactiveFormsModule,
   ],
   providers: [
@@ -80,3 +84,4 @@ import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participa
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+

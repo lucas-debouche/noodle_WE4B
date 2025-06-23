@@ -7,6 +7,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
 import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
 import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
+import {Admin_panelComponent} from "./admin/admin_panel/admin_panel.component";
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -18,10 +19,9 @@ const routes: Routes = [
 
   {path : 'ues/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard]},
 
-
+  { path: 'admin_panel', component: Admin_panelComponent },
 
   { path: '**', redirectTo: '/login'}
-
 ];
 
 
