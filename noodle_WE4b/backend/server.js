@@ -3,18 +3,21 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const utilisateurRoutes = require('./routes/utilisateur.routes');
-const ueRoutes = require('./routes/ue.routes');
-const postRoutes = require('./routes/post.routes');
+const path = require('path');
+const fs = require('fs');
+
+const authMiddleware = require('./security/middleware_auth');
+
+// Importation des routes
 const authRoutes = require('./routes/auth.routes');
+const utilisateurRoutes = require('./routes/utilisateur.routes');
+const postRoutes = require('./routes/post.routes');
 const prioriteRoutes = require('./routes/priorite.routes');
 const typeRoutes = require('./routes/type.routes');
 const forumsRoutes = require('./routes/forums.routes');
-
-const path = require('path');
-const fs = require('fs');
+const departementRoutes = require('./routes/departement.routes');
+const ueRoutes = require('./routes/ue.routes');
 const adminPanelRoutes = require('./routes/admin_panel.routes');
-
 
 const app = express();
 const PORT = 3000;
@@ -23,7 +26,6 @@ const PORT = 3000;
 // CONFIGURATION DE BASE
 // ==========================================
 
-// Créer les dossiers d'upload s'ils n'existent pas
 const createUploadDirs = () => {
   const dirs = [
     path.join(__dirname, 'uploads'),
@@ -40,19 +42,21 @@ const createUploadDirs = () => {
   });
 };
 
-// Initialiser les dossiers
 createUploadDirs();
 
-// Middleware de base
 app.use(cors({
   origin: ['http://localhost:4200', 'http://localhost:3000'],
   credentials: true,
   exposedHeaders: ['x-refresh-token']
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Connexion MongoDB
+// ==========================================
+// CONNEXION À LA BASE DE DONNÉES
+// ==========================================
+
 mongoose.connect('mongodb://localhost:27017/noodle')
   .then(() => console.log('✅ Connecté à MongoDB'))
   .catch(err => console.error('❌ Erreur MongoDB:', err));
@@ -61,49 +65,26 @@ mongoose.connect('mongodb://localhost:27017/noodle')
 // ROUTES
 // ==========================================
 
-// Routes d'authentification (PUBLIC)
-const authRoutes = require('./routes/auth.routes');
 app.use('/api/auth', authRoutes);
-
-// Routes utilisateurs
-const utilisateurRoutes = require('./routes/utilisateur.routes');
 app.use('/api/utilisateur', utilisateurRoutes);
-
-// Routes posts
-const postRoutes = require('./routes/post.routes');
 app.use('/api/post', postRoutes);
-app.use('/api/auth', authRoutes);
 app.use('/api/priorite', prioriteRoutes);
 app.use('/api/type', typeRoutes);
-
-// Routes départements (protégées)
-const authMiddleware = require('./security/middleware_auth');
-const departementRoutes = require('./routes/departement.routes');
-app.use('/api/departements', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), departementRoutes);
-
-// Routes forums
-const forumsRoutes = require('./routes/forums.routes');
 app.use('/api/forums', forumsRoutes);
-app.use("/api/auth", authRoutes);
-app.use('/api/admin', adminPanelRoutes);
-
-
-// Routes UE
-const ueRoutes = require('./routes/ue.routes');
 app.use('/api/ue', ueRoutes);
+app.use('/api/admin', adminPanelRoutes);
+app.use('/api/departements', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), departementRoutes);
 
 // ==========================================
 // FICHIERS STATIQUES
 // ==========================================
 
-// Servir les fichiers statiques
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ==========================================
 // GESTION DES ERREURS
 // ==========================================
 
-// Middleware de gestion d'erreur global
 app.use((error, req, res, next) => {
   console.error('❌ Erreur serveur:', error);
 
@@ -135,6 +116,7 @@ app.use((error, req, res, next) => {
   });
 });
 
+// Route catch-all pour les routes inconnues
 app.use('/api', (req, res) => {
   console.log('❌ Route API non trouvée:', req.method, req.path);
   res.status(404).json({
@@ -153,12 +135,18 @@ app.listen(PORT, () => {
   console.log('  /api/auth - Authentification');
   console.log('  /api/utilisateur - Utilisateurs');
   console.log('  /api/post - Posts');
-  console.log('  /api/departements - Départements (protégé)');
+  console.log('  /api/priorite - Priorités');
+  console.log('  /api/type - Types');
   console.log('  /api/forums - Forums');
   console.log('  /api/ue - Unités d\'enseignement');
+  console.log('  /api/departements - Départements (protégé)');
+  console.log('  /api/admin - Panneau admin');
 });
 
-// Gestion propre de l'arrêt du serveur
+// ==========================================
+// ARRÊT PROPRE DU SERVEUR
+// ==========================================
+
 process.on('SIGINT', () => {
   console.log('\n👋 Arrêt du serveur...');
   mongoose.connection.close(() => {
