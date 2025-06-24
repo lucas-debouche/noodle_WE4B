@@ -10,6 +10,7 @@
           <div class="progress-bar-inner" [style.width.%]="(nbFaits / nbPosts) * 100"></div>
         </div>
       </div>
+      <button class="redirect-to-forum-btn" [routerLink]="['/forums', selectedUeId]">Forum</button>
       <button
         class="create-post-btn"
         *ngIf="currentUser?.role?.includes('ROLE_PROF')"
