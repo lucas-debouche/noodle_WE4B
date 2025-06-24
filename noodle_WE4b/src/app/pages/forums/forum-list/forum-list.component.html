@@ -1,4 +1,7 @@
 <div class="forum-list-container">
+  <button class="back-button" (click)="goBack()">
+    Retour
+  </button>
   <div class="forum-content">
     <!-- En-tête de la page -->
     <div class="forum-header">
@@ -7,92 +10,22 @@
     </div>
 
     <!-- Card de création de forum -->
-    <div class="create-forum-card">
-      <div class="card-icon">✨</div>
-      <div class="card-content">
-        <h2>Créer un nouveau sujet</h2>
-        <div class="input-group">
-          <input
-            [(ngModel)]="newTitle"
-            placeholder="Titre du sujet de discussion..."
-            class="form-control"
-            (keyup.enter)="createForum()"
-          />
-          <button
-            (click)="createForum()"
-            class="btn-create"
-            [disabled]="!isValidTitle() || creating"
-            [class.loading]="creating"
-          >
-            <span *ngIf="!creating">
-              <i class="icon">➕</i>
-              Créer
-            </span>
-            <span *ngIf="creating">
-              <span class="loading-spinner"></span>
-              Création...
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+    <app-forum-create-card
+      [(newTitle)]="newTitle"
+      [creating]="creating"
+      (createForum)="createForum()">
+    </app-forum-create-card>
 
     <!-- Card de filtres et recherche -->
-    <div class="filters-card">
-      <div class="card-icon">🔍</div>
-      <div class="card-content">
-        <div class="filters-header">
-          <h3>Rechercher et filtrer</h3>
-          <div class="results-count" *ngIf="getForumsCount() > 0">
-            {{ getForumsCount() }} résultat{{ getForumsCount() > 1 ? 's' : '' }}
-          </div>
-        </div>
-
-        <div class="search-section">
-          <div class="search-input-wrapper">
-            <i class="search-icon">🔍</i>
-            <input
-              [(ngModel)]="searchTerm"
-              (input)="onSearchChange()"
-              placeholder="Rechercher un forum..."
-              class="search-input"
-            />
-            <button
-              *ngIf="searchTerm"
-              (click)="clearSearch()"
-              class="clear-btn"
-              title="Effacer"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-
-        <div class="filter-controls">
-          <div class="sort-group">
-            <label>Trier par :</label>
-            <select
-              [(ngModel)]="sortBy"
-              (change)="onSortChange()"
-              class="sort-select"
-            >
-              <option *ngFor="let option of sortOptions" [value]="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-          <button
-            (click)="resetFilters()"
-            class="btn-reset"
-            *ngIf="searchTerm || sortBy !== 'recent'"
-          >
-            <i class="icon">🔄</i>
-            Réinitialiser
-          </button>
-        </div>
-      </div>
-    </div>
+    <app-forum-filters-card
+      [(searchTerm)]="searchTerm"
+      [(sortBy)]="sortBy"
+      [forumsCount]="getForumsCount()"
+      (searchChange)="onSearchChange()"
+      (sortChange)="onSortChange()"
+      (clearSearch)="clearSearch()"
+      (resetFilters)="resetFilters()">
+    </app-forum-filters-card>
 
     <!-- Section des discussions -->
     <div class="discussions-section">
@@ -130,74 +63,20 @@
 
       <!-- Grille des discussions -->
       <div class="discussions-grid" *ngIf="getForumsCount() > 0 && !loading && !error; else emptyState">
-        <div class="discussion-card" *ngFor="let forum of filteredForums; trackBy: trackByForumId">
-          <a [routerLink]="['/forums', forum._id]" class="card-link">
-            <div class="card-header">
-              <div class="discussion-icon">💭</div>
-              <div class="card-badge">
-                <span class="message-count" [class.active]="getMessageCount(forum) > 0">
-                  {{ getMessageCount(forum) }}
-                </span>
-              </div>
-            </div>
-
-            <div class="card-body">
-              <h3 class="discussion-title">● {{ forum.title }}</h3>
-              <div class="discussion-meta">
-                <div class="meta-item">
-                  <i class="icon">💬</i>
-                  <span>{{ getMessageCount(forum) }} message{{ getMessageCount(forum) > 1 ? 's' : '' }}</span>
-                </div>
-                <div class="meta-item time">
-                  <i class="icon">🕒</i>
-                  <span>{{ getRelativeTime(forum.createdAt) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="card-footer">
-              <div class="activity-indicator" [class.active]="getMessageCount(forum) > 0">
-                <span *ngIf="getMessageCount(forum) === 0">Nouvelle discussion</span>
-                <span *ngIf="getParticipantCount(forum) > 0">{{ getParticipantCount(forum) }} participant{{ getParticipantCount(forum) > 1 ? 's' : '' }}</span>
-              </div>
-            </div>
-          </a>
-        </div>
+        <app-forum-discussion-card
+          *ngFor="let forum of filteredForums; trackBy: trackByForumId"
+          [forum]="forum">
+        </app-forum-discussion-card>
       </div>
 
       <!-- État vide -->
       <ng-template #emptyState>
-        <div class="empty-card" *ngIf="!loading && !error">
-          <div class="empty-content">
-            <div class="empty-icon">
-              {{ searchTerm ? '🔍' : '💬' }}
-            </div>
-            <h3>
-              {{ searchTerm ? 'Aucun résultat trouvé' : 'Aucune discussion pour le moment' }}
-            </h3>
-            <p>
-              {{ searchTerm ? 'Essayez avec d\'autres mots-clés ou modifiez vos filtres' : 'Soyez le premier à créer un sujet de discussion !' }}
-            </p>
-            <div class="empty-actions">
-              <button
-                *ngIf="searchTerm"
-                (click)="clearSearch()"
-                class="btn-action"
-              >
-                <i class="icon">🔄</i>
-                Effacer la recherche
-              </button>
-              <button
-                *ngIf="!searchTerm"
-                (click)="newTitle = ''; createForum()"
-                class="btn-action"
-              >
-                <i class="icon">✨</i>
-                Créer le premier sujet
-              </button>
-            </div>
-          </div>
-        </div>
+        <app-forum-empty-state
+          *ngIf="!loading && !error"
+          [searchTerm]="searchTerm"
+          (clearSearch)="clearSearch()"
+          (createFirstForum)="newTitle = ''; createForum()">
+        </app-forum-empty-state>
       </ng-template>
     </div>
   </div>

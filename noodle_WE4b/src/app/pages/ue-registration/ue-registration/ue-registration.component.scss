@@ -1,0 +1,129 @@
+.ue-registration-container {
+  background: var(--background-gradient);
+  min-height: 100vh;
+  padding: 40px 20px;
+
+  .messages {
+    max-width: 1400px;
+    margin: 0 auto 30px;
+
+    .alert {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-radius: var(--border-radius);
+      margin-bottom: 15px;
+      font-weight: 500;
+      box-shadow: var(--shadow-light);
+      position: relative;
+
+      .icon {
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+
+      .close-btn {
+        background: transparent;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        margin-left: auto;
+        opacity: 0.7;
+        transition: var(--transition);
+
+        &:hover {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+      }
+
+      &.alert-error {
+        background: linear-gradient(135deg, #ffe6e6, #ffcccc);
+        color: var(--danger-color);
+        border-left: 4px solid var(--danger-color);
+      }
+
+      &.alert-success {
+        background: linear-gradient(135deg, #e8f5e8, #d4edda);
+        color: var(--success-color);
+        border-left: 4px solid var(--success-color);
+      }
+    }
+  }
+
+  .loading-card {
+    background: var(--card-background);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--card-shadow);
+    padding: 60px 40px;
+    text-align: center;
+    border: 1px solid var(--card-border);
+    max-width: 600px;
+    margin: 0 auto;
+
+    .loading-content {
+      .loading-spinner-large {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #e9ecef;
+        border-top: 4px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      h3 {
+        color: var(--text-primary);
+        margin-bottom: 10px;
+        font-size: 1.5rem;
+      }
+
+      p {
+        color: var(--text-muted);
+        margin: 0;
+      }
+    }
+  }
+
+  .content-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+}
+
+// Animation
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .ue-registration-container {
+    .content-wrapper {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .ue-registration-container {
+    padding: 20px 15px;
+
+    .content-wrapper {
+      gap: 25px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .ue-registration-container {
+    padding: 15px 10px;
+  }
+}

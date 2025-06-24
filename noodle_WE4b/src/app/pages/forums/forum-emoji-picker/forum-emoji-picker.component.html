@@ -1,0 +1,15 @@
+<div class="emoji-picker" *ngIf="showEmojiPicker">
+  <div class="emoji-header">
+    <span>😊 Choisir un emoji</span>
+    <button type="button" class="close-emoji" (click)="onToggleEmojiPicker()">×</button>
+  </div>
+  <div class="emoji-grid">
+    <button type="button"
+            class="emoji-option"
+            *ngFor="let emoji of commonEmojis"
+            (click)="onAddEmoji(emoji)"
+            [title]="emoji">
+      {{ emoji }}
+    </button>
+  </div>
+</div>

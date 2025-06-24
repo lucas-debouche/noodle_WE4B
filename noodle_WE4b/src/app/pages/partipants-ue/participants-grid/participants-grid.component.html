@@ -1,0 +1,39 @@
+<div class="participants-main">
+  <!-- Section Professeurs -->
+  <div class="participants-group" *ngIf="visibleProfesseurs.length > 0">
+    <div class="group-header">
+      <h3>
+        <i class="icon">👨‍🏫</i>
+        Professeurs
+        <span class="count-badge">{{ visibleProfesseurs.length }}</span>
+      </h3>
+    </div>
+
+    <div class="participants-grid">
+      <app-participant-card
+        *ngFor="let professeur of visibleProfesseurs; trackBy: trackByParticipantId"
+        [participant]="professeur"
+        [isProfesseur]="true">
+      </app-participant-card>
+    </div>
+  </div>
+
+  <!-- Section Étudiants -->
+  <div class="participants-group" *ngIf="visibleEtudiants.length > 0">
+    <div class="group-header">
+      <h3>
+        <i class="icon">🎓</i>
+        Étudiants
+        <span class="count-badge">{{ visibleEtudiants.length }}</span>
+      </h3>
+    </div>
+
+    <div class="participants-grid">
+      <app-participant-card
+        *ngFor="let etudiant of visibleEtudiants; trackBy: trackByParticipantId"
+        [participant]="etudiant"
+        [isProfesseur]="false">
+      </app-participant-card>
+    </div>
+  </div>
+</div>

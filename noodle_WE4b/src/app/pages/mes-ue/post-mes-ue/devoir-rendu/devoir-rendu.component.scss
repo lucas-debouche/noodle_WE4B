@@ -1,0 +1,90 @@
+.devoir-submit-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 2px;
+  position: relative;
+
+  .devoir-upload-label input[type="file"] {
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  .devoir-submit-btn {
+    background: #ff9800;
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    padding: 6px 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    &:hover {
+      background: #fb8c00;
+    }
+    &:disabled {
+      background: #ffe0b2;
+      color: #bdbdbd;
+      cursor: not-allowed;
+    }
+  }
+
+  .devoir-fait-label {
+    color: #388e3c;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+
+  .devoir-file-name {
+    color: #1976d2;
+    font-size: 1.05em;
+    margin-left: 8px;
+    font-weight: 500;
+  }
+
+  .etat-rendu {
+    margin-left: auto;
+
+    .devoir-progress-label {
+      color: #ff9800;
+      border: 1px solid #ffb74d;
+      border-radius: 14px;
+      padding: 3px 14px;
+      font-weight: 600;
+      font-size: 1.01rem;
+      margin-left: 12px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-align: right;
+
+      .note-icon {
+        font-size: 1.15rem;
+        margin-right: 4px;
+      }
+
+      .note-label {
+        font-size: 1.01rem;
+        font-weight: 600;
+      }
+    }
+
+    .consulter-rendu-btn {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      padding: 6px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 10px;
+
+      &:hover {
+        background: #1565c0;
+      }
+    }
+  }
+}

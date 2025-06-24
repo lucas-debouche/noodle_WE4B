@@ -1,0 +1,133 @@
+// Card de discussion
+.discussion-card {
+  background: var(--card-background);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+  transition: var(--transition);
+  overflow: hidden;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+
+    .card-header {
+      padding: 25px 25px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid #f1f3f4;
+
+      .discussion-icon {
+        font-size: 2rem;
+        opacity: 0.7;
+      }
+
+      .card-badge {
+        .message-count {
+          background: #e9ecef;
+          color: var(--text-muted);
+          padding: 8px 12px;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          min-width: 35px;
+          text-align: center;
+          transition: var(--transition);
+
+          &.active {
+            background: linear-gradient(135deg, var(--success-color), #229954);
+            color: white;
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+          }
+        }
+      }
+    }
+
+    .card-body {
+      padding: 15px 25px 20px;
+
+      .discussion-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+        line-height: 1.4;
+        transition: var(--transition);
+      }
+
+      .discussion-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          font-weight: 500;
+
+          .icon {
+            font-size: 14px;
+            opacity: 0.7;
+          }
+
+          &.time {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+          }
+        }
+      }
+    }
+
+    .card-footer {
+      padding: 15px 25px 25px;
+      border-top: 1px solid #f1f3f4;
+
+      .activity-indicator {
+        background: #f8f9fa;
+        color: var(--text-muted);
+        padding: 10px 16px;
+        border-radius: var(--border-radius);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        transition: var(--transition);
+
+        &.active {
+          background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+          color: white;
+          box-shadow: 0 2px 8px rgba(255, 107, 65, 0.2);
+        }
+      }
+    }
+
+    &:hover .card-body .discussion-title {
+      color: var(--primary-color);
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 480px) {
+  .discussion-card {
+    .card-link {
+      .card-header,
+      .card-body,
+      .card-footer {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+    }
+  }
+}

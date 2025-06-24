@@ -1,0 +1,24 @@
+<div class="section-ue" [class.closed]="!opened">
+  <div class="section-header" (click)="toggleSection()">
+    <button class="toggle-btn" [attr.aria-label]="opened ? 'Fermer la section' : 'Ouvrir la section'">
+      <span [ngClass]="opened ? 'arrow-down' : 'arrow-right'"></span>
+    </button>
+    <h2>{{ sectionTitle }}</h2>
+  </div>
+  <div *ngIf="opened">
+    <ul *ngIf="posts.length > 0" class="posts-list">
+      <li *ngFor="let post of posts; let i = index">
+        <app-post-mes-ue
+          [post]="post"
+          [fait]="faitStates[i]"
+          [totalUsers]="totalUsers"
+          [utilisateursUeIds]="utilisateursUeIds"
+          (faitChange)="onFaitChange(i, $event)">
+        </app-post-mes-ue>
+      </li>
+    </ul>
+    <div *ngIf="posts.length === 0" class="no-posts">
+      Aucun post dans cette section.
+    </div>
+  </div>
+</div>

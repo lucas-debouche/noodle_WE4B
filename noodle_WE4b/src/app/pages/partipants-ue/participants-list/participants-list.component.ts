@@ -2,9 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UtilisateurService } from '../../../services/utilisateur.service';
 import { UesService } from '../../../services/ues.service';
-import {Ue} from "../../../models/ue.model";
-import {ParticipantWithUeInfo} from "../../../models/participant-ue.model";
-
+import { Ue } from "../../../models/ue.model";
+import { ParticipantWithUeInfo } from "../../../models/participant-ue.model";
 
 @Component({
   selector: 'app-participants-list',
@@ -23,31 +22,11 @@ export class ParticipantsListComponent implements OnInit {
 
   // Filtres et recherche
   searchTerm: string = '';
-  roleFilter: string = 'tous'; // 'tous', 'etudiants', 'professeurs'
-  sortBy: string = 'nom'; // 'nom', 'prenom', 'recent', 'promotion'
+  roleFilter: string = 'tous';
+  sortBy: string = 'nom';
   showFilters: boolean = false;
   selectedPromotion: string = 'toutes';
   selectedStatut: string = 'tous';
-
-  // Options pour les filtres
-  roleOptions = [
-    { value: 'tous', label: 'Tous les participants', icon: '👥' },
-    { value: 'etudiants', label: 'Étudiants uniquement', icon: '🎓' },
-    { value: 'professeurs', label: 'Professeurs uniquement', icon: '👨‍🏫' }
-  ];
-
-  sortOptions = [
-    { value: 'nom', label: 'Nom (A-Z)' },
-    { value: 'prenom', label: 'Prénom (A-Z)' },
-    { value: 'recent', label: 'Plus récents' },
-    { value: 'promotion', label: 'Par promotion' }
-  ];
-
-  statutOptions = [
-    { value: 'tous', label: 'Tous les statuts' },
-    { value: 'actif', label: 'Actifs uniquement' },
-    { value: 'inactif', label: 'Inactifs uniquement' }
-  ];
 
   // Listes pour les filtres
   promotions: string[] = [];
@@ -93,7 +72,6 @@ export class ParticipantsListComponent implements OnInit {
   loadParticipants(ueId: string) {
     console.log('🔍 Chargement des participants pour UE:', ueId);
 
-    // CORRECTION: Utiliser ueService au lieu de utilisateurService
     this.ueService.getParticipantsByUe(ueId).subscribe(
       data => {
         console.log('✅ Données reçues de l\'API:', data);
@@ -117,21 +95,11 @@ export class ParticipantsListComponent implements OnInit {
         console.error('❌ Erreur lors du chargement des participants:', error);
         this.error = 'Erreur lors du chargement des participants: ' + (error.message || error);
         this.loading = false;
-
-        // Debug: vérifier si l'endpoint existe
-        console.log('🔗 URL appelée:', `http://localhost:3000/api/ue/${ueId}/participants`);
       }
     );
   }
 
-  // Méthode utilitaire pour obtenir l'URL de l'API (à adapter selon votre configuration)
-  private getApiUrl(): string {
-    // Remplacez par votre URL d'API
-    return 'http://localhost:3000/api';
-  }
-
   processParticipants(participants: ParticipantWithUeInfo[]) {
-    // Debug: afficher les participants reçus
     console.log('Participants reçus:', participants);
     console.log('Premier participant (exemple):', participants[0]);
 
@@ -234,34 +202,34 @@ export class ParticipantsListComponent implements OnInit {
     });
   }
 
-  // Méthodes pour les filtres
-  onSearchChange() {
+  // Gestionnaires d'événements des filtres
+  onSearchChange(searchTerm: string) {
+    this.searchTerm = searchTerm;
     this.applyFiltersAndSort();
   }
 
-  onRoleFilterChange() {
+  onRoleFilterChange(roleFilter: string) {
+    this.roleFilter = roleFilter;
     this.applyFiltersAndSort();
   }
 
-  onSortChange() {
+  onSortChange(sortBy: string) {
+    this.sortBy = sortBy;
     this.applyFiltersAndSort();
   }
 
-  onPromotionChange() {
+  onPromotionChange(promotion: string) {
+    this.selectedPromotion = promotion;
     this.applyFiltersAndSort();
   }
 
-  onStatutChange() {
+  onStatutChange(statut: string) {
+    this.selectedStatut = statut;
     this.applyFiltersAndSort();
   }
 
   toggleFilters() {
     this.showFilters = !this.showFilters;
-  }
-
-  clearSearch() {
-    this.searchTerm = '';
-    this.applyFiltersAndSort();
   }
 
   resetFilters() {
@@ -290,36 +258,15 @@ export class ParticipantsListComponent implements OnInit {
     return this.etudiants.length + this.professeurs.length;
   }
 
+  hasActiveFilters(): boolean {
+    return this.searchTerm !== '' ||
+      this.roleFilter !== 'tous' ||
+      this.selectedPromotion !== 'toutes' ||
+      this.selectedStatut !== 'tous';
+  }
+
   refreshData() {
     this.loadData();
-  }
-
-  getInitials(participant: ParticipantWithUeInfo): string {
-    return `${participant.prenom.charAt(0)}${participant.nom.charAt(0)}`.toUpperCase();
-  }
-
-  getParticipantBadgeColor(participant: ParticipantWithUeInfo): string {
-    if (this.isProfesseur(participant.role)) {
-      return 'professor';
-    }
-
-    if (participant.statut === 'inactif') {
-      return 'inactive';
-    }
-
-    // Couleur basée sur la promotion pour les étudiants
-    if (participant.promotion) {
-      const promotions = ['L1', 'L2', 'L3', 'M1', 'M2'];
-      const index = promotions.indexOf(participant.promotion);
-      return index !== -1 ? `promotion-${index}` : 'default';
-    }
-
-    return 'default';
-  }
-
-  formatDate(date: string): string {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('fr-FR');
   }
 
   exportParticipants() {
@@ -343,148 +290,12 @@ export class ParticipantsListComponent implements OnInit {
     );
   }
 
-  trackByParticipantId(index: number, participant: ParticipantWithUeInfo): string {
-    return participant.id;
-  }
-
   // Méthodes utilitaires pour les rôles
-
-  /**
-   * Vérifie si un utilisateur est étudiant
-   * @param roles - Tableau des rôles
-   * @returns boolean
-   */
   private isEtudiant(roles: string[]): boolean {
-    // Dans votre système, les étudiants ont le rôle ROLE_USER
     return roles.includes('ROLE_USER') && !roles.includes('ROLE_PROF') && !roles.includes('ROLE_ADMIN');
   }
 
-  /**
-   * Vérifie si un utilisateur est professeur
-   * @param roles - Tableau des rôles
-   * @returns boolean
-   */
   private isProfesseur(roles: string[]): boolean {
-    // Dans votre système, les professeurs ont le rôle ROLE_PROF
     return roles.includes('ROLE_PROF');
   }
-
-  /**
-   * Détermine le type de rôle principal d'un utilisateur
-   * @param roles - Tableau des rôles
-   * @returns 'etudiant' | 'professeur' | 'admin' | 'autre'
-   */
-  getRoleType(roles: string[]): 'etudiant' | 'professeur' | 'admin' | 'autre' {
-    if (roles.includes('ROLE_ADMIN')) return 'admin';
-    if (roles.includes('ROLE_PROF')) return 'professeur';
-    if (roles.includes('ROLE_USER') && !roles.includes('ROLE_PROF') && !roles.includes('ROLE_ADMIN')) return 'etudiant';
-    return 'autre';
-  }
-
-  /**
-   * Obtient le libellé du rôle principal
-   * @param roles - Tableau des rôles
-   * @returns string
-   */
-  getRoleLabel(roles: string[]): string {
-    const roleType = this.getRoleType(roles);
-    switch (roleType) {
-      case 'etudiant':
-        return 'Étudiant';
-      case 'professeur':
-        return 'Professeur';
-      case 'admin':
-        return 'Administrateur';
-      default:
-        return 'Autre';
-    }
-  }
-
-  /**
-   * Obtient l'icône du rôle principal
-   * @param roles - Tableau des rôles
-   * @returns string
-   */
-  getRoleIcon(roles: string[]): string {
-    const roleType = this.getRoleType(roles);
-    switch (roleType) {
-      case 'etudiant':
-        return '🎓';
-      case 'professeur':
-        return '👨‍🏫';
-      case 'admin':
-        return '👑';
-      default:
-        return '👤';
-    }
-  }
-
-  /**
-   * Obtient le temps relatif depuis une date
-   * @param date - Date au format string
-   * @returns string
-   */
-  getRelativeTime(date: string): string {
-    if (!date) return '';
-
-    const now = new Date();
-    const targetDate = new Date(date);
-    const diffInMs = now.getTime() - targetDate.getTime();
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-    if (diffInDays === 0) {
-      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-      if (diffInHours === 0) {
-        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-        return diffInMinutes <= 1 ? 'À l\'instant' : `Il y a ${diffInMinutes} min`;
-      }
-      return `Il y a ${diffInHours}h`;
-    } else if (diffInDays === 1) {
-      return 'Hier';
-    } else if (diffInDays < 7) {
-      return `Il y a ${diffInDays} jours`;
-    } else if (diffInDays < 30) {
-      const diffInWeeks = Math.floor(diffInDays / 7);
-      return `Il y a ${diffInWeeks} semaine${diffInWeeks > 1 ? 's' : ''}`;
-    } else if (diffInDays < 365) {
-      const diffInMonths = Math.floor(diffInDays / 30);
-      return `Il y a ${diffInMonths} mois`;
-    } else {
-      return targetDate.toLocaleDateString('fr-FR');
-    }
-  }
-
-
-  /**
-   * Construit l'URL complète de la photo
-   */
-  getPhotoUrl(photo: string, participant: ParticipantWithUeInfo): string {
-    if (!photo || photo === 'null') {
-      return '';
-    }
-
-    if (photo.startsWith('http')) {
-      return photo;
-    }
-
-    if (photo.startsWith('/uploads')) {
-      return `http://localhost:3000${photo}`;
-    }
-
-    // Construire le chemin basé sur la structure: /uploads/user/{nom}/photo_profil/{filename}
-    return `http://localhost:3000/uploads/user/${participant.nom}/photo_profil/${photo}`;
-  }
-
-  /**
-   * Gère les erreurs de chargement d'image
-   */
-  onImageError(event: any, participant: ParticipantWithUeInfo) {
-    console.log(`❌ Erreur chargement image pour ${participant.prenom} ${participant.nom}:`, participant.photo);
-
-    // Cacher l'image et afficher les initiales
-    event.target.style.display = 'none';
-
-
-  }
-
 }

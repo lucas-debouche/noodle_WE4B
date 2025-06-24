@@ -1,0 +1,54 @@
+<div class="mes-ue-layout">
+  <app-sidebar-mes-ue [ueId]="selectedUeId" class="sidebar"></app-sidebar-mes-ue>
+  <div class="mes-ue-sections" *ngIf="selectedUeId">
+    <div class="progress-bar-container-flex" *ngIf="nbPosts">
+      <div class="progress-bar-container-main">
+        <div class="progress-bar-label">
+          Progression : {{ nbFaits }} / {{ nbPosts }} posts faits
+        </div>
+        <div class="progress-bar">
+          <div class="progress-bar-inner" [style.width.%]="(nbFaits / nbPosts) * 100"></div>
+        </div>
+      </div>
+      <button class="redirect-to-forum-btn" [routerLink]="['/mes-ue', selectedUeId, 'forums']">Forum</button>
+      <button
+        class="create-post-btn"
+        *ngIf="currentUser?.role?.includes('ROLE_PROF')"
+        (click)="openCreatePostModal()"
+      >
+        Créer un post
+      </button>
+    </div>
+    <app-create-post-ue
+      *ngIf="showCreatePostModal"
+      [ueId]="selectedUeId"
+      [currentUser]="currentUser"
+      (close)="closeCreatePostModal()"
+      (postCreated)="onPostCreated($event)">
+    </app-create-post-ue>
+    <div id="info">
+      <app-sections-ue [sectionTitle]="'info'" [ueId]="selectedUeId"
+        (postsLoaded)="onPostsLoaded('info', $event)"
+        (faitChange)="onFaitChange('info', $event.index, $event.value)">
+      </app-sections-ue>
+    </div>
+    <div id="cm">
+      <app-sections-ue [sectionTitle]="'CM'" [ueId]="selectedUeId"
+        (postsLoaded)="onPostsLoaded('CM', $event)"
+        (faitChange)="onFaitChange('CM', $event.index, $event.value)">
+      </app-sections-ue>
+    </div>
+    <div id="td">
+      <app-sections-ue [sectionTitle]="'TD'" [ueId]="selectedUeId"
+        (postsLoaded)="onPostsLoaded('TD', $event)"
+        (faitChange)="onFaitChange('TD', $event.index, $event.value)">
+      </app-sections-ue>
+    </div>
+    <div id="tp">
+      <app-sections-ue [sectionTitle]="'TP'" [ueId]="selectedUeId"
+        (postsLoaded)="onPostsLoaded('TP', $event)"
+        (faitChange)="onFaitChange('TP', $event.index, $event.value)">
+      </app-sections-ue>
+    </div>
+  </div>
+</div>
