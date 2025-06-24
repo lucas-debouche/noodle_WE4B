@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ForumService } from '../../../services/forum.service';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-forum-list',
@@ -29,7 +30,8 @@ export class ForumListComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private forumService: ForumService
+    private forumService: ForumService,
+    private location: Location
   ) {}
 
   ngOnInit() {
@@ -208,5 +210,9 @@ export class ForumListComponent implements OnInit {
     } else {
       return forumDate.toLocaleDateString('fr-FR');
     }
+  }
+
+  goBack() {
+    this.location.back();
   }
 }

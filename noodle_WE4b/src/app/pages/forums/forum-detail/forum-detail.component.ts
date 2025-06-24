@@ -3,8 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ForumService } from '../../../services/forum.service';
 import { UtilisateurService } from '../../../services/utilisateur.service';
 import { AuthService } from '../../../services/auth.service';
-import { Location } from '@angular/common';
-
 
 @Component({
   selector: 'app-forum-detail',
@@ -55,8 +53,7 @@ export class ForumDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private forumService: ForumService,
     private utilisateurService: UtilisateurService,
-    private authService: AuthService,
-    private location: Location
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -574,9 +571,5 @@ export class ForumDetailComponent implements OnInit {
     const currentUserId = this.getCurrentUserId();
     // L'auteur peut supprimer sa propre réponse OU les profs/admins peuvent supprimer toutes les réponses
     return (reply.userId === currentUserId && !!currentUserId) || this.canModerate();
-  }
-
-  goBack() {
-    this.location.back();
   }
 }

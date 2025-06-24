@@ -13,8 +13,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'choix-ue', component:  ChoixUeComponent, canActivate: [AuthGuard]},
   { path: 'mes-ue/:id', component: MesUeComponent, canActivate: [AuthGuard]},
-
-  { path: 'ues/:ueId/forums', component: ForumListComponent, canActivate: [AuthGuard] },
+  { path: 'mes-ue/:id/forums', component: ForumListComponent, canActivate: [AuthGuard] },
   { path: 'forums/:forumId', component: ForumDetailComponent , canActivate: [AuthGuard]},
 
   {path : 'ues/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard]},
