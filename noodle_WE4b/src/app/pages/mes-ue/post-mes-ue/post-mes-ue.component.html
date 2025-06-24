@@ -1,0 +1,60 @@
+<div class="post-card" [ngClass]="getTypeNom(post)">
+  <div class="post-header">
+    <div class="post-type-icon">
+      <ng-container [ngSwitch]="getTypeNom(post)">
+        <span *ngSwitchCase="'message'" title="Message">💬</span>
+        <span *ngSwitchCase="'fichier'" title="Fichier">📎</span>
+        <span *ngSwitchCase="'devoir'" title="Devoir">📝</span>
+        <span *ngSwitchDefault>📄</span>
+      </ng-container>
+    </div>
+    <div class="post-meta">
+      <span class="post-title">{{ post.titre }}</span>
+      <ng-container *ngIf="getPrioriteNom(post) === 'important'">
+        <span class="important-icon" title="Important">&#9888;</span>
+      </ng-container>
+      <span class="post-date">{{ post.date_publication | date:'dd/MM/yyyy HH:mm' }}</span>
+      <span class="post-user"
+            *ngIf="post.utilisateur_id && isUtilisateurObj(post.utilisateur_id) && post.utilisateur_id.prenom && post.utilisateur_id.nom">
+        • {{ post.utilisateur_id.prenom }} {{ post.utilisateur_id.nom }}
+      </span>
+    </div>
+    <div class="fait-btn-container" *ngIf="isUser()">
+      <button class="fait-btn" [ngClass]="{fait: fait}" (click)="toggleFait()">
+        {{ fait ? 'Fait' : 'À faire' }}
+      </button>
+      <span class="fait-count">
+        {{ faitCount }} / {{ totalUsers }}
+      </span>
+    </div>
+  </div>
+
+  <ng-container [ngSwitch]="getTypeNom(post)">
+    <app-fichier-content *ngSwitchCase="'fichier'" [post]="post"></app-fichier-content>
+    <app-devoir-content *ngSwitchCase="'devoir'"
+                        [post]="post"
+                        [currentUser]="currentUser"
+                        [renduUtilisateur]="renduUtilisateur"
+                        [etatRendu]="etatRendu"
+                        (openCorrection)="openCorrectionModal()"
+                        (openRendus)="openRendusModal()"
+    >
+    </app-devoir-content>
+    <div *ngSwitchDefault class="post-content">
+      <div class="post-message">{{ post.contenu }}</div>
+    </div>
+  </ng-container>
+
+  <app-correction-modal
+    *ngIf="showCorrectionModal"
+    [rendu]="renduUtilisateur"
+    (close)="closeCorrectionModal()">
+  </app-correction-modal>
+
+  <app-rendus-modal
+    *ngIf="showRendusModal"
+    [rendus]="post.rendus"
+    [isProf]="isProf()"
+    (close)="closeRendusModal()">
+  </app-rendus-modal>
+</div>

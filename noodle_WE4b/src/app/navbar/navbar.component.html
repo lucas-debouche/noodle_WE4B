@@ -7,9 +7,8 @@
       <h1>{{ title || 'Noodle' }}</h1>
     </div>
     <div class="nav" *ngIf="isLoggedIn">
-      <a *ngIf="isAdmin" routerLink="/admin-dashboard">Dashboard</a>
-      <a *ngIf="isAdmin" routerLink="/admin-panel">Panel Admin</a>
-      <a *ngIf="hasRoles" routerLink="/choix-ue">Mes UEs</a>
+      <a *ngIf="isAdmin" routerLink="/admin_panel">Panel Admin</a>
+      <a *ngIf="isProf || isUser" routerLink="/choix-ue">Mes UEs</a>
       <a (click)="logout()" routerLink="/">Déconnexion</a>
     </div>
   </div>

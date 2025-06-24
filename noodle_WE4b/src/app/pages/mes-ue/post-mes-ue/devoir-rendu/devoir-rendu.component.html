@@ -1,0 +1,23 @@
+<div class="devoir-submit-block">
+  <ng-container *ngIf="renduUtilisateur; else soumissionDevoir">
+    <span class="devoir-fait-label">Fichier soumis :</span>
+    <a *ngIf="renduUtilisateur.fichier_chemin"
+       [href]="'http://localhost:3000/' + renduUtilisateur.fichier_chemin"
+       [attr.download]="renduUtilisateur.fichier_nom"
+       class="devoir-file-name"
+       target="_blank"
+       rel="noopener">{{ renduUtilisateur.fichier_nom }}</a>
+    <button class="devoir-submit-btn" (click)="enableModifyDevoir()">Modifier le fichier</button>
+  </ng-container>
+  <ng-template #soumissionDevoir>
+    <label class="devoir-upload-label">
+      <input type="file" (change)="onDevoirFileChange($event)" />
+    </label>
+    <button class="devoir-submit-btn"
+            [disabled]="!devoirFile"
+            (click)="submitDevoir()">
+      Soumettre
+    </button>
+    <span *ngIf="devoirFileName" class="devoir-file-name">{{ devoirFileName }}</span>
+  </ng-template>
+</div>

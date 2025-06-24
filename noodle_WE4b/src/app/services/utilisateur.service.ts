@@ -213,6 +213,11 @@ export class UtilisateurService {
     );
   }
 
+  // Récupérer tous les utilisateurs assignés à une UE
+  getUtilisateursByUe(ueId: string) {
+    return this.http.get<User[]>(`${this.apiUrl}/ue/${ueId}`);
+  }
+
   /**
    * Rechercher des participants dans une UE
    * @param ueId - Identifiant de l'UE
@@ -390,7 +395,7 @@ export class UtilisateurService {
 
     return participants.map(participant => ({
       // Propriétés de base de User
-      id: participant.id || participant._id,
+      _id: participant._id || '',
       nom: participant.nom || participant.lastName || participant.name || '',
       prenom: participant.prenom || participant.firstName || '',
       email: participant.email || '',

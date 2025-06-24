@@ -81,10 +81,10 @@ export class UeFormComponent implements OnChanges {
     if (!this.editingUe) return;
 
     try {
-      console.log('👥 Chargement des utilisateurs assignés pour UE:', this.editingUe.id);
+      console.log('👥 Chargement des utilisateurs assignés pour UE:', this.editingUe._id);
 
-      console.log('🔍 Récupération des participants pour l\'UE:', this.editingUe.id);
-      const participants: any = await this.uesService.getParticipantsByUe(this.editingUe.id).toPromise();
+      console.log('🔍 Récupération des participants pour l\'UE:', this.editingUe._id);
+      const participants: any = await this.uesService.getParticipantsByUe(this.editingUe._id).toPromise();
 
       console.log('📥 Participants reçus:', participants);
 

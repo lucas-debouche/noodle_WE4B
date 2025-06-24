@@ -5,7 +5,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configuration Multer pour les fichiers de forum
+// Configuration Multer pour les fichiers de forum : permet de gérer les fichiers attachés aux messages et réponses
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(__dirname, '../uploads/forums');

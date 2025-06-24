@@ -3,8 +3,18 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const utilisateurRoutes = require('./routes/utilisateur.routes');
+const ueRoutes = require('./routes/ue.routes');
+const postRoutes = require('./routes/post.routes');
+const authRoutes = require('./routes/auth.routes');
+const prioriteRoutes = require('./routes/priorite.routes');
+const typeRoutes = require('./routes/type.routes');
+const forumsRoutes = require('./routes/forums.routes');
+
 const path = require('path');
 const fs = require('fs');
+const adminPanelRoutes = require('./routes/admin_panel.routes');
+
 
 const app = express();
 const PORT = 3000;
@@ -62,6 +72,9 @@ app.use('/api/utilisateur', utilisateurRoutes);
 // Routes posts
 const postRoutes = require('./routes/post.routes');
 app.use('/api/post', postRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/priorite', prioriteRoutes);
+app.use('/api/type', typeRoutes);
 
 // Routes départements (protégées)
 const authMiddleware = require('./security/middleware_auth');
@@ -71,6 +84,9 @@ app.use('/api/departements', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADM
 // Routes forums
 const forumsRoutes = require('./routes/forums.routes');
 app.use('/api/forums', forumsRoutes);
+app.use("/api/auth", authRoutes);
+app.use('/api/admin', adminPanelRoutes);
+
 
 // Routes UE
 const ueRoutes = require('./routes/ue.routes');

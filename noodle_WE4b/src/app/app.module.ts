@@ -5,7 +5,7 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { UtilisateurComponent } from './utilisateurs/utilisateurs.component';
+import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
 import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { FooterComponent } from './footer/footer.component';
@@ -13,6 +13,16 @@ import { ProfilSidebarComponent } from './profil-sidebar/profil-sidebar.componen
 import { AuthInterceptor } from './services/auth.interceptor.service';
 import { LoginComponent } from './pages/login/login.component';
 import { UeBoxComponent } from './ue-box/ue-box.component';
+import { MesUeComponent } from "./pages/mes-ue/mes-ue.component";
+import { SectionsUeComponent } from './pages/mes-ue/sections-ue/sections-ue.component';
+import { SidebarMesUeComponent } from './pages/mes-ue/sidebar-mes-ue/sidebar-mes-ue.component';
+import { PostMesUeComponent } from './pages/mes-ue/post-mes-ue/post-mes-ue.component';
+import { CreatePostUeComponent } from './pages/mes-ue/create-post-ue/create-post-ue.component';
+import { DevoirRenduComponent } from './pages/mes-ue/post-mes-ue/devoir-rendu/devoir-rendu.component';
+import { CorrectionModalComponent } from './pages/mes-ue/post-mes-ue/correction-modal/correction-modal.component';
+import { RendusModalComponent } from './pages/mes-ue/post-mes-ue/rendus-modal/rendus-modal.component';
+import { FichierContentComponent } from './pages/mes-ue/post-mes-ue/fichier-content/fichier-content.component';
+import { DevoirContentComponent } from './pages/mes-ue/post-mes-ue/devoir-content/devoir-content.component';
 
 import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
 import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
@@ -43,13 +53,23 @@ import { UeRegistrationComponent} from "./pages/ue-registration/ue-registration/
 @NgModule({
   declarations: [
     AppComponent,
-    UtilisateurComponent,
+    Admin_panelComponent,
     ChoixUeComponent,
     NavbarComponent,
     FooterComponent,
     ProfilSidebarComponent,
     LoginComponent,
+    MesUeComponent,
     UeBoxComponent,
+    SectionsUeComponent,
+    SidebarMesUeComponent,
+    PostMesUeComponent,
+    CreatePostUeComponent,
+    DevoirRenduComponent,
+    CorrectionModalComponent,
+    RendusModalComponent,
+    FichierContentComponent,
+    DevoirContentComponent,
     ForumListComponent,
     ForumDetailComponent,
     ParticipantsListComponent,
@@ -80,6 +100,7 @@ import { UeRegistrationComponent} from "./pages/ue-registration/ue-registration/
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
+    FormsModule,
     ReactiveFormsModule,
   ],
   providers: [
@@ -92,3 +113,4 @@ import { UeRegistrationComponent} from "./pages/ue-registration/ue-registration/
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+

@@ -1,0 +1,20 @@
+<div class="correction-modal-backdrop">
+  <div class="correction-modal">
+    <div class="correction-modal-header">
+      <span>Correction du devoir</span>
+      <button class="close-modal-btn" (click)="closeModal()">✕</button>
+    </div>
+    <div class="correction-modal-content">
+      <table class="correction-table">
+        <tr>
+          <th>Note</th>
+          <td>{{ rendu.note }}/20</td>
+        </tr>
+        <tr>
+          <th>Commentaire</th>
+          <td>{{ rendu.commentaire || 'Aucun commentaire' }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>

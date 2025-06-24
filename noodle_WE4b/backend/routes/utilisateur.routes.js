@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Utilisateur = require('../models/utilisateur.model');
+const UtilisateurUe = require('../models/utilisateur_ue.model'); // Crée ce modèle si besoin
 const utilisateurController = require('../controllers/utilisateur.controller');
 const authMiddleware = require('../security/middleware_auth');
 const mongoose = require('mongoose');
@@ -9,7 +10,7 @@ const path = require("path");
 const fs = require('fs');
 
 // GET / → obtenir tous les utilisateurs
-router.get('/', utilisateurController.getAllUtilisateurs);
+router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getAllUtilisateurs);
 
 // GET /current → obtenir l'utilisateur actuel
 router.get('/current', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getCurrentUtilisateur);
@@ -35,7 +36,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // PUT /update_photo/:nom → mettre à jour la photo d'un utilisateur
-router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
+router.put('/update_photo/:nom', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), upload.single('photo'), async (req, res) => {
   try {
     console.log('Mise à jour de la photo de l\'utilisateur');
     const photo = req.file ? req.file.filename : null;
@@ -74,7 +75,22 @@ router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
   }
 });
 
+
+router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
+  try {
+    // Récupère les liaisons pour cette UE
+    const liaisons = await UtilisateurUe.find({ ue_id: req.params.ueId });
+    const utilisateurIds = liaisons.map(liaison => liaison.utilisateur_id);
+
+    // Récupère les utilisateurs correspondants
+    const utilisateurs = await Utilisateur.find({ _id: { $in: utilisateurIds } });
+    res.json(utilisateurs);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs par UE.' });
+  }
+});
+
 // GET /:userId → obtenir un utilisateur par son ID (pour afficher les auteurs de message du forum)
-router.get('/:userId', utilisateurController.getUtilisateurById);
+router.get('/:userId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getUtilisateurById);
 
 module.exports = router;

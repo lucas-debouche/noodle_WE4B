@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"356157e588cd49528b41fccbcfff817d","collectionName":"doctrine_migration_versions","type":"collection"}
