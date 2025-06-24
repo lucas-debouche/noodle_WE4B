@@ -76,7 +76,7 @@ export class LoginComponent implements OnInit{
             localStorage.setItem('token', response.token);
 
             if (response.roles.includes('ROLE_ADMIN')) {
-              this.router.navigate(['/dashboard']);
+              this.router.navigate(['/admin_panel']);
             } else {
               this.router.navigate(['/choix-ue']);
             }
