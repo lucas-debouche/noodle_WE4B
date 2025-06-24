@@ -6,8 +6,4 @@ export interface Ue {
   description?: string;     // Description de l'UE (facultatif)
   ects: number;             // Nombre de crédits ECTS
   participants?: string[];  // Liste des IDs des utilisateurs inscrits à cet UE
-  departementId?: string;   // ID du département associé
-  departementNom?: string;  // Nom du département (pour affichage)
-  createdAt?: string;       // Date de création
-  updatedAt?: string;       // Date de mise à jour
 }

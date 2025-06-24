@@ -3,12 +3,12 @@ const router = express.Router();
 const forumsController = require('../controllers/forums.controller');
 const authMiddleware = require('../security/middleware_auth');
 
-
-// Routes spécifiques (sans paramètres) - DOIVENT être en premier
-router.get('/download/:filename', forumsController.downloadFile);
-
-// Routes avec paramètres spécifiques - AVANT les routes génériques
+// Routes publiques (lecture)
+router.get('/:ueId', forumsController.getForumsByUe);
 router.get('/detail/:forumId', forumsController.getForumDetail);
+
+// Route pour télécharger les fichiers
+router.get('/download/:filename', forumsController.downloadFile);
 
 // Routes pour ROLE_USER, ROLE_PROF, ROLE_ADMIN
 router.post(
@@ -17,21 +17,21 @@ router.post(
   forumsController.createForum
 );
 
-// Routes avec paramètres - messages
+// Route pour ajouter un message avec fichiers
 router.post(
   '/:forumId/messages',
   authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.addMessage
 );
 
-// Routes avec paramètres - réponses (plus spécifiques)
+// Route pour ajouter une réponse avec fichiers
 router.post(
   '/:forumId/messages/:messageId/replies',
   authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.addReply
 );
 
-// Routes PUT - modification
+// Routes pour ROLE_PROF et ROLE_ADMIN uniquement
 router.put(
   '/:forumId/title',
   authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
@@ -43,33 +43,28 @@ router.put(
   authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.updateMessage
 );
-
 router.put(
   '/:forumId/messages/:messageId/replies/:replyId',
   authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.updateReply
 );
-
-// Routes DELETE - suppression
-router.delete(
-  '/:forumId/messages/:messageId/replies/:replyId',
-  authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
-  forumsController.deleteReply
-);
-
 router.delete(
   '/:forumId/messages/:messageId',
   authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
   forumsController.deleteMessage
 );
 
-// Route DELETE forum (ADMIN uniquement)
+router.delete(
+  '/:forumId/messages/:messageId/replies/:replyId',
+  authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
+  forumsController.deleteReply
+);
+
+// Routes pour ROLE_ADMIN uniquement
 router.delete(
   '/:forumId',
   authMiddleware(['ROLE_ADMIN']),
   forumsController.deleteForum
 );
-
-router.get('/:ueId', forumsController.getForumsByUe);
 
 module.exports = router;

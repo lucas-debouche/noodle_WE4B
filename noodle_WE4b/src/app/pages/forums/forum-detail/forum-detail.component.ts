@@ -203,7 +203,7 @@ export class ForumDetailComponent implements OnInit {
     console.log('Starting edit for reply:', reply._id);
     this.cancelEdit(); // Annuler toute édition en cours
     this.editingReply = reply;
-    this.editText = reply.message;
+    this.editText = reply.message; // ✅ CORRECTION : Initialiser editText avec le contenu actuel
   }
 
   saveMessageEdit(event: {messageId: string, text: string}) {
@@ -238,7 +238,7 @@ export class ForumDetailComponent implements OnInit {
     }
   }
 
-
+  // ✅ CORRECTION : Nouvelle signature pour saveReplyEdit
   saveReplyEdit(event: {messageId: string, replyId: string, text: string}) {
     console.log('Saving reply edit:', event);
     const forumId = this.route.snapshot.paramMap.get('forumId');
