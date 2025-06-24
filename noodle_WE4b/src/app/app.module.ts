@@ -43,6 +43,12 @@ import { ParticipantsFiltersComponent } from './pages/partipants-ue/participants
 import { ParticipantsGridComponent } from './pages/partipants-ue/participants-grid/participants-grid.component';
 import { ParticipantCardComponent } from './pages/partipants-ue/participant-card/participant-card.component';
 import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participants-empty-state/participants-empty-state.component';
+import { UeFormComponent } from './pages/ue-registration/ue-registration/components/ue-form/ue-form.component';
+import { UeListComponent } from './pages/ue-registration/ue-registration/components/ue-list/ue-list.component';
+import { UserManagementComponent } from './pages/ue-registration/ue-registration/components/user-management/user-management.component';
+import { UeCardComponent } from './pages/ue-registration/ue-registration/components/ue-card/ue-card.component';
+import { ImageUploadComponent } from './pages/ue-registration/ue-registration/components/image-upload/image-upload.component';
+import { UeRegistrationComponent} from "./pages/ue-registration/ue-registration/ue-registration.component";
 
 @NgModule({
   declarations: [
@@ -82,6 +88,12 @@ import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participa
     ParticipantsGridComponent,
     ParticipantCardComponent,
     ParticipantsEmptyStateComponent,
+    UeFormComponent,
+    UeListComponent,
+    UserManagementComponent,
+    UeCardComponent,
+    ImageUploadComponent,
+    UeRegistrationComponent
   ],
   imports: [
     BrowserModule,

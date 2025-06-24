@@ -1,0 +1,159 @@
+<div class="ue-form-container">
+  <div class="form-header">
+    <h2>
+      <i class="icon">{{ isEditMode ? '✏️' : '➕' }}</i>
+      {{ isEditMode ? 'Modifier l\'UE' : 'Créer une nouvelle UE' }}
+    </h2>
+    <div class="form-status" *ngIf="isEditMode && editingUe">
+      <span class="status-badge">
+        ✏️ Édition de l'UE : <strong>{{ editingUe.code }} - {{ editingUe.intitule }}</strong>
+      </span>
+    </div>
+  </div>
+
+  <form [formGroup]="ueForm" (ngSubmit)="onSubmit()" class="ue-form">
+    <!-- Code UE -->
+    <div class="form-group">
+      <label for="code" class="form-label">
+        Code UE <span class="required">*</span>
+      </label>
+      <input
+        type="text"
+        id="code"
+        formControlName="code"
+        class="form-control"
+        [class.invalid]="isFieldInvalid('code')"
+        placeholder="Ex: WE4A"
+        maxlength="8"
+      />
+      <div class="field-error" *ngIf="getFieldError('code')">
+        {{ getFieldError('code') }}
+      </div>
+      <div class="field-hint">Le code doit être en majuscules (2-8 caractères)</div>
+    </div>
+
+    <!-- Intitulé -->
+    <div class="form-group">
+      <label for="intitule" class="form-label">
+        Intitulé <span class="required">*</span>
+      </label>
+      <input
+        type="text"
+        id="intitule"
+        formControlName="intitule"
+        class="form-control"
+        [class.invalid]="isFieldInvalid('intitule')"
+        placeholder="Ex: Développement Web"
+      />
+      <div class="field-error" *ngIf="getFieldError('intitule')">
+        {{ getFieldError('intitule') }}
+      </div>
+    </div>
+
+    <!-- Upload d'image -->
+    <app-image-upload
+      [currentImage]="imagePreview"
+      (fileSelected)="onImageSelected($event)"
+      (previewChanged)="onImagePreviewChanged($event)"
+    ></app-image-upload>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label for="description" class="form-label">Description</label>
+      <textarea
+        id="description"
+        formControlName="description"
+        class="form-control textarea"
+        rows="3"
+        placeholder="Description de l'UE (optionnel)"
+      ></textarea>
+    </div>
+
+    <!-- ECTS -->
+    <div class="form-group">
+      <label for="ects" class="form-label">
+        ECTS <span class="required">*</span>
+      </label>
+      <input
+        type="number"
+        id="ects"
+        formControlName="ects"
+        class="form-control"
+        [class.invalid]="isFieldInvalid('ects')"
+        placeholder="Nombre de crédits ECTS"
+        min="1"
+        max="30"
+      />
+      <div class="field-error" *ngIf="getFieldError('ects')">
+        {{ getFieldError('ects') }}
+      </div>
+    </div>
+
+    <!-- Département -->
+    <div class="form-group">
+      <label for="departementId" class="form-label">
+        Département <span class="required">*</span>
+      </label>
+      <select
+        id="departementId"
+        formControlName="departementId"
+        class="form-control"
+        [class.invalid]="isFieldInvalid('departementId')"
+      >
+        <option value="">Sélectionner un département</option>
+        <option
+          *ngFor="let departement of departements"
+          [value]="departement.id"
+        >
+          {{ departement.nom }}
+        </option>
+      </select>
+      <div class="field-error" *ngIf="getFieldError('departementId')">
+        {{ getFieldError('departementId') }}
+      </div>
+    </div>
+
+    <!-- Gestion des utilisateurs -->
+    <app-user-management
+      [users]="users"
+      [assignedUsers]="assignedUsers"
+      (userAdded)="onUserAdded($event)"
+      (userRemoved)="onUserRemoved($event)"
+    ></app-user-management>
+
+    <!-- Actions du formulaire -->
+    <div class="form-actions">
+      <button
+        type="submit"
+        class="btn-submit"
+        [disabled]="ueForm.invalid || submitting"
+      >
+        <div class="loading-spinner" *ngIf="submitting"></div>
+        <i *ngIf="!submitting" class="icon">
+          {{ isEditMode ? '✏️' : '💾' }}
+        </i>
+        {{ submitting ? 'En cours...' : (isEditMode ? 'Mettre à jour l\'UE' : 'Enregistrer l\'UE') }}
+      </button>
+
+      <button
+        type="button"
+        (click)="onCancelEdit()"
+        class="btn-cancel"
+        *ngIf="isEditMode"
+      >
+        <i class="icon">❌</i>
+        Annuler
+      </button>
+
+      <button
+        type="button"
+        (click)="resetForm()"
+        class="btn-reset"
+        *ngIf="!isEditMode"
+      >
+        <i class="icon">🔄</i>
+        Réinitialiser
+      </button>
+    </div>
+  </form>
+</div>
