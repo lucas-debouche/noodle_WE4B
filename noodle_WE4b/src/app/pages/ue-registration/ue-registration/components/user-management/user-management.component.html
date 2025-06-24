@@ -1,0 +1,134 @@
+<div class="user-management-section">
+  <h3>
+    <i class="icon">👥</i>
+    Gestion des utilisateurs associés
+  </h3>
+
+  <!-- Recherche d'utilisateurs -->
+  <div class="search-user-container">
+    <div class="search-input-wrapper">
+      <i class="search-icon">🔍</i>
+      <input
+        type="text"
+        [(ngModel)]="userSearchTerm"
+        (input)="onUserSearch()"
+        placeholder="Rechercher un utilisateur..."
+        class="search-input"
+      />
+      <div class="loading-spinner" *ngIf="loadingUsers"></div>
+    </div>
+
+    <!-- Résultats de recherche -->
+    <div class="search-results" *ngIf="showSearchResults && searchResults.length > 0">
+      <div class="search-results-header">
+        <span>{{ searchResults.length }} utilisateur(s) trouvé(s)</span>
+        <button
+          type="button"
+          (click)="closeSearchResults()"
+          class="close-search"
+        >
+          ×
+        </button>
+      </div>
+      <div class="results-list">
+        <div
+          *ngFor="let user of searchResults; trackBy: trackByUserId"
+          class="search-result-item"
+          (click)="addUser(user)"
+        >
+          <div class="user-avatar">
+            <img
+              *ngIf="user.photo && getPhotoUrl(user.photo)"
+              [src]="getPhotoUrl(user.photo)"
+              [alt]="user.prenom + ' ' + user.nom"
+              class="avatar-image"
+            />
+            <span
+              *ngIf="!user.photo || !getPhotoUrl(user.photo)"
+              class="avatar-text">
+              {{ getInitials(user) }}
+            </span>
+          </div>
+          <div class="user-info">
+            <strong>{{ user.nom }} {{ user.prenom }}</strong>
+            <small>{{ user.email }}</small>
+            <div class="user-roles">
+              <span
+                class="role-badge"
+                [class]="getRoleClass(user.role)"
+              >
+                {{ getRoleLabel(user.role) }}
+              </span>
+            </div>
+          </div>
+          <button type="button" class="btn-add-user">
+            <i class="icon">➕</i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-results" *ngIf="showSearchResults && searchResults.length === 0 && userSearchTerm">
+      <i class="icon">🔍</i>
+      <p>Aucun utilisateur trouvé pour "{{ userSearchTerm }}"</p>
+    </div>
+  </div>
+
+  <!-- Utilisateurs assignés -->
+  <div class="assigned-users-container">
+    <h4>
+      <i class="icon">✅</i>
+      Utilisateurs assignés
+      <span class="count-badge" *ngIf="assignedUsers.length > 0">
+        {{ assignedUsers.length }}
+      </span>
+    </h4>
+
+    <div class="assigned-users-list" *ngIf="assignedUsers.length > 0">
+      <div
+        *ngFor="let user of assignedUsers; trackBy: trackByUserId"
+        class="assigned-user-item"
+      >
+        <div class="user-avatar">
+          <img
+            *ngIf="user.photo && getPhotoUrl(user.photo)"
+            [src]="getPhotoUrl(user.photo)"
+            [alt]="user.prenom + ' ' + user.nom"
+            class="avatar-image"
+          />
+          <span
+            *ngIf="!user.photo || !getPhotoUrl(user.photo)"
+            class="avatar-text">
+            {{ getInitials(user) }}
+          </span>
+        </div>
+        <div class="user-info">
+          <strong>{{ user.nom }} {{ user.prenom }}</strong>
+          <small>{{ user.email }}</small>
+          <div class="user-roles">
+            <span
+              class="role-badge"
+              [class]="getRoleClass(user.role)"
+            >
+              {{ getRoleLabel(user.role) }}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="removeUser(user)"
+          class="btn-remove-user"
+          title="Retirer cet utilisateur"
+        >
+          <i class="icon">🗑️</i>
+        </button>
+      </div>
+    </div>
+
+    <div class="no-assigned-users" *ngIf="assignedUsers.length === 0">
+      <i class="icon">👥</i>
+      <p>Aucun utilisateur assigné à cette UE</p>
+      <small>Utilisez la recherche ci-dessus pour ajouter des utilisateurs</small>
+    </div>
+  </div>
+</div>
