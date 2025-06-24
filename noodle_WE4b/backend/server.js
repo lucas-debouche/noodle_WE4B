@@ -8,6 +8,7 @@ const ueRoutes = require('./routes/ue.routes');
 const postRoutes = require('./routes/post.routes');
 const authRoutes = require('./routes/auth.routes');
 const forumsRoutes = require('./routes/forums.routes');
+const roleRoutes = require('./routes/roles.routes');
 
 const path = require('path');
 const fs = require('fs');
@@ -37,6 +38,7 @@ createUploadDirs();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 mongoose.connect('mongodb://localhost:27017/noodle')
   .then(() => console.log('Connecté à MongoDB'))
@@ -48,6 +50,7 @@ app.use('/api/ue', ueRoutes);
 app.use('/api/post', postRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/forums', forumsRoutes);
+app.use('/api/role', roleRoutes)
 
 // Servir les fichiers statiques
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

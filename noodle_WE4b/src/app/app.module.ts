@@ -33,6 +33,11 @@ import { ParticipantsFiltersComponent } from './pages/partipants-ue/participants
 import { ParticipantsGridComponent } from './pages/partipants-ue/participants-grid/participants-grid.component';
 import { ParticipantCardComponent } from './pages/partipants-ue/participant-card/participant-card.component';
 import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participants-empty-state/participants-empty-state.component';
+import { UserRegistrationComponent } from './pages/user-registration/user-registration.component';
+import { UserPersonalInfoComponent } from './user/user-personal-info/user-personal-info.component';
+import { UserAccountInfoComponent } from './user/user-account-info/user-account-info.component';
+import { UserPhotoUploadComponent } from './user/user-photo-upload/user-photo-upload.component';
+import { UserRolesUesComponent } from './user/user-roles-ues/user-roles-ues.component';
 
 @NgModule({
   declarations: [
@@ -62,6 +67,11 @@ import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participa
     ParticipantsGridComponent,
     ParticipantCardComponent,
     ParticipantsEmptyStateComponent,
+    UserRegistrationComponent,
+    UserPersonalInfoComponent,
+    UserAccountInfoComponent,
+    UserPhotoUploadComponent,
+    UserRolesUesComponent,
   ],
   imports: [
     BrowserModule,

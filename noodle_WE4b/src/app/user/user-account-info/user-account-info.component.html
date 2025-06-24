@@ -1,0 +1,47 @@
+<div [formGroup]="form">
+  <div class="form-group">
+    <label for="email" class="required">Email</label>
+    <div class="input-with-icon">
+      <span class="input-icon">📧</span>
+      <input
+        id="email"
+        class="form-control"
+        formControlName="email"
+        placeholder="exemple@domaine.com"
+        [class.is-valid]="form.get('email')?.valid && form.get('email')?.touched"
+        [class.is-invalid]="form.get('email')?.invalid && form.get('email')?.touched"
+      />
+    </div>
+    <div class="form-error" *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
+      <span class="error-icon">!</span> Email requis ou invalide
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="plainPassword" class="required">Mot de passe</label>
+    <div class="password-input-container">
+      <div class="input-with-icon">
+        <span class="input-icon">🔒</span>
+        <input
+          id="plainPassword"
+          [type]="showPassword ? 'text' : 'password'"
+          class="form-control"
+          formControlName="plainPassword"
+          [class.is-valid]="form.get('plainPassword')?.valid && form.get('plainPassword')?.touched"
+          [class.is-invalid]="form.get('plainPassword')?.invalid && form.get('plainPassword')?.touched"
+        />
+        <button type="button" class="password-toggle" (click)="showPassword = !showPassword">
+          {{ showPassword ? '👁️' : '🔒' }}
+        </button>
+      </div>
+      <div class="password-strength" *ngIf="form.get('plainPassword')?.value">
+        <div class="strength-bar">
+          <div class="strength-fill" [style.width.%]="passwordStrength" [class]="getPasswordStrengthClass()"></div>
+        </div>
+        <span class="strength-text">{{ getPasswordStrengthText() }}</span>
+      </div>
+    </div>
+    <div class="form-error" *ngIf="form.get('plainPassword')?.invalid && form.get('plainPassword')?.touched">
+      <span class="error-icon">!</span> Mot de passe requis
+    </div>
+  </div>
+</div>

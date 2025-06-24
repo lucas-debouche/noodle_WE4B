@@ -1,0 +1,32 @@
+<div [formGroup]="form">
+  <div class="form-group">
+    <label for="roles" class="required">Rôles</label>
+    <div class="roles-container">
+      <div class="role-chip"
+           *ngFor="let role of roles"
+           [class.selected]="isRoleSelected(role)"
+           (click)="toggleRole(role)">
+        <span class="role-icon">{{ getRoleIcon(role) }}</span>
+        <span class="role-name">{{ role }}</span>
+        <span class="role-check" *ngIf="isRoleSelected(role)">✓</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group ue-selection">
+    <label for="ues">Unités d'Enseignement</label>
+    <div class="ue-input-container">
+      <select #ueSelect>
+        <option *ngFor="let ue of departements" [value]="ue._id">{{ ue.intitule }}</option>
+      </select>
+      <button type="button" class="btn-add-ue" (click)="addUeToUserBySelect(ueSelect.value)">➕ Ajouter</button>
+    </div>
+
+    <div class="roles-container" *ngIf="form.get('ues')?.value?.length">
+              <span class="role-chip selected" *ngFor="let ueId of form.get('ues')?.value">
+                {{ getUeName(ueId) }}
+                <button type="button" class="ue-remove" (click)="removeUeFromUser(ueId)">×</button>
+              </span>
+    </div>
+  </div>
+</div>

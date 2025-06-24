@@ -8,6 +8,7 @@ const multer = require('multer');
 const path = require("path");
 const fs = require('fs');
 
+
 // GET / → obtenir tous les utilisateurs
 router.get('/', utilisateurController.getAllUtilisateurs);
 
@@ -74,7 +75,30 @@ router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
   }
 });
 
+const storageCreation = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, '../uploads/user/tmp/photo_profil');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const uploadCreation = multer({ storage: storageCreation });
+
 // GET /:userId → obtenir un utilisateur par son ID (pour afficher les auteurs de message du forum)
+router.get('/:userId', utilisateurController.getUtilisateurById);
+
+// POST /api/utilisateur → créer un utilisateur
+router.post('/', uploadCreation.single('photo'), utilisateurController.createUtilisateur);
+
+// PUT /api/utilisateur/:userId → modifier un utilisateur
+router.put('/:userId', utilisateurController.updateUtilisateur);
+
+// GET /api/utilisateur/:userId → récupérer un utilisateur par son ID
 router.get('/:userId', utilisateurController.getUtilisateurById);
 
 module.exports = router;
