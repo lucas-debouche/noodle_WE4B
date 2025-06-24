@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Priorite = require('../models/priorite.model');
+const authMiddleware = require("../security/middleware_auth");
 
 // Retourne toutes les priorités
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
     const priorites = await Priorite.find();
     res.json(priorites);
@@ -13,7 +14,7 @@ router.get('/', async (req, res) => {
 });
 
 // Retourne une priorité par ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
     const priorite = await Priorite.findById(req.params.id);
     if (!priorite) {

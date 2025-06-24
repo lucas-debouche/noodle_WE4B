@@ -10,7 +10,7 @@ const path = require("path");
 const fs = require('fs');
 
 // GET / → obtenir tous les utilisateurs
-router.get('/', utilisateurController.getAllUtilisateurs);
+router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getAllUtilisateurs);
 
 // GET /current → obtenir l'utilisateur actuel
 router.get('/current', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getCurrentUtilisateur);
@@ -36,7 +36,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // PUT /update_photo/:nom → mettre à jour la photo d'un utilisateur
-router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
+router.put('/update_photo/:nom', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), upload.single('photo'), async (req, res) => {
   try {
     console.log('Mise à jour de la photo de l\'utilisateur');
     const photo = req.file ? req.file.filename : null;
@@ -76,7 +76,7 @@ router.put('/update_photo/:nom', upload.single('photo'), async (req, res) => {
 });
 
 
-router.get('/ue/:ueId', async (req, res) => {
+router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
     // Récupère les liaisons pour cette UE
     const liaisons = await UtilisateurUe.find({ ue_id: req.params.ueId });
@@ -91,6 +91,6 @@ router.get('/ue/:ueId', async (req, res) => {
 });
 
 // GET /:userId → obtenir un utilisateur par son ID (pour afficher les auteurs de message du forum)
-router.get('/:userId', utilisateurController.getUtilisateurById);
+router.get('/:userId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getUtilisateurById);
 
 module.exports = router;

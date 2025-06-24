@@ -19,6 +19,7 @@ module.exports = (rolesAutorises) => (req, res, next) => {
 
     // Vérification de l'inactivité
     const currentTime = Math.floor(Date.now() / 1000); // Temps actuel en secondes
+    decodedToken.lastActivity = currentTime;
     if (currentTime - decodedToken.lastActivity > 20 * 60) { // 20 minutes d'inactivité
       console.log('authMiddleware : Token expiré en raison d\'inactivité.');
       return res.status(401).json({ error: "Session expirée en raison d'inactivité." });

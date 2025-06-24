@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Type = require('../models/type.model');
+const authMiddleware = require("../security/middleware_auth");
 
 // Retourne toutes les priorités
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
     const types = await Type.find();
     res.json(types);
@@ -13,7 +14,7 @@ router.get('/', async (req, res) => {
 });
 
 // Retourne un type par ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
     const type = await Type.findById(req.params.id);
     if (!type) {

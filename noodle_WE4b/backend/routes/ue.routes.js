@@ -9,16 +9,16 @@ const fs = require('fs');
 const path = require('path');
 
 // Obtenir toutes les Unités d'Enseignement (UE)
-router.get('/', ueController.getAllUes);
+router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), ueController.getAllUes);
 
 // Obtenir une UE par son ID
-router.get('/:ueId', ueController.getUeById);
+router.get('/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), ueController.getUeById);
 
 // Obtenir les statistiques des participants d'une UE
-router.get('/:ueId/participants/stats', ueController.getParticipantsStats);
+router.get('/:ueId/participants/stats', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), ueController.getParticipantsStats);
 
 // Obtenir les participants d'une UE
-router.get('/:ueId/participants', ueController.getParticipantsByUe);
+router.get('/:ueId/participants', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), ueController.getParticipantsByUe);
 
 // Ajouter un participant à une UE (protégé)
 router.post('/:ueId/participants',
@@ -52,7 +52,7 @@ const storage = diskStorage({
 const upload = multer({ storage: storage });
 
 // Route pour ajouter une image à une UE
-router.post('/:code/upload-photo', upload.single('image'), async (req, res) => {
+router.post('/:code/upload-photo', authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']), upload.single('image'), async (req, res) => {
   try {
     const ue = await Ue.findOne({ code: req.params.code });
     if (!ue) {

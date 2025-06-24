@@ -5,6 +5,7 @@ const UE = require('../models/ue.model');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const authMiddleware = require("../security/middleware_auth");
 
 // Multer storage dynamique selon l'UE et la catégorie
 const storage = multer.diskStorage({
@@ -61,7 +62,7 @@ const renduStorage = multer.diskStorage({
 const uploadRendu = multer({ storage: renduStorage });
 
 // Obtenir tous les posts
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
     const posts = await Post.find()
       .populate('utilisateur_id', 'nom prenom email')
@@ -75,7 +76,7 @@ router.get('/', async (req, res) => {
 });
 
 // Obtenir les posts associés à une ue
-router.get('/ue/:ueId', async (req, res) => {
+router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
     const posts = await Post.find({ ue_id: req.params.ueId })
       .populate('utilisateur_id', 'nom prenom email')
@@ -89,7 +90,7 @@ router.get('/ue/:ueId', async (req, res) => {
 });
 
 // Obtenir un post par ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate('utilisateur_id', 'nom prenom email')
@@ -110,7 +111,7 @@ const uploadFields = upload.fields([
   { name: 'fichier', maxCount: 1 }
 ]);
 
-router.post('/', uploadFields, async (req, res) => {
+router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploadFields, async (req, res) => {
   try {
     let postData = req.body;
     // Si certains champs sont des tableaux (cas FormData), prends la première valeur
@@ -153,7 +154,7 @@ router.post('/', uploadFields, async (req, res) => {
 });
 
 // Mettre à jour le statut "fait" pour un utilisateur sur un post
-router.patch('/:id/fait', async (req, res) => {
+router.patch('/:id/fait', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   const { utilisateurId, fait } = req.body;
   if (!utilisateurId) {
     return res.status(400).json({ error: 'utilisateurId requis' });
@@ -175,7 +176,7 @@ router.patch('/:id/fait', async (req, res) => {
   }
 });
 
-router.post('/:id/rendu', uploadRendu.single('rendu'), async (req, res) => {
+router.post('/:id/rendu', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploadRendu.single('rendu'), async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post non trouvé' });
@@ -201,7 +202,7 @@ router.post('/:id/rendu', uploadRendu.single('rendu'), async (req, res) => {
   }
 });
 
-router.patch('/:postId/rendu/:userId/note', async (req, res) => {
+router.patch('/:postId/rendu/:userId/note', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   const { note } = req.body;
   if (typeof note !== 'number' || note < 0 || note > 20) {
     return res.status(400).json({ error: 'Note invalide' });
@@ -222,7 +223,7 @@ router.patch('/:postId/rendu/:userId/note', async (req, res) => {
   }
 });
 
-router.patch('/:postId/rendu/:userId/commentaire', async (req, res) => {
+router.patch('/:postId/rendu/:userId/commentaire', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   const { commentaire } = req.body;
   try {
     const post = await Post.findById(req.params.postId);
