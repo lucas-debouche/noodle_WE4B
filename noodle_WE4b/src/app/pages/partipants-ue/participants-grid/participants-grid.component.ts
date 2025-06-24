@@ -17,6 +17,6 @@ export class ParticipantsGridComponent {
   }
 
   trackByParticipantId(index: number, participant: ParticipantWithUeInfo): string {
-    return participant.id;
+    return participant._id;
   }
 }

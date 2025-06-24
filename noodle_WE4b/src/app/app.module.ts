@@ -5,7 +5,6 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { UtilisateurComponent } from './utilisateurs/utilisateurs.component';
 import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
 import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
 import { NavbarComponent } from './navbar/navbar.component';
@@ -48,9 +47,7 @@ import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participa
 @NgModule({
   declarations: [
     AppComponent,
-    UtilisateurComponent,
     Admin_panelComponent,
-    UtilisateurComponent,
     ChoixUeComponent,
     NavbarComponent,
     FooterComponent,

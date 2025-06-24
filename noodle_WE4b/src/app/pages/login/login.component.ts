@@ -43,7 +43,7 @@ export class LoginComponent implements OnInit{
     this.utilisateurService.getUtilisateurs().subscribe(data => {
       this.stats.user = data.length;
     });
-    this.ueService.getUes().subscribe(data => {
+    this.ueService.getAllUes().subscribe(data => {
       this.stats.ue = data.length;
     });
     this.postService.getPosts().subscribe(data => {

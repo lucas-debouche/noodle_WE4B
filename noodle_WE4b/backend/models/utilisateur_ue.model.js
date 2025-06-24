@@ -2,9 +2,7 @@ const mongoose = require('mongoose');
 
 const utilisateurUeSchema = new mongoose.Schema({
   utilisateur_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur', required: true },
-  ue_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Ue', required: true }
-});
-
+  ue_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Ue', required: true },
   // Métadonnées optionnelles pour l'inscription
   statut: {
     type: String,

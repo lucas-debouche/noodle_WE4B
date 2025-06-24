@@ -9,6 +9,7 @@
     <div class="nav" *ngIf="isLoggedIn">
       <a *ngIf="isAdmin" routerLink="/admin-dashboard">Dashboard</a>
       <a *ngIf="isAdmin" routerLink="/admin-panel">Panel Admin</a>
+      <a *ngIf="hasRoles" routerLink="/forums">Forums</a>
       <a *ngIf="hasRoles" routerLink="/choix-ue">Mes UEs</a>
       <a (click)="logout()" routerLink="/">Déconnexion</a>
     </div>

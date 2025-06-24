@@ -12,16 +12,6 @@ export class UesService {
 
   constructor(private http: HttpClient) {}
 
-  // Récupérer la liste des UEs
-  getUes(): Observable<Ue[]> {
-    return this.http.get<Ue[]>(this.apiUrl);
-  }
-
-  // Récupérer une UE par son ID
-  getUeById(id: string): Observable<Ue> {
-    return this.http.get<Ue>(`${this.apiUrl}/${id}`);
-  }
-
   /**
    * Récupère les informations détaillées d'une UE
    * @param ueId - Identifiant de l'UE
@@ -112,7 +102,7 @@ export class UesService {
    * @returns Observable<Ue[]>
    */
   getAllUes(): Observable<Ue[]> {
-    const url = `${this.apiUrl}/ues`;
+    const url = `${this.apiUrl}`;
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
@@ -261,7 +251,7 @@ export class UesService {
     }
 
     return {
-      id: ue.id || ue._id,
+      _id: ue._id || '',
       code: ue.code || ue.codeUE || '',
       intitule: ue.intitule || ue.nom || ue.name || ue.titre || '',
       image: ue.image || ue.imageUrl || ue.photo,
