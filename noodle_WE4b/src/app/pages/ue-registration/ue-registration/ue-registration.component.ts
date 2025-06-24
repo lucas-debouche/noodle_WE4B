@@ -5,6 +5,7 @@ import { DepartementService } from '../../../services/departement.service';
 import { Ue } from '../../../models/ue.model';
 import { User } from '../../../models/user.model';
 import { Departement } from '../../../models/departement.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-ue-registration',
@@ -26,14 +27,35 @@ export class UeRegistrationComponent implements OnInit {
   editingUe: Ue | null = null;
 
   constructor(
+    private route: ActivatedRoute,
     private uesService: UesService,
     private utilisateurService: UtilisateurService,
     private departementService: DepartementService
   ) {}
 
-  ngOnInit() {
-    this.loadInitialData();
+  ngOnInit(): void {
+    this.route.params.subscribe(params => {
+      const ueId = params['id'];
+      console.log('🔍 ID récupéré via params subscription:', ueId);
+
+      if (ueId) {
+        this.isEditMode = true;
+        this.loading = true;
+        this.uesService.getUeById(ueId).subscribe({
+          next: (ue) => {
+            this.editingUe = ue;
+            this.loading = false;
+          },
+          error: (err) => {
+            this.error = "Impossible de charger l'UE.";
+            this.loading = false;
+          }
+        });
+      }
+    });
   }
+
+
 
   async loadInitialData() {
     this.loading = true;

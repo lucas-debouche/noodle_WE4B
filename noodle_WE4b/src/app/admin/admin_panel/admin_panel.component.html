@@ -84,7 +84,7 @@
           </td>
           <td>
             <div class="actions">
-              <a class="action-btn edit" [routerLink]="['/ue-registration', ue.id]">
+              <a class="action-btn edit" [routerLink]="['/admin/ue-registration', ue._id]">
                 <i>✏️</i> Modifier
               </a>
               <button class="action-btn delete" (click)="showDeleteConfirmation('ue', ue._id)">

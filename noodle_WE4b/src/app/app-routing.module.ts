@@ -25,6 +25,7 @@ const routes: Routes = [
   { path: 'ues/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard] },
 
   // Routes d'administration
+  { path: 'admin/ue-registration/:id', component: UeRegistrationComponent, canActivate: [AuthAdminGuard] },
   { path: 'admin/ue-registration', component: UeRegistrationComponent, canActivate: [AuthAdminGuard] },
   { path: 'admin_panel', component: Admin_panelComponent, canActivate: [AdminGuard] },
 

@@ -34,18 +34,24 @@ export class UeFormComponent implements OnChanges {
     this.initializeForm();
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    // DEBUG: Afficher les départements reçus
-    if (changes['departements']) {
-      console.log('🏢 Départements reçus dans le formulaire:', this.departements);
-    }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['editingUe'] && this.editingUe && this.isEditMode) {
+      this.ueForm.patchValue({
+        code: this.editingUe.code,
+        intitule: this.editingUe.intitule,
+        description: this.editingUe.description,
+        ects: this.editingUe.ects,
+        departementId: this.editingUe.departementId
+      });
 
-    if (changes['editingUe'] && this.editingUe) {
-      this.populateFormForEdit();
-    } else if (changes['editingUe'] && !this.editingUe) {
-      this.resetForm();
+      this.assignedUsers = this.users.filter(user =>
+        this.editingUe?.participants?.includes(user._id) || false
+      );
+
+      this.imagePreview = this.editingUe.image ? this.getImageUrl(this.editingUe.image) : null;
     }
   }
+
 
   private initializeForm() {
     this.ueForm = this.fb.group({
