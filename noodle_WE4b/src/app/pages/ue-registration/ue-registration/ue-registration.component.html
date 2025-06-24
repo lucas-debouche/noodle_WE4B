@@ -39,7 +39,7 @@
     <!-- Liste des UE existantes -->
     <app-ue-list
       [ues]="ues"
-      [editingUeId]="editingUe?.id"
+      [editingUeId]="editingUe?._id"
       (editUe)="onEditUe($event)"
       (deleteUe)="onUeDeleted($event)"
       (refreshData)="onRefreshData()"

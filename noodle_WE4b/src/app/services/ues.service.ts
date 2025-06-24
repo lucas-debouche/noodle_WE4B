@@ -399,12 +399,28 @@ export class UesService {
     departementNom?: string;
     createdAt: Date | undefined;
     updatedAt: Date | undefined
-  } {
+  }
+
+  {
     return {
-      ...ue,
-      code: ue.code?.toUpperCase(),
+      id: ue._id,
+      code: ue.code,
+      intitule: ue.intitule,
+      image: ue.image ? this.getImageUrl(ue.image) : undefined,
+      description: ue.description,
+      ects: ue.ects,
+      participants: ue.participants || [],
+      departementId: ue.departementId,
+      departementNom: ue.departementNom,
       createdAt: ue.createdAt ? new Date(ue.createdAt) : undefined,
       updatedAt: ue.updatedAt ? new Date(ue.updatedAt) : undefined
     };
+  }
+
+  private getImageUrl(image: string) {
+    if (image.startsWith('http')) {
+      return image; // URL absolue
+    }
+    return `http://localhost:3000/uploads/ue/${image}`; // URL relative
   }
 }

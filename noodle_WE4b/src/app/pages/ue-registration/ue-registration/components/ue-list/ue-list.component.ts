@@ -55,7 +55,7 @@ export class UeListComponent {
     }
 
     try {
-      await this.uesService.deleteUe(ue.id).toPromise();
+      await this.uesService.deleteUe(ue._id).toPromise();
       this.deleteUe.emit(ue);
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
@@ -68,10 +68,10 @@ export class UeListComponent {
   }
 
   trackByUeId(index: number, ue: Ue): string {
-    return ue.id;
+    return ue._id;
   }
 
   isEditing(ue: Ue): boolean {
-    return this.editingUeId === ue.id;
+    return this.editingUeId === ue._id;
   }
 }

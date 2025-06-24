@@ -33,7 +33,7 @@ export class UserManagementComponent {
         (user.nom.toLowerCase().includes(search) ||
           user.prenom.toLowerCase().includes(search) ||
           user.email.toLowerCase().includes(search)) &&
-        !this.assignedUsers.some(assigned => assigned.id === user.id)
+        !this.assignedUsers.some(assigned => assigned._id === user._id)
       );
       this.showSearchResults = true;
     } catch (error) {
@@ -46,7 +46,7 @@ export class UserManagementComponent {
   addUser(user: User) {
     this.userAdded.emit(user);
     // Retirer l'utilisateur des résultats de recherche
-    this.searchResults = this.searchResults.filter(result => result.id !== user.id);
+    this.searchResults = this.searchResults.filter(result => result._id !== user._id);
   }
 
   removeUser(user: User) {
@@ -84,6 +84,6 @@ export class UserManagementComponent {
   }
 
   trackByUserId(index: number, user: User): string {
-    return user.id;
+    return user._id;
   }
 }

@@ -112,9 +112,9 @@ export class UeRegistrationComponent implements OnInit {
   }
 
   async onUeDeleted(deletedUe: Ue) {
-    this.ues = this.ues.filter(ue => ue.id !== deletedUe.id);
+    this.ues = this.ues.filter(ue => ue._id !== deletedUe._id);
     this.success = 'UE supprimée avec succès !';
-    if (this.editingUe?.id === deletedUe.id) {
+    if (this.editingUe?._id === deletedUe._id) {
       this.exitEditMode();
     }
     this.clearMessages();

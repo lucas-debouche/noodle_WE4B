@@ -117,7 +117,7 @@ export class UeFormComponent implements OnChanges {
 
       // Filtrer les utilisateurs disponibles qui correspondent aux IDs
       this.assignedUsers = this.users.filter(user =>
-        participantIds.includes(user.id)
+        participantIds.includes(user._id)
       );
 
       console.log('✅ Utilisateurs trouvés depuis les IDs:', this.assignedUsers.length);
@@ -148,7 +148,7 @@ export class UeFormComponent implements OnChanges {
       console.log('📤 Données préparées pour envoi:', formData);
 
       if (this.isEditMode && this.editingUe) {
-        const updatedUe = await this.uesService.updateUe(this.editingUe.id, formData).toPromise();
+        const updatedUe = await this.uesService.updateUe(this.editingUe._id, formData).toPromise();
         this.ueUpdated.emit(updatedUe);
       } else {
         const newUe = await this.uesService.createUe(formData).toPromise();
@@ -191,7 +191,7 @@ export class UeFormComponent implements OnChanges {
     // Ajouter les utilisateurs assignés
     if (this.assignedUsers.length > 0) {
       this.assignedUsers.forEach((user, index) => {
-        formData.append(`assigned_users[${index}]`, user.id);
+        formData.append(`assigned_users[${index}]`, user._id);
       });
     }
 
@@ -225,13 +225,13 @@ export class UeFormComponent implements OnChanges {
 
   // Gestion des utilisateurs assignés
   onUserAdded(user: User) {
-    if (!this.assignedUsers.some(assigned => assigned.id === user.id)) {
+    if (!this.assignedUsers.some(assigned => assigned._id === user._id)) {
       this.assignedUsers.push(user);
     }
   }
 
   onUserRemoved(user: User) {
-    this.assignedUsers = this.assignedUsers.filter(assigned => assigned.id !== user.id);
+    this.assignedUsers = this.assignedUsers.filter(assigned => assigned._id !== user._id);
   }
 
   // Gestion de l'image
