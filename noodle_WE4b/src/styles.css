@@ -48,7 +48,12 @@
   padding: 0;
   box-sizing: border-box;
 }
-
+html, body, app-root {
+  width: 100%;
+  min-width: 100vw;
+  margin: 0;
+  padding: 0;
+}
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--arriere-plan);
