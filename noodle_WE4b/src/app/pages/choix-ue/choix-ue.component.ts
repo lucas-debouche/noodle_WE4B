@@ -25,11 +25,11 @@ export class ChoixUeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.navbarService.setTitle('Choix UEs');
+    this.navbarService.setTitle('Tableau de bord');
     this.loadUes();
     this.utilisateurService.getUtilisateurActuel().subscribe({
       next: (user: User) => {
-        this.navbarService.setTitle('Choix UEs');
+        this.navbarService.setTitle('Tableau de bord');
         this.navbarService.setCurrentUser(user); // Met à jour l'utilisateur dans le NavbarService
       },
       error: (err: any) => {

@@ -1,16 +1,15 @@
 <div class="mes-ue-layout">
   <app-sidebar-mes-ue [ueId]="selectedUeId" class="sidebar"></app-sidebar-mes-ue>
   <div class="mes-ue-sections" *ngIf="selectedUeId">
-    <div class="progress-bar-container-flex" *ngIf="nbPosts">
+    <div class="progress-bar-container-flex" *ngIf="nbPosts && currentUser?.role?.includes('ROLE_USER')">
       <div class="progress-bar-container-main">
         <div class="progress-bar-label">
-          Progression : {{ nbFaits }} / {{ nbPosts }} posts faits
+          Progression : {{ nbFaits }} / {{ nbPosts }} tâches accomplies
         </div>
         <div class="progress-bar">
           <div class="progress-bar-inner" [style.width.%]="(nbFaits / nbPosts) * 100"></div>
         </div>
       </div>
-      <button class="redirect-to-forum-btn" [routerLink]="['/mes-ue', selectedUeId, 'forums']">Forum</button>
       <button
         class="create-post-btn"
         *ngIf="currentUser?.role?.includes('ROLE_PROF')"
@@ -18,6 +17,11 @@
       >
         Créer un post
       </button>
+    </div>
+    <div class="rediretion-participants" *ngIf="currentUser?.role?.includes('ROLE_PROF')">
+      <a [routerLink]="['/mes-ue', selectedUeId, 'participants']" class="redirect-to-participants-btn">
+        Participants
+      </a>
     </div>
     <app-create-post-ue
       *ngIf="showCreatePostModal"

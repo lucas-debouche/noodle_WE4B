@@ -1,19 +1,22 @@
-<nav class="sidebar-nav">
-  <div class="sidebar-title">
-    Navigation
-  </div>
-  <ul>
-    <li>
-      <a [routerLink]="['/mes-ue', ueId]" [fragment]="'info'"><span class="section-dot"></span>Informations</a>
-    </li>
-    <li>
-      <a [routerLink]="['/mes-ue', ueId]" [fragment]="'cm'"><span class="section-dot"></span>CM</a>
-    </li>
-    <li>
-      <a [routerLink]="['/mes-ue', ueId]" [fragment]="'td'"><span class="section-dot"></span>TD</a>
-    </li>
-    <li>
-      <a [routerLink]="['/mes-ue', ueId]" [fragment]="'tp'"><span class="section-dot"></span>TP</a>
-    </li>
-  </ul>
-</nav>
+<div class="sidebar-header">
+  <nav class="sidebar-nav">
+    <div class="sidebar-title">
+      Navigation
+    </div>
+    <ul>
+      <li>
+        <a [routerLink]="['/mes-ue', ueId]" [fragment]="'info'"><span class="section-dot"></span>Informations</a>
+      </li>
+      <li>
+        <a [routerLink]="['/mes-ue', ueId]" [fragment]="'cm'"><span class="section-dot"></span>CM</a>
+      </li>
+      <li>
+        <a [routerLink]="['/mes-ue', ueId]" [fragment]="'td'"><span class="section-dot"></span>TD</a>
+      </li>
+      <li>
+        <a [routerLink]="['/mes-ue', ueId]" [fragment]="'tp'"><span class="section-dot"></span>TP</a>
+      </li>
+    </ul>
+  </nav>
+  <button class="redirect-to-forum-btn" [routerLink]="['/mes-ue', ueId, 'forums']">Forum</button>
+</div>

@@ -20,12 +20,9 @@ export class PostMesUeComponent implements OnInit {
   devoirFile: File | null = null;
   devoirFileName: string = '';
   showRendusModal = false;
-  showNoteInputIndex: number | null = null;
-  noteInputs: { [index: number]: number } = {};
   renduUtilisateur: any = null;
   etatRendu: string = '';
   showCorrectionModal = false;
-
 
   constructor(
     private utilisateurService: UtilisateurService,
@@ -112,12 +109,6 @@ export class PostMesUeComponent implements OnInit {
     return undefined;
   }
 
-  onDevoirFileChange(event: any) {
-    const file = event.target.files[0];
-    this.devoirFile = file ? file : null;
-    this.devoirFileName = file ? file.name : '';
-  }
-
   isProf(): boolean {
     return this.currentUser?.role?.includes('ROLE_PROF');
   }
@@ -125,15 +116,15 @@ export class PostMesUeComponent implements OnInit {
     return this.currentUser?.role?.includes('ROLE_USER');
   }
 
-  submitDevoir() {
-    if (!this.devoirFile) return;
+  submitDevoir(devoirFile: File) {
+    if (!devoirFile) return;
+    this.devoirFile = devoirFile;
     const formData = new FormData();
     formData.append('rendu', this.devoirFile);
     formData.append('utilisateur_id', this.currentUser._id);
     this.postsService.uploadRendu(this.post._id, formData).subscribe({
-      next: () => {
+      next: (res: any) => {
         // Recharge le rendu utilisateur après soumission
-        this.fait = true;
         this.devoirFileName = this.devoirFile?.name || '';
         // Optionnel : recharger le post ou juste ajouter le rendu localement
         if (!this.post.rendus) this.post.rendus = [];
@@ -146,15 +137,18 @@ export class PostMesUeComponent implements OnInit {
           date_rendu: new Date()
         });
         this.renduUtilisateur = this.post.rendus[this.post.rendus.length - 1];
+
+        if (res && res.faitPar) {
+          this.post.faitPar = res.faitPar;
+        }
+        this.toggleFait();
+        this.faitChange.emit(true);
+        window.location.reload();
+      },
+      error: (err) => {
+        console.error("Erreur lors de la soumission du devoir :", err);
       }
     });
-  }
-
-  enableModifyDevoir() {
-    this.fait = false;
-    this.devoirFile = null;
-    this.devoirFileName = '';
-    this.renduUtilisateur = null;
   }
 
   openRendusModal() {
@@ -163,16 +157,6 @@ export class PostMesUeComponent implements OnInit {
 
   closeRendusModal() {
     this.showRendusModal = false;
-  }
-
-  toggleNoteInput(index: number) {
-    if (this.showNoteInputIndex === index) {
-      this.showNoteInputIndex = null;
-    } else {
-      this.showNoteInputIndex = index;
-      const note = this.post.rendus && this.post.rendus[index]?.note;
-      this.noteInputs[index] = note !== null && note !== undefined ? note : 0;
-    }
   }
 
   onNoteChange(event: { rendu: any, note: number }) {
@@ -193,18 +177,6 @@ export class PostMesUeComponent implements OnInit {
       error: (err) => {
         console.error('Erreur lors de l\'attribution de la note', err);
         alert('Une erreur est survenue lors de l\'attribution de la note.');
-      }
-    });
-  }
-
-  enregistrerCommentaire(rendu: any) {
-    if (!rendu.commentaire) return;
-    this.postsService.enregistrerCommentaire(this.post._id, rendu.utilisateur_id._id, rendu.commentaire).subscribe({
-      next: () => {
-        console.log('Commentaire enregistré avec succès');
-      },
-      error: (err) => {
-        console.error('Erreur lors de l\'enregistrement du commentaire :', err);
       }
     });
   }

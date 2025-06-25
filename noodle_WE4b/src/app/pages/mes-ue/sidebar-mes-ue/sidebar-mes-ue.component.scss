@@ -10,6 +10,7 @@
   margin-right: 32px;
   margin-top: 24px;
   padding-top: 18px;
+  width: 200px;
   .sidebar-title {
     font-size: 1.18rem;
     font-weight: 700;
@@ -60,5 +61,25 @@
         }
       }
     }
+  }
+}
+
+.redirect-to-forum-btn {
+  background-color: var(--primary-color, #ff6b41);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+  width: 200px;
+
+
+  &:hover {
+    background-color: var(--primary-hover, #ff8c41);
   }
 }

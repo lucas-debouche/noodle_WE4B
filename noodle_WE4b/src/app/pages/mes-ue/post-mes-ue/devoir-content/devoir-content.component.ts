@@ -33,16 +33,21 @@ export class DevoirContentComponent {
     }
   }
 
-  enableModifyDevoir() {
-    this.devoirFile = null;
-    this.devoirFileName = '';
-  }
-
   isUser(): boolean {
     return this.currentUser?.role?.includes('ROLE_USER') || false;
   }
 
   isProf(): boolean {
     return this.currentUser?.role?.includes('ROLE_PROF') || false;
+  }
+
+  shouldShowLate(): boolean {
+    if (!this.post?.date_rendu) {
+      return false;
+    }
+    const now = new Date();
+    const dueDate = new Date(this.post.date_rendu);
+    // Late if now is after due date and etatRendu is neither 'corrigé' nor 'en attente'
+    return now > dueDate && this.etatRendu !== 'corrigé' && this.etatRendu !== 'en attente';
   }
 }

@@ -45,4 +45,15 @@
     transform: translateY(-12px) scale(1.02);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
   }
+
+  .progress-label {
+    text-align: right;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 1000;
+    color: var(--orange-noodle);
+    font-size: 1.1em;
+    font-weight: bold;
+  }
 }

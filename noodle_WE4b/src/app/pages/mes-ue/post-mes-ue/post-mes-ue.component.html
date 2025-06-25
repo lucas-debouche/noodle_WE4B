@@ -24,7 +24,7 @@
         {{ fait ? 'Fait' : 'À faire' }}
       </button>
       <span class="fait-count">
-        {{ faitCount }} / {{ totalUsers }}
+        {{ faitCount }} / {{ totalUsers }} étudiants
       </span>
     </div>
   </div>
@@ -36,6 +36,7 @@
                         [currentUser]="currentUser"
                         [renduUtilisateur]="renduUtilisateur"
                         [etatRendu]="etatRendu"
+                        (rendSubmit)="submitDevoir($event)"
                         (openCorrection)="openCorrectionModal()"
                         (openRendus)="openRendusModal()"
     >

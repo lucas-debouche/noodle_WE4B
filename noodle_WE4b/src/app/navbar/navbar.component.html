@@ -8,7 +8,7 @@
     </div>
     <div class="nav" *ngIf="isLoggedIn">
       <a *ngIf="isAdmin" routerLink="/admin_panel">Panel Admin</a>
-      <a *ngIf="isProf || isUser" routerLink="/choix-ue">Mes UEs</a>
+      <a *ngIf="isProf || isUser" routerLink="/choix-ue">Tableau de bord</a>
       <a (click)="logout()" routerLink="/">Déconnexion</a>
     </div>
   </div>

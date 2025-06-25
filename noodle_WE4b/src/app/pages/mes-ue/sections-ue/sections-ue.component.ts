@@ -62,7 +62,6 @@ export class SectionsUeComponent implements OnInit, OnChanges {
       this.faitStates = this.posts.map(post =>
         !!(post.faitPar && Array.isArray(post.faitPar) && userId && post.faitPar.includes(userId))
       );
-      console.log(this.posts);
       this.postsLoaded.emit(this.posts);
     });
   }

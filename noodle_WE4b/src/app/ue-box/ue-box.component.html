@@ -3,4 +3,7 @@
     <img [src]="'http://localhost:3000' + ue.image" alt="Image UE" />
     <h3>{{ ue.code }} - {{ ue.intitule }}</h3>
   </div>
+  <div class="progress-label">
+    {{ (nbFaits / nbPosts  * 100).toFixed(1) }} %
+  </div>
 </a>
