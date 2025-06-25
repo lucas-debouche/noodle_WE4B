@@ -24,9 +24,12 @@ export class RendusModalComponent {
   }
 
   validerNote(rendu: any, index: number) {
-    if (this.noteInputs[index] !== undefined) {
-      this.noteChange.emit({rendu, note: this.noteInputs[index]});
-      this.showNoteInputIndex = null;
+    const newNote = this.noteInputs[index];
+    if (newNote !== undefined && newNote >= 0 && newNote <= 20) {
+      this.noteChange.emit({ rendu, note: newNote });
+      this.showNoteInputIndex = null; // Fermer l'input de note
+    } else {
+      alert('Veuillez entrer une note valide entre 0 et 20.');
     }
   }
 

@@ -118,3 +118,13 @@
     background-color: #138496;
   }
 }
+
+.aucun-rendu-btn {
+  background-color: #f0f0f0;
+  color: #666;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: not-allowed;
+  font-size: 14px;
+}

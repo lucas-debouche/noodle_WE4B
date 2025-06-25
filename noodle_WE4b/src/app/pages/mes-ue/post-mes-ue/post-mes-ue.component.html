@@ -55,6 +55,7 @@
     *ngIf="showRendusModal"
     [rendus]="post.rendus"
     [isProf]="isProf()"
+    (noteChange)="onNoteChange($event)"
     (close)="closeRendusModal()">
   </app-rendus-modal>
 </div>
