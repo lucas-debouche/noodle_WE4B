@@ -10,7 +10,7 @@ const path = require("path");
 const fs = require('fs');
 
 // GET / → obtenir tous les utilisateurs
-router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getAllUtilisateurs);
+router.get('/', utilisateurController.getAllUtilisateurs);
 
 // GET /current → obtenir l'utilisateur actuel
 router.get('/current', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getCurrentUtilisateur);

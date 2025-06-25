@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Obtenir toutes les Unités d'Enseignement (UE)
-router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), ueController.getAllUes);
+router.get('/', ueController.getAllUes);
 
 // Obtenir une UE par son ID
 router.get('/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), ueController.getUeById);

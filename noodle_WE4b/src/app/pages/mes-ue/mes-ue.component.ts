@@ -113,5 +113,6 @@ export class MesUeComponent implements OnInit {
       this.updateAllPostsAndFaits();
     }
     this.closeCreatePostModal();
+    window.location.reload(); // Rafraîchit la page pour afficher le nouveau post
   }
 }
