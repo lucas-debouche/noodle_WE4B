@@ -109,6 +109,7 @@ export class UesService {
         }),
         catchError(this.handleError)
       );
+
   }
 
   // ===============================
@@ -297,4 +298,10 @@ export class UesService {
   private getImageUrl(image: string): string {
     return image.startsWith('http') ? image : `http://localhost:3000${image}`;
   }
+  removeUserFromUe(ueId: string, userId: string): Observable<any> {
+    console.log(`🗑️ UesService.removeUserFromUe appelé pour UE: ${ueId}, utilisateur: ${userId}`);
+    return this.http.delete(`${this.apiUrl}/${ueId}/participants/${userId}`);
+  }
+
 }
+

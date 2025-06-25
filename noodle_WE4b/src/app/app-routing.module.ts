@@ -22,7 +22,7 @@ const routes: Routes = [
   { path: 'mes-ue/:id', component: MesUeComponent, canActivate: [AuthGuard] },
   { path: 'mes-ue/:ueId/forums', component: ForumListComponent, canActivate: [AuthGuard] },
   { path: 'forums/:forumId', component: ForumDetailComponent, canActivate: [AuthGuard] },
-  { path: 'ues/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard] },
+  { path: 'mes-ue/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard] },
 
   // Routes d'administration
   { path: 'admin/ue-registration', component: UeRegistrationComponent, canActivate: [AuthAdminGuard] },

@@ -308,7 +308,9 @@ exports.createUe = [
 // PUT /api/ue/:ueId → modifier une UE existante
 exports.updateUe = [
   upload.single('image'),
+
   async (req, res) => {
+
     const ueId = req.params.ueId;
     console.log(`updateUe → ueId = ${ueId}`, req.body);
 
@@ -649,7 +651,7 @@ exports.getParticipantsByUe = async (req, res) => {
 
         if (utilisateur) {
           const formattedParticipant = {
-            id: utilisateur._id.toString(),
+            _id: utilisateur._id.toString(),
             nom: utilisateur.nom,
             prenom: utilisateur.prenom,
             email: utilisateur.email,
@@ -763,6 +765,7 @@ exports.addParticipantToUe = async (req, res) => {
 
 // DELETE /api/ue/:ueId/participants/:utilisateurId → retirer un participant d'une UE
 exports.removeParticipantFromUe = async (req, res) => {
+  console.log('removeParticipantFromUe → req.params =', req.params);
   try {
     const { ueId, utilisateurId } = req.params;
 

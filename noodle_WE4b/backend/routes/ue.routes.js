@@ -43,6 +43,12 @@ router.delete('/:ueId/participants/:utilisateurId',
   ueController.removeParticipantFromUe
 );
 
+router.put('/:ueId',
+  authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
+  ueController.updateUe
+);
+
+
 // Configuration multer pour stocker les images dans un dossier spécifique
 const storage = diskStorage({
   destination: function (req, file, cb) {

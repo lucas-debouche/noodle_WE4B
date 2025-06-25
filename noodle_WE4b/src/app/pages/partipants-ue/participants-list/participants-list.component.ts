@@ -125,6 +125,8 @@ export class ParticipantsListComponent implements OnInit {
         statut: p.statut || 'actif'
       }));
 
+
+
     console.log('Étudiants filtrés:', this.etudiants);
     console.log('Professeurs filtrés:', this.professeurs);
   }
