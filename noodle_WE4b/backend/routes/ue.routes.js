@@ -1,14 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const Ue = require('../models/ue.model');
-const ueController = require('../controllers/ue.controller'); // Nouveau contrôleur
+const ueController = require('../controllers/ue.controller');
 const authMiddleware = require('../security/middleware_auth');
 const multer = require("multer");
 const { diskStorage } = require("multer");
 const fs = require('fs');
 const path = require('path');
+const Ue = require('../models/ue.model'); // nécessaire pour upload-photo
 
-// Obtenir toutes les Unités d'Enseignement (UE)
+// ===============================
+// ROUTES PUBLIQUES OU SPÉCIFIQUES
+// ===============================
+
+// Recherche d’UE
+router.get('/search', ueController.searchUes);
+
+// ===============================
+// ROUTES PROTÉGÉES (USER/PROF/ADMIN)
+// ===============================
+
+// Obtenir toutes les UE
 router.get('/', ueController.getAllUes);
 
 // Obtenir une UE par son ID

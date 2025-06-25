@@ -36,7 +36,6 @@ export class UtilisateurService {
    * @returns Observable<ParticipantWithUeInfo[]>
    */
   getParticipantsByUe(ueId: string): Observable<ParticipantWithUeInfo[]> {
-    // CORRECTION: Utiliser /api/ue/ au lieu de /api/ues/
     const url = `${this.apiUrl}/ue/${ueId}/participants`;
 
     console.log('🌐 Appel API vers:', url);
@@ -274,7 +273,6 @@ export class UtilisateurService {
    * @returns Observable<Blob>
    */
   exportParticipantsCSV(ueId: string): Observable<Blob> {
-    // CORRECTION: Utiliser /api/ue/ au lieu de /api/ues/
     const url = `${this.apiUrl}/ue/${ueId}/participants/export`;
 
     const headers = new HttpHeaders({

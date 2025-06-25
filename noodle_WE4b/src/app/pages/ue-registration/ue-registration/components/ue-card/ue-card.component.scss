@@ -1,0 +1,358 @@
+.ue-card {
+  background: var(--card-background);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+  transition: var(--transition);
+  overflow: hidden;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  &.editing {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 65, 0.2);
+  }
+
+  .ue-card-header {
+    position: relative;
+    height: 150px;
+    overflow: hidden;
+
+    .ue-image {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+
+      .ue-image-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition);
+
+        &:hover {
+          transform: scale(1.05);
+        }
+      }
+
+      .ue-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .image-icon {
+          font-size: 3rem;
+          color: white;
+          opacity: 0.8;
+        }
+      }
+    }
+
+    .ue-actions {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+      opacity: 0;
+      transition: var(--transition);
+
+      .btn-edit,
+      .btn-delete {
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        backdrop-filter: blur(10px);
+
+        .icon {
+          font-size: 16px;
+        }
+      }
+
+      .btn-edit {
+        color: var(--secondary-color);
+
+        &:hover,
+        &.active {
+          background: var(--secondary-color);
+          color: white;
+          transform: scale(1.1);
+        }
+      }
+
+      .btn-delete {
+        color: var(--danger-color);
+
+        &:hover {
+          background: var(--danger-color);
+          color: white;
+          transform: scale(1.1);
+        }
+      }
+    }
+
+    &:hover .ue-actions {
+      opacity: 1;
+    }
+  }
+
+  .ue-card-body {
+    padding: 20px;
+
+    .ue-code {
+      background: linear-gradient(135deg, var(--secondary-color), var(--secondary-hover));
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+    }
+
+    .ue-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 15px;
+      line-height: 1.3;
+      word-wrap: break-word;
+    }
+
+    .ue-meta {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+
+      .ue-ects,
+      .ue-participants,
+      .ue-departement {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8f9fa;
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        border: 1px solid #e9ecef;
+
+        .icon {
+          font-size: 14px;
+          opacity: 0.7;
+        }
+      }
+
+      .ue-ects {
+        background: linear-gradient(135deg, #fff5f0, #ffe6d9);
+        border-color: var(--primary-light);
+        color: var(--primary-color);
+      }
+
+      .ue-participants {
+        background: linear-gradient(135deg, #e8f4fd, #d1ecf1);
+        border-color: var(--info-color);
+        color: var(--info-color);
+      }
+
+      .ue-departement {
+        background: linear-gradient(135deg, #f0f9f0, #e8f5e8);
+        border-color: var(--success-color);
+        color: var(--success-color);
+      }
+    }
+
+    .ue-description {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0 0 15px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .ue-footer {
+      padding-top: 15px;
+      border-top: 1px solid #f1f3f4;
+
+      .creation-date {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-weight: 500;
+
+        .icon {
+          font-size: 12px;
+          opacity: 0.7;
+        }
+      }
+    }
+  }
+
+  .editing-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 107, 65, 0.3);
+    z-index: 5;
+    animation: pulse 2s ease-in-out infinite;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .ue-card {
+    .ue-card-header {
+      height: 120px;
+
+      .ue-actions {
+        opacity: 1; // Toujours visible sur mobile
+        gap: 6px;
+
+        .btn-edit,
+        .btn-delete {
+          width: 32px;
+          height: 32px;
+
+          .icon {
+            font-size: 14px;
+          }
+        }
+      }
+    }
+
+    .ue-card-body {
+      padding: 15px;
+
+      .ue-title {
+        font-size: 1.1rem;
+      }
+
+      .ue-meta {
+        gap: 8px;
+
+        .ue-ects,
+        .ue-participants,
+        .ue-departement {
+          font-size: 0.75rem;
+          padding: 4px 8px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .ue-card {
+    .ue-card-header {
+      height: 100px;
+
+      .ue-image .ue-image-placeholder .image-icon {
+        font-size: 2rem;
+      }
+
+      .ue-actions {
+        top: 10px;
+        right: 10px;
+
+        .btn-edit,
+        .btn-delete {
+          width: 28px;
+          height: 28px;
+
+          .icon {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+
+    .ue-card-body {
+      padding: 12px;
+
+      .ue-code {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+      }
+
+      .ue-title {
+        font-size: 1rem;
+        margin-bottom: 10px;
+      }
+
+      .ue-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .ue-description {
+        font-size: 0.85rem;
+        margin-bottom: 10px;
+      }
+
+      .ue-footer {
+        padding-top: 10px;
+
+        .creation-date {
+          font-size: 0.75rem;
+        }
+      }
+    }
+
+    .editing-badge {
+      top: 8px;
+      left: 8px;
+      padding: 3px 8px;
+      font-size: 0.65rem;
+    }
+  }
+}
