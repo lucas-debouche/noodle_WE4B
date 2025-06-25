@@ -14,7 +14,7 @@ import { ProfilSidebarComponent } from './profil-sidebar/profil-sidebar.componen
 import { LoginComponent } from './pages/login/login.component';
 import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
 import { MesUeComponent } from './pages/mes-ue/mes-ue.component';
-import { UeBoxComponent } from './ue-box/ue-box.component';
+import { UeBoxComponent } from './pages/choix-ue/ue-box/ue-box.component';
 
 import { SectionsUeComponent } from './pages/mes-ue/sections-ue/sections-ue.component';
 import { SidebarMesUeComponent } from './pages/mes-ue/sidebar-mes-ue/sidebar-mes-ue.component';
