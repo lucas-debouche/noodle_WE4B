@@ -5,6 +5,7 @@ const Role = require('../models/role.model');
 // GET /api/roles - retourne tous les rôles
 router.get('/', async (req, res) => {
   try {
+    console.log("Récupération de tous les rôles...");
     const roles = await Role.find();
     res.json(roles);
   } catch (err) {

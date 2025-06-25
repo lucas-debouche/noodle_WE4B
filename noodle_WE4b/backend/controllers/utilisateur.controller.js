@@ -1,4 +1,5 @@
 const Utilisateur = require('../models/utilisateur.model');
+const Ue = require('../models/ue.model');
 const mongoose = require('mongoose');
 
 // GET /api/utilisateur → récupérer tous les utilisateurs
@@ -48,7 +49,6 @@ exports.getUtilisateurById = async (req, res) => {
   }
 };
 
-
 // Créer un utilisateur
 exports.createUtilisateur = async (req, res) => {
   try {
@@ -56,24 +56,128 @@ exports.createUtilisateur = async (req, res) => {
     if (!Array.isArray(roles)) {
       roles = roles ? [roles] : [];
     }
+
+    let ues = req.body.ues || req.body['ues[]'];
+    if (!Array.isArray(ues)) {
+      ues = ues ? [ues] : [];
+    }
+
     const photo = req.file ? req.file.filename : undefined;
-    const { nom, prenom, email, plainPassword} = req.body;
+    const { nom, prenom, email, plainPassword } = req.body;
+
     if (!nom || !prenom || !email || !plainPassword || roles.length === 0) {
       return res.status(400).json({ message: "Champs obligatoires manquants" });
     }
+
+    console.log('📝 Création utilisateur:', { nom, prenom, email, roles: roles.length, ues: ues.length });
+
+    // 1. Créer l'utilisateur
     const utilisateur = new Utilisateur({
       nom,
       prenom,
       email,
       mot_passe: plainPassword,
       photo,
-      role: roles
+      role: roles,
+      ues: ues // Stockage optionnel dans le modèle utilisateur
     });
-    await utilisateur.save();
-    res.status(201).json(utilisateur);
+
+    const savedUser = await utilisateur.save();
+    console.log('✅ Utilisateur créé:', savedUser._id);
+
+    // 2. Ajouter l'utilisateur aux UEs sélectionnées
+    const uesProcessed = [];
+    const uesErrors = [];
+
+    if (ues && ues.length > 0) {
+      console.log('👥 Attribution des UEs à l\'utilisateur:', ues);
+
+      for (const ueId of ues) {
+        try {
+          let ue = null;
+
+          // Rechercher l'UE par différents critères
+          if (mongoose.Types.ObjectId.isValid(ueId)) {
+            ue = await Ue.findById(ueId);
+          }
+          if (!ue) {
+            ue = await Ue.findOne({ id: ueId });
+          }
+          if (!ue) {
+            ue = await Ue.findOne({ code: ueId });
+          }
+
+          if (ue) {
+            // Vérifier si l'utilisateur n'est pas déjà dans les participants
+            const userObjectId = savedUser._id;
+            if (!ue.participants) {
+              ue.participants = [];
+            }
+
+            // Utiliser la méthode equals pour comparer les ObjectId
+            const isAlreadyParticipant = ue.participants.some(id => id.equals && id.equals(userObjectId));
+
+            if (!isAlreadyParticipant) {
+              ue.participants.push(userObjectId);
+              await ue.save();
+              uesProcessed.push({
+                id: ue._id,
+                code: ue.code,
+                intitule: ue.intitule
+              });
+              console.log(`✅ Utilisateur ajouté à l'UE: ${ue.code} - ${ue.intitule}`);
+            } else {
+              console.log(`⚠️ Utilisateur déjà présent dans l'UE: ${ue.code}`);
+              uesProcessed.push({
+                id: ue._id,
+                code: ue.code,
+                intitule: ue.intitule,
+                note: 'Déjà inscrit'
+              });
+            }
+          } else {
+            console.log(`⚠️ UE non trouvée pour ID: ${ueId}`);
+            uesErrors.push({
+              ueId: ueId,
+              error: 'UE non trouvée'
+            });
+          }
+        } catch (ueError) {
+          console.error(`❌ Erreur lors du traitement de l'UE ${ueId}:`, ueError.message);
+          uesErrors.push({
+            ueId: ueId,
+            error: ueError.message
+          });
+        }
+      }
+    }
+
+    res.status(201).json({
+      message: 'Utilisateur créé avec succès',
+      utilisateur: savedUser,
+      uesAttribuees: uesProcessed.length,
+      uesProcessed: uesProcessed,
+      uesErrors: uesErrors.length > 0 ? uesErrors : undefined
+    });
+
   } catch (err) {
     console.error("Erreur lors de la création de l'utilisateur :", err);
-    res.status(500).json({ message: "Erreur lors de la création de l'utilisateur", error: err.message });
+
+    // En cas d'erreur, essayer de nettoyer les données partielles
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({
+        message: "Données invalides",
+        errors: Object.keys(err.errors).map(key => ({
+          field: key,
+          message: err.errors[key].message
+        }))
+      });
+    }
+
+    res.status(500).json({
+      message: "Erreur lors de la création de l'utilisateur",
+      error: err.message
+    });
   }
 };
 
@@ -84,30 +188,244 @@ exports.updateUtilisateur = async (req, res) => {
     if (!Array.isArray(roles)) {
       roles = roles ? [roles] : [];
     }
+
+    let ues = req.body.ues || req.body['ues[]'];
+    if (!Array.isArray(ues)) {
+      ues = ues ? [ues] : [];
+    }
+
     const photo = req.file ? req.file.filename : undefined;
-    const { nom, prenom, email, plainPassword} = req.body;
+    const { nom, prenom, email, plainPassword } = req.body;
+
+    console.log('🔄 Mise à jour utilisateur ID:', req.params.userId);
+    console.log('📋 Nouvelles UEs:', ues);
+
+    // Récupérer l'utilisateur actuel pour comparer les UEs
+    const currentUser = await Utilisateur.findById(req.params.userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+
+    const currentUes = currentUser.ues || [];
+    const newUes = ues || [];
+
+    console.log('📋 UEs actuelles:', currentUes);
+    console.log('📋 Nouvelles UEs:', newUes);
+
+    const uesProcessed = [];
+    const uesErrors = [];
+
+    // 1. Retirer l'utilisateur des UEs qu'il n'a plus
+    const uesToRemove = currentUes.filter(ueId => !newUes.includes(ueId));
+    console.log('➖ UEs à retirer:', uesToRemove);
+
+    for (const ueId of uesToRemove) {
+      try {
+        let ue = null;
+
+        if (mongoose.Types.ObjectId.isValid(ueId)) {
+          ue = await Ue.findById(ueId);
+        }
+        if (!ue) {
+          ue = await Ue.findOne({ id: ueId });
+        }
+        if (!ue) {
+          ue = await Ue.findOne({ code: ueId });
+        }
+
+        if (ue && ue.participants) {
+          const userObjectId = currentUser._id;
+          const initialLength = ue.participants.length;
+
+          // Filtrer en utilisant equals pour ObjectId
+          ue.participants = ue.participants.filter(id => {
+            if (id.equals) {
+              return !id.equals(userObjectId);
+            }
+            return id.toString() !== userObjectId.toString();
+          });
+
+          if (ue.participants.length < initialLength) {
+            await ue.save();
+            uesProcessed.push({
+              action: 'removed',
+              id: ue._id,
+              code: ue.code,
+              intitule: ue.intitule
+            });
+            console.log(`➖ Utilisateur retiré de l'UE: ${ue.code}`);
+          }
+        }
+      } catch (removeError) {
+        console.error(`❌ Erreur lors du retrait de l'UE ${ueId}:`, removeError.message);
+        uesErrors.push({
+          action: 'remove',
+          ueId: ueId,
+          error: removeError.message
+        });
+      }
+    }
+
+    // 2. Ajouter l'utilisateur aux nouvelles UEs
+    const uesToAdd = newUes.filter(ueId => !currentUes.includes(ueId));
+    console.log('➕ UEs à ajouter:', uesToAdd);
+
+    for (const ueId of uesToAdd) {
+      try {
+        let ue = null;
+
+        if (mongoose.Types.ObjectId.isValid(ueId)) {
+          ue = await Ue.findById(ueId);
+        }
+        if (!ue) {
+          ue = await Ue.findOne({ id: ueId });
+        }
+        if (!ue) {
+          ue = await Ue.findOne({ code: ueId });
+        }
+
+        if (ue) {
+          if (!ue.participants) {
+            ue.participants = [];
+          }
+
+          const userObjectId = currentUser._id;
+          const isAlreadyParticipant = ue.participants.some(id => {
+            if (id.equals) {
+              return id.equals(userObjectId);
+            }
+            return id.toString() === userObjectId.toString();
+          });
+
+          if (!isAlreadyParticipant) {
+            ue.participants.push(userObjectId);
+            await ue.save();
+            uesProcessed.push({
+              action: 'added',
+              id: ue._id,
+              code: ue.code,
+              intitule: ue.intitule
+            });
+            console.log(`➕ Utilisateur ajouté à l'UE: ${ue.code}`);
+          }
+        } else {
+          console.log(`⚠️ UE non trouvée pour ID: ${ueId}`);
+          uesErrors.push({
+            action: 'add',
+            ueId: ueId,
+            error: 'UE non trouvée'
+          });
+        }
+      } catch (addError) {
+        console.error(`❌ Erreur lors de l'ajout à l'UE ${ueId}:`, addError.message);
+        uesErrors.push({
+          action: 'add',
+          ueId: ueId,
+          error: addError.message
+        });
+      }
+    }
+
+    // 3. Mettre à jour l'utilisateur
     const updateData = {
       nom,
       prenom,
       email,
-      photo,
-      role: roles
+      role: roles,
+      ues: newUes
     };
+
+    if (photo) {
+      updateData.photo = photo;
+    }
+
     if (plainPassword) {
       updateData.mot_passe = plainPassword;
     }
+
     const utilisateur = await Utilisateur.findByIdAndUpdate(
       req.params.userId,
       updateData,
       { new: true }
     );
-    if (!utilisateur) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
-    }
-    res.json(utilisateur);
+
+    res.json({
+      message: 'Utilisateur modifié avec succès',
+      utilisateur: utilisateur,
+      uesProcessed: uesProcessed,
+      uesErrors: uesErrors.length > 0 ? uesErrors : undefined,
+      summary: {
+        added: uesProcessed.filter(ue => ue.action === 'added').length,
+        removed: uesProcessed.filter(ue => ue.action === 'removed').length,
+        errors: uesErrors.length
+      }
+    });
+
   } catch (err) {
     console.error("Erreur lors de la maj de l'utilisateur :", err);
-    res.status(500).json({ message: "Erreur lors de la modification de l'utilisateur", error: err.message });
+    res.status(500).json({
+      message: "Erreur lors de la modification de l'utilisateur",
+      error: err.message
+    });
   }
 };
 
+// Méthode pour obtenir les participants d'une UE
+exports.getParticipantsByUe = async (req, res) => {
+  try {
+    const ueId = req.params.ueId;
+    console.log(`🔍 Recherche participants pour UE: ${ueId}`);
+
+    // Récupérer l'UE avec populate des participants
+    let ue;
+    if (mongoose.Types.ObjectId.isValid(ueId)) {
+      ue = await Ue.findById(ueId).populate('participants', 'nom prenom email photo role ues');
+    }
+    if (!ue) {
+      ue = await Ue.findOne({ id: ueId }).populate('participants', 'nom prenom email photo role ues');
+    }
+    if (!ue) {
+      ue = await Ue.findOne({ code: ueId }).populate('participants', 'nom prenom email photo role ues');
+    }
+
+    if (!ue) {
+      return res.status(404).json({
+        success: false,
+        message: 'UE non trouvée'
+      });
+    }
+
+    console.log(`✅ UE trouvée: ${ue.code} - ${ue.intitule}`);
+    console.log(`👥 Participants: ${ue.participants ? ue.participants.length : 0}`);
+
+    // Avec populate, les participants sont déjà des objets complets
+    const formattedParticipants = ue.participants.map(participant => ({
+      _id: participant._id.toString(),
+      nom: participant.nom,
+      prenom: participant.prenom,
+      email: participant.email,
+      photo: participant.photo,
+      role: Array.isArray(participant.role) ? participant.role : [participant.role],
+      ues: participant.ues || []
+    }));
+
+    res.json({
+      success: true,
+      data: formattedParticipants,
+      ue: {
+        id: ue._id.toString(),
+        code: ue.code,
+        intitule: ue.intitule,
+        participantCount: ue.participants.length
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ Error in getParticipantsByUe:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: err.message
+    });
+  }
+};

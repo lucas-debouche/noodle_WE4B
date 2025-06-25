@@ -263,7 +263,7 @@ label {
   border-top: 1px solid var(--border-color);
 }
 
-.btn-submit, .btn-cancel {
+.btn-submit, .btn-cancel, .btn-back {
   padding: 0.875rem 2rem;
   border: none;
   border-radius: var(--radius-md);
@@ -304,6 +304,17 @@ label {
   &:hover {
     background-color: var(--border-color);
     color: var(--text-color);
+  }
+}
+
+.btn-back {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  color: white;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
   }
 }
 
@@ -409,10 +420,24 @@ label {
 
   .form-actions {
     flex-direction: column-reverse;
+    gap: 1rem;
 
-    .btn-submit, .btn-cancel {
+    .btn-submit, .btn-cancel, .btn-back {
       width: 100%;
       justify-content: center;
+    }
+
+    // Ordre spécifique pour mobile
+    .btn-back {
+      order: 3; // En dernier (en haut visuellement)
+    }
+
+    .btn-cancel {
+      order: 2; // Au milieu
+    }
+
+    .btn-submit {
+      order: 1; // En premier (en bas visuellement)
     }
   }
 
@@ -460,6 +485,13 @@ label {
   .roles-container {
     .role-chip {
       min-width: 100%;
+    }
+  }
+
+  .form-actions {
+    .btn-submit, .btn-cancel, .btn-back {
+      padding: 1rem;
+      font-size: 0.875rem;
     }
   }
 }

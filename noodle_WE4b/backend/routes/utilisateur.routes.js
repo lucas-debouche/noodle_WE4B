@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Utilisateur = require('../models/utilisateur.model');
-const UtilisateurUe = require('../models/utilisateur_ue.model');
+const Ue = require('../models/ue.model');
 const utilisateurController = require('../controllers/utilisateur.controller');
 const authMiddleware = require('../security/middleware_auth');
 const mongoose = require('mongoose');
@@ -81,15 +81,45 @@ router.put('/update_photo/:nom', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE
   }
 });
 
-// GET /ue/:ueId → obtenir les utilisateurs associés à une UE
+// GET /ue/:ueId/participants → obtenir les participants d'une UE (nouvelle route)
+router.get('/ue/:ueId/participants',
+  authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
+  utilisateurController.getParticipantsByUe
+);
+
+// GET /ue/:ueId → obtenir les utilisateurs associés à une UE (route pour compatibilité)
 router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
   try {
-    const liaisons = await UtilisateurUe.find({ ue_id: req.params.ueId });
-    const utilisateurIds = liaisons.map(liaison => liaison.utilisateur_id);
+    const ueId = req.params.ueId;
 
-    const utilisateurs = await Utilisateur.find({ _id: { $in: utilisateurIds } });
+    // Récupérer l'UE avec ses participants
+    let ue;
+    if (mongoose.Types.ObjectId.isValid(ueId)) {
+      ue = await Ue.findById(ueId);
+    }
+    if (!ue) {
+      ue = await Ue.findOne({ id: ueId });
+    }
+    if (!ue) {
+      ue = await Ue.findOne({ code: ueId });
+    }
+
+    if (!ue) {
+      return res.status(404).json({ error: 'UE non trouvée.' });
+    }
+
+    if (!ue.participants || ue.participants.length === 0) {
+      return res.json([]);
+    }
+
+    // Récupérer les utilisateurs participants
+    const utilisateurs = await Utilisateur.find({
+      _id: { $in: ue.participants }
+    });
+
     res.json(utilisateurs);
   } catch (err) {
+    console.error('Erreur lors de la récupération des utilisateurs par UE:', err);
     res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs par UE.' });
   }
 });
@@ -101,6 +131,6 @@ router.get('/:userId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']),
 router.post('/', uploadCreation.single('photo'), utilisateurController.createUtilisateur);
 
 // PUT /:userId → modifier un utilisateur
-router.put('/:userId', utilisateurController.updateUtilisateur);
+router.put('/:userId', uploadCreation.single('photo'), utilisateurController.updateUtilisateur);
 
 module.exports = router;
