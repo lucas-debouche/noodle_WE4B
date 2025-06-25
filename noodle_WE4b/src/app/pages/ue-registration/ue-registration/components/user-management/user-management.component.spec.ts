@@ -8,8 +8,8 @@ describe('UserManagementComponent', () => {
   let fixture: ComponentFixture<UserManagementComponent>;
 
   const mockUsers = [
-    { id: '1', nom: 'Dupont', prenom: 'Jean', email: 'jean@test.com', role: ['ROLE_USER'], ues: [] },
-    { id: '2', nom: 'Martin', prenom: 'Marie', email: 'marie@test.com', role: ['ROLE_PROF'], ues: [] }
+    { _id: '1', nom: 'Dupont', prenom: 'Jean', email: 'jean@test.com', role: ['ROLE_USER'], ues: [] },
+    { _id: '2', nom: 'Martin', prenom: 'Marie', email: 'marie@test.com', role: ['ROLE_PROF'], ues: [] }
   ];
 
   beforeEach(() => {
