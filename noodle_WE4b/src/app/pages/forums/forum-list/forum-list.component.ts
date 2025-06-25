@@ -40,10 +40,11 @@ export class ForumListComponent implements OnInit {
 
   loadForums() {
     const ueId = this.route.snapshot.paramMap.get('ueId');
+    console.log(ueId, 'ueId récupéré de la route');
+
     if (ueId) {
       this.loading = true;
       this.error = '';
-
       this.forumService.getForumsByUe(ueId).subscribe(
         data => {
           this.forums = data || [];
@@ -64,12 +65,14 @@ export class ForumListComponent implements OnInit {
   }
 
   createForum() {
+    console.log('Tentative de création du forum avec le titre:', this.newTitle.trim());
     const ueId = this.route.snapshot.paramMap.get('ueId');
     if (ueId && this.newTitle.trim() !== '' && !this.creating) {
       this.creating = true;
       this.error = '';
-
+      console.log('Création du forum avec le titre:', this.newTitle.trim());
       this.forumService.createForum(ueId, this.newTitle.trim()).subscribe(
+
         (response) => {
           console.log('Forum créé avec succès:', response);
           this.newTitle = '';

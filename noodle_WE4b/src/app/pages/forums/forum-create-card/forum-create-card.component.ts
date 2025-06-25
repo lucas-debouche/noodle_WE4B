@@ -12,11 +12,12 @@ export class ForumCreateCardComponent {
   @Output() newTitleChange = new EventEmitter<string>();
   @Output() createForum = new EventEmitter<void>();
 
-  onCreateForum() {
-    this.createForum.emit();
-  }
-
   isValidTitle(): boolean {
     return this.newTitle.trim().length > 0;
+  }
+
+  onCreateForum() {
+    if (!this.isValidTitle() || this.creating) return;
+    this.createForum.emit();
   }
 }
