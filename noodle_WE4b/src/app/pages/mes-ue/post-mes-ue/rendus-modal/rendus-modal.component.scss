@@ -1,0 +1,86 @@
+.rendus-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.rendus-modal {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.rendus-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+
+  span {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+
+  .close-modal-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+  }
+}
+
+.rendus-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
+}
+
+.attribuer-note-btn, .valider-note-btn {
+  padding: 5px 10px;
+  margin: 2px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.attribuer-note-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.valider-note-btn {
+  background-color: #008CBA;
+  color: white;
+}
+
+.note-input {
+  width: 50px;
+  padding: 5px;
+  margin-right: 5px;
+}
+
+.aucun-rendu {
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+  color: #666;
+}

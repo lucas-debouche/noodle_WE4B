@@ -16,6 +16,8 @@ export class NavbarComponent implements OnInit {
   currentUser: User | null = null; // L'utilisateur actuel, récupéré depuis le service NavbarService.
   isLoggedIn: boolean = false; // Simule si l'utilisateur est connecté.
   isAdmin: boolean = false; // Simule si l'utilisateur est admin.
+  isProf: boolean = false; // Simule si l'utilisateur est prof.'
+  isUser: boolean = false; // Simule si l'utilisateur est étudiant.'
   hasRoles: boolean = false; // Simule si l'utilisateur a des rôles.
 
   constructor(
@@ -42,10 +44,14 @@ export class NavbarComponent implements OnInit {
       if (this.currentUser) {
         this.isLoggedIn = true;
         this.isAdmin = this.currentUser.role.includes('ROLE_ADMIN');
+        this.isProf = this.currentUser.role.includes('ROLE_PROF');
+        this.isUser = this.currentUser.role.includes('ROLE_USER');
         this.hasRoles = this.currentUser.role.length > 0;
       } else {
         this.isLoggedIn = false;
         this.isAdmin = false;
+        this.isProf = false;
+        this.isUser = false;
         this.hasRoles = false;
       }
     });

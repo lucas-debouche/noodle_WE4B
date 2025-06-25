@@ -1,0 +1,49 @@
+<div class="ue-registration-container">
+  <!-- Messages d'état -->
+  <div class="messages" *ngIf="error || success">
+    <div class="alert alert-error" *ngIf="error">
+      <i class="icon">⚠️</i>
+      {{ error }}
+      <button (click)="error = ''" class="close-btn">×</button>
+    </div>
+    <div class="alert alert-success" *ngIf="success">
+      <i class="icon">✅</i>
+      {{ success }}
+      <button (click)="success = ''" class="close-btn">×</button>
+    </div>
+  </div>
+
+  <!-- Message de chargement global -->
+  <div class="loading-card" *ngIf="loading">
+    <div class="loading-content">
+      <div class="loading-spinner-large"></div>
+      <h3>Chargement des données...</h3>
+      <p>Veuillez patienter</p>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="content-wrapper" *ngIf="!loading">
+    <!-- Formulaire d'enregistrement/édition -->
+    <app-ue-form
+      [users]="users"
+      [departements]="departements"
+      [isEditMode]="isEditMode"
+      [editingUe]="editingUe"
+      (ueCreated)="onUeCreated($event)"
+      (ueUpdated)="onUeUpdated($event)"
+      (editCancelled)="onCancelEdit()"
+      (error)="onFormError($event)"
+    ></app-ue-form>
+
+    <!-- Liste des UE existantes -->
+    <app-ue-list
+      [ues]="ues"
+      [editingUeId]="editingUe?._id"
+      (editUe)="onEditUe($event)"
+      (deleteUe)="onUeDeleted($event)"
+      (refreshData)="onRefreshData()"
+      (error)="onFormError($event)"
+    ></app-ue-list>
+  </div>
+</div>

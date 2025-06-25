@@ -1,0 +1,35 @@
+.post-file {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+
+  strong {
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+
+    .file-icon {
+      margin-right: 5px;
+    }
+  }
+
+  .file-name {
+    color: #007bff;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .file-none {
+    color: #6c757d;
+    font-style: italic;
+  }
+}
+
+.post-message {
+  margin-top: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

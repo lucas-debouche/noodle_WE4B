@@ -1,15 +1,17 @@
 <nav *ngIf="shouldShowNavbar()">
   <div class="header">
-    <a routerLink="/choix-ue">
-      <img src="assets/Images/Logo_Noodle_Web.webp" routerLink="/choix-ue" alt="logo" width="150"/>
+    <a *ngIf ="!isAdmin" routerLink="/choix-ue">
+      <img src="assets/Images/Logo_Noodle_Web.webp" routerLink="/choix-ue" alt="logo" width="125"/>
+    </a>
+    <a *ngIf="isAdmin" routerLink="/admin_panel">
+      <img src="assets/Images/Logo_Noodle_Web.webp" routerLink="/admin_panel" alt="logo" width="125"/>
     </a>
     <div class="header-title">
       <h1>{{ title || 'Noodle' }}</h1>
     </div>
     <div class="nav" *ngIf="isLoggedIn">
-      <a *ngIf="isAdmin" routerLink="/admin-dashboard">Dashboard</a>
-      <a *ngIf="isAdmin" routerLink="/admin-panel">Panel Admin</a>
-      <a *ngIf="hasRoles" routerLink="/choix-ue">Mes UEs</a>
+      <a *ngIf="isAdmin" routerLink="/admin_panel">Panel Admin</a>
+      <a *ngIf="isProf || isUser" routerLink="/choix-ue">Mes UEs</a>
       <a (click)="logout()" routerLink="/">Déconnexion</a>
     </div>
   </div>
