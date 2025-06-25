@@ -17,6 +17,7 @@ exports.getAllUtilisateurs = async (req, res) => {
 // GET /api/utilisateur/current → récupérer l'utilisateur courant
 exports.getCurrentUtilisateur = async (req, res) => {
   console.log('/current : Début de la gestion de la requête');
+  console.log(req.user);
 
   try {
     console.log('/current : Utilisateur ID extrait du token :', req.user.userId);
