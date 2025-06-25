@@ -1,0 +1,133 @@
+<div class="container">
+  <div class="registration-container">
+    <!-- En-tête avec breadcrumb -->
+    <div class="page-header">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Gestion</span>
+        <span class="breadcrumb-separator">›</span>
+        <span class="breadcrumb-item">Utilisateurs</span>
+        <span class="breadcrumb-separator">›</span>
+        <span class="breadcrumb-item active">{{ editMode ? 'Modification' : 'Création' }}</span>
+      </div>
+      <h2>
+        <span class="header-icon">{{ editMode ? '✏️' : '👤' }}</span>
+        {{ editMode ? ('Modifier l\'utilisateur #' + userId) : 'Créer un nouvel utilisateur' }}
+      </h2>
+    </div>
+
+    <!-- Messages d'alerte avec animation -->
+    <div class="alerts-container">
+      <div *ngIf="successMessage" class="alert alert-success slide-in">
+        <span class="alert-icon">✅</span>
+        <div class="alert-content">{{ successMessage }}</div>
+        <button class="alert-close" (click)="successMessage = ''">&times;</button>
+      </div>
+      <div *ngIf="errorMessage" class="alert alert-error slide-in">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-content">{{ errorMessage }}</div>
+        <button class="alert-close" (click)="errorMessage = ''">&times;</button>
+      </div>
+    </div>
+
+    <!-- Indicateur de progression -->
+    <div class="progress-indicator">
+      <div class="step"
+           [class.active]="currentStep >= 1"
+           [class.completed]="isStepCompleted(1)">
+        <div class="step-number">{{ isStepCompleted(1) ? '✓' : '1' }}</div>
+        <div class="step-label">Infos personnelles</div>
+      </div>
+      <div class="step"
+           [class.active]="currentStep >= 2"
+           [class.completed]="isStepCompleted(2)">
+        <div class="step-number">{{ isStepCompleted(2) ? '✓' : '2' }}</div>
+        <div class="step-label">Compte</div>
+      </div>
+      <div class="step"
+           [class.active]="currentStep >= 3"
+           [class.completed]="isStepCompleted(3)">
+        <div class="step-number">{{ isStepCompleted(3) ? '✓' : '3' }}</div>
+        <div class="step-label">Photo</div>
+      </div>
+      <div class="step"
+           [class.active]="currentStep >= 4"
+           [class.completed]="isStepCompleted(4)">
+        <div class="step-number">{{ isStepCompleted(4) ? '✓' : '4' }}</div>
+        <div class="step-label">Permissions</div>
+      </div>
+    </div>
+
+    <form [formGroup]="registrationForm" (ngSubmit)="submit()" enctype="multipart/form-data" class="user-form">
+
+      <!-- Section 1: Informations personnelles -->
+      <div class="form-section" [class.active]="currentStep >= 1" [class.completed]="isStepCompleted(1)">
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">👤</span>
+            Informations personnelles
+            <span class="completion-badge" *ngIf="isStepCompleted(1)">✓</span>
+          </h3>
+          <div class="section-description">Saisissez les informations de base de l'utilisateur</div>
+        </div>
+        <app-user-personal-info [form]="registrationForm"></app-user-personal-info>
+      </div>
+
+      <!-- Section 2: Compte utilisateur -->
+      <div class="form-section" [class.active]="currentStep >= 2" [class.completed]="isStepCompleted(2)">
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">🔐</span>
+            Compte utilisateur
+            <span class="completion-badge" *ngIf="isStepCompleted(2)">✓</span>
+          </h3>
+          <div class="section-description">Configuration du compte de connexion</div>
+        </div>
+        <app-user-account-info [form]="registrationForm"></app-user-account-info>
+      </div>
+
+      <!-- Section 3: Photo -->
+      <div class="form-section" [class.active]="currentStep >= 3" [class.completed]="isStepCompleted(3)">
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">📷</span>
+            Photo de profil
+            <span class="completion-badge" *ngIf="isStepCompleted(3)">✓</span>
+          </h3>
+          <div class="section-description">Ajoutez une photo pour personnaliser le profil (optionnel)</div>
+        </div>
+        <app-user-photo-upload [form]="registrationForm" [resetPhotoTrigger]="resetPhotoTrigger"></app-user-photo-upload>
+      </div>
+
+      <!-- Section 4: Rôles et Permissions -->
+      <div class="form-section" [class.active]="currentStep >= 4" [class.completed]="isStepCompleted(4)">
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">🎭</span>
+            Rôles et Unités d'Enseignement
+            <span class="completion-badge" *ngIf="isStepCompleted(4)">✓</span>
+          </h3>
+          <div class="section-description">Définissez les permissions et accès de l'utilisateur</div>
+        </div>
+        <app-user-roles-ues
+          [form]="registrationForm"
+          [roles]="roles"
+          [departements]="departements">
+        </app-user-roles-ues>
+      </div>
+
+      <!-- Actions finales -->
+      <div class="form-actions">
+        <button type="button" class="btn-back" (click)="goBack()">
+          <span class="btn-icon">🔙</span> Retour
+        </button>
+        <button type="button" class="btn-cancel" (click)="resetForm()">
+          <span class="btn-icon">↩️</span> Annuler
+        </button>
+        <button type="submit" class="btn-submit" [disabled]="registrationForm.invalid || isSubmitting">
+          <span class="btn-icon">{{ isSubmitting ? '⏳' : (editMode ? '💾' : '👤') }}</span>
+          {{ isSubmitting ? 'En cours...' : (editMode ? 'Sauvegarder' : 'Créer') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

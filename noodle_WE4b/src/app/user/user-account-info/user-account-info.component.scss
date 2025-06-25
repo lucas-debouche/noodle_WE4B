@@ -1,0 +1,145 @@
+.form-group {
+  padding: 0 1.5rem 1.5rem;
+
+  &:only-child {
+    padding: 0 1.5rem 1.5rem;
+  }
+}
+
+
+// Labels et inputs améliorés
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.875rem;
+
+  &.required::after {
+    content: ' *';
+    color: var(--error-color);
+  }
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: white;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  &.is-valid {
+    border-color: var(--success-color);
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+  }
+
+  &.is-invalid {
+    border-color: var(--error-color);
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+// Inputs avec icônes
+.input-with-icon {
+  position: relative;
+
+  .input-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.25rem;
+    z-index: 1;
+  }
+
+  .form-control {
+    padding-left: 3rem;
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--surface-color);
+    }
+  }
+}
+
+// Indicateur de force du mot de passe
+.password-input-container {
+  .password-strength {
+    margin-top: 0.5rem;
+
+    .strength-bar {
+      height: 4px;
+      background-color: var(--border-color);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 0.25rem;
+
+      .strength-fill {
+        height: 100%;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+
+        &.weak {
+          background-color: var(--error-color);
+        }
+
+        &.medium {
+          background-color: var(--warning-color);
+        }
+
+        &.strong {
+          background-color: var(--success-color);
+        }
+      }
+    }
+
+    .strength-text {
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  }
+}
+
+// Messages d'erreur
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--error-color);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+
+  .error-icon {
+    font-size: 1rem;
+  }
+}

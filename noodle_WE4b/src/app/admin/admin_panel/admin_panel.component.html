@@ -52,7 +52,6 @@
       </button>
     </div>
 
-    <!-- Affichage du nombre total d'UE trouvées -->
     <div class="results-info">
       📊 {{ filteredUes.length }} UE(s) trouvée(s) - Page {{ ueCurrentPage }} sur {{ ueTotalPages }}
     </div>
@@ -60,69 +59,47 @@
     <div class="table-container">
       <table class="ue-table">
         <thead>
-        <tr>
-          <th>🏷️ Code</th>
-          <th>📝 Nom</th>
-          <th>📄 Description</th>
-          <th>⚙️ Actions</th>
-        </tr>
+          <tr>
+            <th>🏷️ Code</th>
+            <th>📝 Nom</th>
+            <th>📄 Description</th>
+            <th>⚙️ Actions</th>
+          </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let ue of pagedUes" class="fade-in">
-          <td>
-            <strong>{{ ue.code }}</strong>
-          </td>
-          <td>
-                        <span [title]="ue.intitule" class="text-truncate">
-                            {{ getTruncatedText(ue.intitule, 30) }}
-                        </span>
-          </td>
-          <td>
-                        <span [title]="ue.description" class="text-truncate">
-                            {{ getTruncatedText(ue.description, 50) }}
-                        </span>
-          </td>
-          <td>
-            <div class="actions">
-              <a class="action-btn edit" [routerLink]="['/ue-registration', ue.id]">
-                <i>✏️</i> Modifier
-              </a>
-              <button class="action-btn delete" (click)="showDeleteConfirmation('ue', ue._id)">
-                <i>🗑️</i> Supprimer
-              </button>
-            </div>
-          </td>
-        </tr>
-        <!-- Lignes vides pour maintenir la taille du tableau -->
-        <tr *ngFor="let i of [].constructor(ueItemsPerPage - pagedUes.length); index as idx"
-            style="height: 60px; opacity: 0;">
-          <td colspan="4">&nbsp;</td>
-        </tr>
+          <tr *ngFor="let ue of pagedUes" class="fade-in">
+            <td><strong>{{ ue.code }}</strong></td>
+            <td><span [title]="ue.intitule" class="text-truncate">{{ getTruncatedText(ue.intitule, 30) }}</span></td>
+            <td><span [title]="ue.description" class="text-truncate">{{ getTruncatedText(ue.description, 50) }}</span></td>
+            <td>
+              <div class="actions">
+                <a class="action-btn edit" [routerLink]="['/admin/ue-registration', ue._id]"><i>✏️</i> Modifier</a>
+                <button class="action-btn delete" (click)="showDeleteConfirmation('ue', ue._id)"><i>🗑️</i> Supprimer</button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngFor="let i of [].constructor(ueItemsPerPage - pagedUes.length); index as idx"
+              style="height: 60px; opacity: 0;">
+            <td colspan="4">&nbsp;</td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Pagination UE -->
     <div class="pagination" *ngIf="ueTotalPages > 1">
-      <button (click)="changeUePage(ueCurrentPage - 1)"
-              [disabled]="ueCurrentPage === 1">
-        ‹
-      </button>
+      <button (click)="changeUePage(ueCurrentPage - 1)" [disabled]="ueCurrentPage === 1">‹</button>
       <button *ngFor="let page of getPaginationArray(ueTotalPages)"
               [class.active]="ueCurrentPage === page"
               (click)="changeUePage(page)">
         {{ page }}
       </button>
-      <button (click)="changeUePage(ueCurrentPage + 1)"
-              [disabled]="ueCurrentPage === ueTotalPages">
-        ›
-      </button>
+      <button (click)="changeUePage(ueCurrentPage + 1)" [disabled]="ueCurrentPage === ueTotalPages">›</button>
     </div>
   </div>
 
   <!-- Section des Utilisateurs -->
   <div id="users-tab" class="tab-content" [class.active]="activeTab === 'users'">
-    <a class="create-btn" [routerLink]="['/admin/user-registration']">
+    <a class="create-btn" [routerLink]="['/admin/users-registration']">
       + Créer un utilisateur
     </a>
 
@@ -132,9 +109,7 @@
                [(ngModel)]="userSearch"
                placeholder="🔍 Rechercher un utilisateur..."
                (input)="applyUserFilters()">
-        <button (click)="applyUserFilters()">
-          <i>🔍</i>
-        </button>
+        <button (click)="applyUserFilters()"><i>🔍</i></button>
       </div>
       <div class="filters">
         <select [(ngModel)]="userFilterField" (change)="applyUserFilters()">
@@ -151,12 +126,9 @@
           <option value="ROLE_PROF">👨‍🏫 Professeur</option>
         </select>
       </div>
-      <button class="reset-btn" (click)="resetUserFilters()">
-        🔄 Réinitialiser
-      </button>
+      <button class="reset-btn" (click)="resetUserFilters()">🔄 Réinitialiser</button>
     </div>
 
-    <!-- Affichage du nombre total d'utilisateurs trouvés -->
     <div class="results-info">
       📊 {{ filteredUsers.length }} utilisateur(s) trouvé(s) - Page {{ userCurrentPage }} sur {{ userTotalPages }}
     </div>
@@ -164,74 +136,54 @@
     <div class="table-container">
       <table class="users-table">
         <thead>
-        <tr>
-          <th>👤 Nom</th>
-          <th>👤 Prénom</th>
-          <th>📧 Email</th>
-          <th>🎭 Rôle</th>
-          <th>⚙️ Actions</th>
-        </tr>
+          <tr>
+            <th>👤 Nom</th>
+            <th>👤 Prénom</th>
+            <th>📧 Email</th>
+            <th>🎭 Rôle</th>
+            <th>⚙️ Actions</th>
+          </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let user of pagedUsers" class="fade-in">
-          <td>
-            <strong>{{ user.nom }}</strong>
-          </td>
-          <td>
-            {{ user.prenom }}
-          </td>
-          <td>
-                        <span [title]="user.email" class="text-truncate">
-                            {{ getTruncatedText(user.email, 25) }}
-                        </span>
-          </td>
-          <td>
-            <ng-container *ngIf="user.role?.length; else noRole">
-                            <span *ngFor="let role of user.role; let last = last"
-                                  class="badge"
-                                  [ngClass]="getRoleBadgeClass(role)">
-                                {{ role.replace('ROLE_', '') }}
-                            </span>
-            </ng-container>
-            <ng-template #noRole>
-              <span class="badge badge-default">Aucun rôle</span>
-            </ng-template>
-          </td>
-          <td>
-            <div class="actions">
-              <a class="action-btn edit" [routerLink]="['/user-edit', user.id]">
-                <i>✏️</i> Modifier
-              </a>
-              <button class="action-btn delete" (click)="showDeleteConfirmation('user', user._id)">
-                <i>🗑️</i> Supprimer
-              </button>
-            </div>
-          </td>
-        </tr>
-        <!-- Lignes vides pour maintenir la taille du tableau -->
-        <tr *ngFor="let i of [].constructor(userItemsPerPage - pagedUsers.length); index as idx"
-            style="height: 60px; opacity: 0;">
-          <td colspan="5">&nbsp;</td>
-        </tr>
+          <tr *ngFor="let user of pagedUsers" class="fade-in">
+            <td><strong>{{ user.nom }}</strong></td>
+            <td>{{ user.prenom }}</td>
+            <td><span [title]="user.email" class="text-truncate">{{ getTruncatedText(user.email, 25) }}</span></td>
+            <td>
+              <ng-container *ngIf="user.role?.length; else noRole">
+                <span *ngFor="let role of user.role; let last = last"
+                      class="badge"
+                      [ngClass]="getRoleBadgeClass(role)">
+                  {{ role.replace('ROLE_', '') }}
+                </span>
+              </ng-container>
+              <ng-template #noRole>
+                <span class="badge badge-default">Aucun rôle</span>
+              </ng-template>
+            </td>
+            <td>
+              <div class="actions">
+                <a class="action-btn edit" [routerLink]="['/user-edit', user.id]"><i>✏️</i> Modifier</a>
+                <button class="action-btn delete" (click)="showDeleteConfirmation('user', user._id)"><i>🗑️</i> Supprimer</button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngFor="let i of [].constructor(userItemsPerPage - pagedUsers.length); index as idx"
+              style="height: 60px; opacity: 0;">
+            <td colspan="5">&nbsp;</td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Pagination Utilisateurs -->
     <div class="pagination" *ngIf="userTotalPages > 1">
-      <button (click)="changeUserPage(userCurrentPage - 1)"
-              [disabled]="userCurrentPage === 1">
-        ‹
-      </button>
+      <button (click)="changeUserPage(userCurrentPage - 1)" [disabled]="userCurrentPage === 1">‹</button>
       <button *ngFor="let page of getPaginationArray(userTotalPages)"
               [class.active]="userCurrentPage === page"
               (click)="changeUserPage(page)">
         {{ page }}
       </button>
-      <button (click)="changeUserPage(userCurrentPage + 1)"
-              [disabled]="userCurrentPage === userTotalPages">
-        ›
-      </button>
+      <button (click)="changeUserPage(userCurrentPage + 1)" [disabled]="userCurrentPage === userTotalPages">›</button>
     </div>
   </div>
 </div>
@@ -246,9 +198,7 @@
       <button (click)="confirmDelete()" [disabled]="isLoading">
         {{ isLoading ? '⏳ Suppression...' : '🗑️ Confirmer' }}
       </button>
-      <button (click)="hideDeleteConfirmation()" [disabled]="isLoading">
-        ❌ Annuler
-      </button>
+      <button (click)="hideDeleteConfirmation()" [disabled]="isLoading">❌ Annuler</button>
     </div>
   </div>
 </div>

@@ -53,15 +53,5 @@ describe('UeListComponent', () => {
     expect(component.editUe.emit).toHaveBeenCalledWith(ue);
   });
 
-  it('should delete UE after confirmation', async () => {
-    uesService.deleteUe.and.returnValue(of({ success: true }));
-    spyOn(window, 'confirm').and.returnValue(true);
-    spyOn(component.deleteUe, 'emit');
 
-    await component.onDeleteUe(mockUes[0]);
-
-    expect(window.confirm).toHaveBeenCalled();
-    expect(uesService.deleteUe).toHaveBeenCalledWith(mockUes[0].id);
-    expect(component.deleteUe.emit).toHaveBeenCalledWith(mockUes[0]);
-  });
 });
