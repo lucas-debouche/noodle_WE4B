@@ -40,6 +40,29 @@
         <span class="strength-text">{{ getPasswordStrengthText() }}</span>
       </div>
     </div>
+    <!-- Affichage dynamique des conditions -->
+    <ul class="password-conditions" *ngIf="form.get('plainPassword')?.touched || form.get('plainPassword')?.dirty">
+      <li [class.valid]="!form.get('plainPassword')?.errors?.['minLength']" [class.invalid]="form.get('plainPassword')?.errors?.['minLength']">
+        <span *ngIf="!form.get('plainPassword')?.errors?.['minLength']">✅</span>
+        <span *ngIf="form.get('plainPassword')?.errors?.['minLength']">❌</span>
+        Au moins 10 caractères
+      </li>
+      <li [class.valid]="!form.get('plainPassword')?.errors?.['uppercase']" [class.invalid]="form.get('plainPassword')?.errors?.['uppercase']">
+        <span *ngIf="!form.get('plainPassword')?.errors?.['uppercase']">✅</span>
+        <span *ngIf="form.get('plainPassword')?.errors?.['uppercase']">❌</span>
+        Au moins 2 majuscules
+      </li>
+      <li [class.valid]="!form.get('plainPassword')?.errors?.['number']" [class.invalid]="form.get('plainPassword')?.errors?.['number']">
+        <span *ngIf="!form.get('plainPassword')?.errors?.['number']">✅</span>
+        <span *ngIf="form.get('plainPassword')?.errors?.['number']">❌</span>
+        Au moins 1 chiffre
+      </li>
+      <li [class.valid]="!form.get('plainPassword')?.errors?.['specialChars']" [class.invalid]="form.get('plainPassword')?.errors?.['specialChars']">
+        <span *ngIf="!form.get('plainPassword')?.errors?.['specialChars']">✅</span>
+        <span *ngIf="form.get('plainPassword')?.errors?.['specialChars']">❌</span>
+        Au moins 2 caractères spéciaux
+      </li>
+    </ul>
     <div class="form-error" *ngIf="form.get('plainPassword')?.invalid && form.get('plainPassword')?.touched">
       <span class="error-icon">!</span> Mot de passe requis
     </div>

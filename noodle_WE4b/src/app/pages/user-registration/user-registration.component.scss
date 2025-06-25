@@ -54,17 +54,23 @@
 
 // Conteneur d'alertes
 .alerts-container {
-  padding: 1rem 2rem 0;
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 500px;
+  max-width: 90vw;
+  z-index: 2000;
+  padding: 0;
+  pointer-events: none;
 }
 
 .alert {
   display: flex;
   align-items: center;
-  padding: 1rem;
-  border-radius: var(--radius-md);
+  pointer-events: auto;
   margin-bottom: 1rem;
-  position: relative;
-  border-left: 4px solid;
+  box-shadow: var(--shadow-lg);
+  animation: fadeIn 0.5s;
 
   &.alert-success {
     background-color: #ecfdf5;

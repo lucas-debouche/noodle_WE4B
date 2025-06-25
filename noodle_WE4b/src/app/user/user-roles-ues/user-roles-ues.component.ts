@@ -20,8 +20,15 @@ export class UserRolesUesComponent {
   };
 
   toggleRole(role: string): void {
-    const currentRoles = this.form.get('roles')?.value || [];
+    const currentRoles = [...(this.form.get('roles')?.value || [])];
     const roleIndex = currentRoles.indexOf(role);
+
+    if (role === 'ROLE_USER' && this.isExclusiveRoleSelected()) {
+      return; // Ne rien faire si admin ou prof déjà sélectionné
+    }
+    if ((role === 'ROLE_ADMIN' || role === 'ROLE_PROF') && currentRoles.includes('ROLE_USER')) {
+      return; // Ne rien faire si user déjà sélectionné
+    }
 
     if (roleIndex > -1) {
       currentRoles.splice(roleIndex, 1);
@@ -29,12 +36,17 @@ export class UserRolesUesComponent {
       currentRoles.push(role);
     }
 
-    this.form.patchValue({roles: currentRoles});
+    this.form.patchValue({ roles: currentRoles });
   }
 
   isRoleSelected(role: string): boolean {
     const currentRoles = this.form.get('roles')?.value || [];
     return currentRoles.includes(role);
+  }
+
+  isExclusiveRoleSelected(): boolean {
+    const currentRoles = this.form.get('roles')?.value || [];
+    return currentRoles.includes('ROLE_ADMIN') || currentRoles.includes('ROLE_PROF');
   }
 
   getRoleIcon(role: string): string {

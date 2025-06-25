@@ -1,7 +1,9 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {FormBuilder, FormControl, FormGroup, ValidationErrors, Validators} from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import {UserPhotoUploadComponent} from "../../user/user-photo-upload/user-photo-upload.component";
+import { ChangeDetectorRef } from '@angular/core';
+
 
 
 @Component({
@@ -31,13 +33,14 @@ export class UserRegistrationComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private http: HttpClient
-  ) {
+    private http: HttpClient,
+    private cdRef: ChangeDetectorRef
+) {
     this.registrationForm = this.fb.group({
       nom: ['', Validators.required],
       prenom: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      plainPassword: ['', [Validators.required, Validators.minLength(6)]],
+      plainPassword: ['', [Validators.required, passwordValidator]],
       roles: [[], Validators.required],
       departement: [''],
       ues: [[]],
@@ -77,12 +80,9 @@ export class UserRegistrationComponent implements OnInit {
 
     // Étape 3: Photo de profil (optionnelle, passe automatiquement)
     if (!values.roles || values.roles.length === 0) {
-      this.currentStep = 3;
+      this.currentStep = 4;
       return;
     }
-
-    // Étape 4: Rôles et permissions
-    this.currentStep = 4;
   }
 
 
@@ -99,7 +99,7 @@ export class UserRegistrationComponent implements OnInit {
           this.registrationForm.get('email')?.valid &&
           this.registrationForm.get('plainPassword')?.valid);
       case 3:
-        return true; // Étape photo optionnelle, toujours considérée comme complétée
+        return !!(this.photoUploadComponent?.photoFile);
       case 4:
         return !!(values.roles && values.roles.length > 0);
       default:
@@ -189,17 +189,6 @@ export class UserRegistrationComponent implements OnInit {
   }
 
   deleteUser(id: string): void {
-    // Simulation de suppression
-    // this.userService.deleteUser(id).subscribe({
-    //   next: () => {
-    //     this.showSuccess('Utilisateur supprimé avec succès !');
-    //     this.resetForm();
-    //   },
-    //   error: () => {
-    //     this.showError('Erreur lors de la suppression.');
-    //   }
-    // });
-
     this.showDeleteModal = false;
     this.showSuccess('Utilisateur supprimé avec succès !');
   }
@@ -230,15 +219,20 @@ export class UserRegistrationComponent implements OnInit {
   loadUser(userId: string): void {
     this.http.get<any>(`http://localhost:3000/api/utilisateur/${userId}`).subscribe({
       next: (user) => {
+        console.log('Chargement de l\'utilisateur:', user);
         this.registrationForm.patchValue({
           nom: user.nom,
           prenom: user.prenom,
           email: user.email,
-          roles: user.role,
-          // Ajoute les autres champs si besoin
+          plainPassword:  user.mot_passe,
+          roles: Array.isArray(user.role) ? user.role : [user.role],
+          ues: Array.isArray(user.ues) ? user.ues : (user.ues ? [user.ues] : []),
+          photo: user.photo || null
         });
         this.userId = userId;
         this.editMode = true;
+        this.cdRef.detectChanges();
+        this.cdRef.markForCheck();
       },
       error: () => {
         this.showError('Impossible de charger l\'utilisateur.');
@@ -276,4 +270,17 @@ export class UserRegistrationComponent implements OnInit {
     this.errorMessage = '';
   }
 
+}
+
+export function passwordValidator(control: FormControl): ValidationErrors | null {
+
+  const errors: any = {}
+  const value = control.value || '';
+
+  if (value.length < 10) errors['minLength'] = true;
+  if ((value.match(/[A-Z]/g) || []).length < 2) errors['uppercase'] = true;
+  if (!/\d/.test(value)) errors['number'] = true;
+  if ((value.match(/[!@#$%^&*()_+\-=\[\]{} ':"\\|,.<>\/?]/g) || []).length < 2) errors['specialChars'] = true;
+
+  return Object.keys(errors).length ? errors : null;
 }

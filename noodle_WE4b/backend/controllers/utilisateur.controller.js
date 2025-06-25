@@ -38,7 +38,7 @@ exports.getCurrentUtilisateur = async (req, res) => {
 // GET /api/utilisateur/:userId → récupérer un utilisateur par son ID (pour le forum)
 exports.getUtilisateurById = async (req, res) => {
   try {
-    const utilisateur = await Utilisateur.findById(req.params.userId).select('nom prenom');
+    const utilisateur = await Utilisateur.findById(req.params.userId);
     if (!utilisateur) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }

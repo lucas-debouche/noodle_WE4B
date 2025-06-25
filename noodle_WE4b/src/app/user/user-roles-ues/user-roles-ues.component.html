@@ -5,6 +5,7 @@
       <div class="role-chip"
            *ngFor="let role of roles"
            [class.selected]="isRoleSelected(role)"
+           [class.disabled]="(role === 'ROLE_USER' && isExclusiveRoleSelected()) || ((role === 'ROLE_ADMIN' || role === 'ROLE_PROF') && isRoleSelected('ROLE_USER'))"
            (click)="toggleRole(role)">
         <span class="role-icon">{{ getRoleIcon(role) }}</span>
         <span class="role-name">{{ role }}</span>
