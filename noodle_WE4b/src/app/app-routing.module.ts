@@ -7,6 +7,7 @@ import { MesUeComponent } from './pages/mes-ue/mes-ue.component';
 import { ForumListComponent } from './pages/forums/forum-list/forum-list.component';
 import { ForumDetailComponent } from './pages/forums/forum-detail/forum-detail.component';
 import { ParticipantsListComponent } from './pages/partipants-ue/participants-list/participants-list.component';
+import { UserRegistrationComponent } from './pages/user-registration/user-registration.component';
 import { UeRegistrationComponent } from './pages/ue-registration/ue-registration/ue-registration.component';
 import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
 
@@ -17,16 +18,21 @@ import { AuthAdminGuard } from './guards/auth-admin.guard';
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
 
-  // Routes protégées par AuthGuard
+  // Routes protégées pour les utilisateurs connectés
   { path: 'choix-ue', component: ChoixUeComponent, canActivate: [AuthGuard] },
   { path: 'mes-ue/:id', component: MesUeComponent, canActivate: [AuthGuard] },
   { path: 'mes-ue/:id/forums', component: ForumListComponent, canActivate: [AuthGuard] },
   { path: 'forums/:forumId', component: ForumDetailComponent, canActivate: [AuthGuard] },
   { path: 'ues/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard] },
 
-  // Routes d'administration
+  // Admin : création d'utilisateurs
+  { path: 'admin/users-registration', component: UserRegistrationComponent, canActivate: [AuthGuard] },
+
+  // Admin : enregistrement des UE
   { path: 'admin/ue-registration/:id', component: UeRegistrationComponent, canActivate: [AuthAdminGuard] },
   { path: 'admin/ue-registration', component: UeRegistrationComponent, canActivate: [AuthAdminGuard] },
+
+  // Panel d'administration
   { path: 'admin_panel', component: Admin_panelComponent, canActivate: [AdminGuard] },
 
   // Redirection par défaut
