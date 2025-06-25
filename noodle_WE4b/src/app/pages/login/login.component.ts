@@ -42,9 +42,13 @@ export class LoginComponent implements OnInit{
   ngOnInit() {
     this.utilisateurService.getUtilisateurs().subscribe(data => {
       this.stats.user = data.length;
+      this.cdRef.detectChanges();
+      this.triggerStatAnimation();
     });
     this.ueService.getAllUes().subscribe(data => {
       this.stats.ue = data.length;
+      this.cdRef.detectChanges();
+      this.triggerStatAnimation();
     });
     this.postService.getPosts().subscribe(data => {
       this.stats.post = data.length;
