@@ -34,6 +34,7 @@ export class UeRegistrationComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadInitialData();
     this.route.params.subscribe(params => {
       const ueId = params['id'];
       console.log('🔍 ID récupéré via params subscription:', ueId);
