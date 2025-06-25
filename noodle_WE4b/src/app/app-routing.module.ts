@@ -12,7 +12,6 @@ import { UeRegistrationComponent } from './pages/ue-registration/ue-registration
 import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
 
 import { AuthGuard } from './guards/auth.guard';
-import { AdminGuard } from './guards/admin.guard';
 import { AuthAdminGuard } from './guards/auth-admin.guard';
 
 const routes: Routes = [
@@ -26,14 +25,14 @@ const routes: Routes = [
   { path: 'mes-ue/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard] },
 
   // Admin : création d'utilisateurs
-  { path: 'admin/users-registration', component: UserRegistrationComponent, canActivate: [AuthGuard] },
+  { path: 'admin/users-registration', component: UserRegistrationComponent, canActivate: [AuthAdminGuard] },
 
   // Admin : enregistrement des UE
   { path: 'admin/ue-registration/:id', component: UeRegistrationComponent, canActivate: [AuthAdminGuard] },
   { path: 'admin/ue-registration', component: UeRegistrationComponent, canActivate: [AuthAdminGuard] },
 
   // Panel d'administration
-  { path: 'admin_panel', component: Admin_panelComponent, canActivate: [AdminGuard] },
+  { path: 'admin_panel', component: Admin_panelComponent, canActivate: [AuthAdminGuard] },
 
   // Redirection par défaut
   { path: '**', redirectTo: '/login' }
