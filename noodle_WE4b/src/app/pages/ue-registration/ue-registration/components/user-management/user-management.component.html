@@ -89,6 +89,7 @@
         *ngFor="let user of assignedUsers; trackBy: trackByUserId"
         class="assigned-user-item"
       >
+
         <div class="user-avatar">
           <img
             *ngIf="user.photo && getPhotoUrl(user.photo)"

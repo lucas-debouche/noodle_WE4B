@@ -175,21 +175,24 @@ export class PostMesUeComponent implements OnInit {
     }
   }
 
-  validerNote(rendu: any, index: number) {
-    const note = this.noteInputs[index];
-    if (note === null || note === undefined || isNaN(note) || note < 0 || note > 20) {
-      alert('Veuillez saisir une note valide entre 0 et 20.');
-      return;
-    }
-    this.postsService.attribuerNote(this.post._id, rendu.utilisateur_id._id, note).subscribe({
+  onNoteChange(event: { rendu: any, note: number }) {
+    this.postsService.attribuerNote(this.post._id, event.rendu.utilisateur_id._id, event.note).subscribe({
       next: (res: any) => {
-        if (this.post.rendus && this.post.rendus[index]) {
-          this.post.rendus[index].note = note;
+        console.log('Note attribuée avec succès', res);
+        // Vérifier si this.post.rendus existe
+        if (this.post.rendus && Array.isArray(this.post.rendus)) {
+          const index = this.post.rendus.findIndex(r => r.utilisateur_id._id === event.rendu.utilisateur_id._id);
+          if (index !== -1) {
+            this.post.rendus[index].note = event.note;
+            this.post.rendus[index].etat_rendu = 'corrigé';
+          }
+        } else {
+          console.warn('Le tableau des rendus n\'existe pas ou n\'est pas un tableau');
         }
-        this.showNoteInputIndex = null;
       },
-      error: () => {
-        alert('Erreur lors de l\'attribution de la note.');
+      error: (err) => {
+        console.error('Erreur lors de l\'attribution de la note', err);
+        alert('Une erreur est survenue lors de l\'attribution de la note.');
       }
     });
   }

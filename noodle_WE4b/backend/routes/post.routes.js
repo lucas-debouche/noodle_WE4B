@@ -62,7 +62,7 @@ const renduStorage = multer.diskStorage({
 const uploadRendu = multer({ storage: renduStorage });
 
 // Obtenir tous les posts
-router.get('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const posts = await Post.find()
       .populate('utilisateur_id', 'nom prenom email')

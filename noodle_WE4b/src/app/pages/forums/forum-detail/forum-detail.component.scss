@@ -74,6 +74,20 @@
       }
     }
   }
+  .back-button {
+    padding: 10px 20px;
+    background-color: var(--primary-color, #ff6b41);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: var(--primary-hover, #ff8c41);
+    }
+  }
 }
 
 // Responsive

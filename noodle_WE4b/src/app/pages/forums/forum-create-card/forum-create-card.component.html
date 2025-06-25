@@ -5,6 +5,7 @@
     <div class="input-group">
       <input
         [(ngModel)]="newTitle"
+        (ngModelChange)="newTitleChange.emit($event)"
         placeholder="Titre du sujet de discussion..."
         class="form-control"
         (keyup.enter)="onCreateForum()"

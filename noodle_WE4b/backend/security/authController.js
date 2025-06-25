@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/utilisateur.model");
 const bcrypt = require("bcryptjs");
+const {logAction} = require("../utils/logActions");
 
 exports.login = async (req, res) => {
   const { email, mot_passe } = req.body;
@@ -43,6 +44,17 @@ exports.login = async (req, res) => {
     );
 
     console.log('Token créé avec succès:', token);
+
+    await logAction({
+      action:"connexion",
+      category:"authentification",
+      userId:user._id,
+      targetId:null,
+      details: {
+      email: user.email,
+      roles:user.role
+    }
+  });
 
     return res.status(200).json({
       message: "Connexion réussie",

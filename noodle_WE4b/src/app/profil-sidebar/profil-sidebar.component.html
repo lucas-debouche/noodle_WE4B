@@ -5,53 +5,194 @@
       <button id="closeProfilSidebar" class="close-btn" (click)="toggleProfilSidebar()">&times;</button>
     </div>
 
-    <form [formGroup]="profilForm" (ngSubmit)="saveProfil()">
-      <div class="form-group">
-        <label for="nom">Nom</label>
-        <input id="nom" formControlName="nom" type="text" class="form-control" />
+    <div class="sidebar-content">
+      <!-- Messages d'état -->
+      <div *ngIf="successMessage" class="alert alert-success">
+        <span class="alert-icon">✅</span>
+        {{ successMessage }}
       </div>
 
-      <div class="form-group">
-        <label for="prenom">Prénom</label>
-        <input id="prenom" formControlName="prenom" type="text" class="form-control" />
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        <span class="alert-icon">❌</span>
+        {{ errorMessage }}
       </div>
 
-      <div class="form-group">
-        <label for="plainPassword">Mot de passe</label>
-        <input
-          id="plainPassword"
-          formControlName="plainPassword"
-          type="password"
-          class="form-control"
-        />
-      </div>
+      <form [formGroup]="profilForm" (ngSubmit)="saveProfil()">
+        <!-- Nom -->
+        <div class="form-group">
+          <label for="nom">Nom *</label>
+          <input
+            id="nom"
+            formControlName="nom"
+            type="text"
+            class="form-control"
+            [class.error]="hasError('nom', 'required') || hasError('nom', 'minlength')"
+            placeholder="Votre nom"
+          />
+          <div class="validation-messages">
+            <div *ngIf="hasError('nom', 'required')" class="text-danger small">
+              ❌ Le nom est requis
+            </div>
+            <div *ngIf="hasError('nom', 'minlength')" class="text-danger small">
+              ❌ Le nom doit contenir au moins 2 caractères
+            </div>
+            <div *ngIf="isFieldValid('nom')" class="text-success small">
+              ✅ Nom valide
+            </div>
+          </div>
+        </div>
 
-      <div class="form-group">
-        <label for="confirmPassword">Confirmer le mot de passe</label>
-        <input
-          id="confirmPassword"
-          formControlName="confirmPassword"
-          type="password"
-          class="form-control"
-        />
-      </div>
+        <!-- Prénom -->
+        <div class="form-group">
+          <label for="prenom">Prénom *</label>
+          <input
+            id="prenom"
+            formControlName="prenom"
+            type="text"
+            class="form-control"
+            [class.error]="hasError('prenom', 'required') || hasError('prenom', 'minlength')"
+            placeholder="Votre prénom"
+          />
+          <div class="validation-messages">
+            <div *ngIf="hasError('prenom', 'required')" class="text-danger small">
+              ❌ Le prénom est requis
+            </div>
+            <div *ngIf="hasError('prenom', 'minlength')" class="text-danger small">
+              ❌ Le prénom doit contenir au moins 2 caractères
+            </div>
+            <div *ngIf="isFieldValid('prenom')" class="text-success small">
+              ✅ Prénom valide
+            </div>
+          </div>
+        </div>
 
-      <div class="profil-avatar">
-        <img *ngIf="photoPreview; else userPhoto" [src]="photoPreview" alt="Aperçu de la photo" />
-        <ng-template #userPhoto>
-          <img *ngIf="user?.photo" [src]="'http://localhost:3000/uploads/user/' + user.nom + '/photo_profil/' + user.photo" alt="Photo de profil" />
-        </ng-template>
-      </div>
+        <!-- Photo de profil actuelle -->
+        <div class="profil-avatar">
+          <img *ngIf="photoPreview; else userPhoto" [src]="photoPreview" alt="Aperçu de la photo" />
+          <ng-template #userPhoto>
+            <img *ngIf="user?.photo; else defaultAvatar"
+                 [src]="'http://localhost:3000/uploads/user/' + user.nom + '/photo_profil/' + user.photo"
+                 alt="Photo de profil" />
+            <ng-template #defaultAvatar>
+              <div class="default-avatar">
+                <span>👤</span>
+              </div>
+            </ng-template>
+          </ng-template>
+        </div>
 
-      <div class="form-group">
-        <label for="photo">Changer la photo de profil</label>
-        <input id="photo" type="file" class="form-control" (change)="onPhotoChange($event)" />
-      </div>
+        <!-- Upload photo -->
+        <div class="form-group">
+          <label for="photo">Changer la photo de profil</label>
+          <input
+            id="photo"
+            type="file"
+            class="form-control file-input"
+            (change)="onPhotoChange($event)"
+            accept="image/*"
+          />
+          <div class="file-info">
+            <small class="text-muted">Formats acceptés: JPG, PNG, GIF (max 5MB)</small>
+          </div>
+        </div>
 
-      <button type="submit" class="profil-btn" [disabled]="profilForm.invalid">Enregistrer</button>
-    </form>
+        <!-- Nouveau mot de passe -->
+        <div class="form-group">
+          <label for="plainPassword">Nouveau mot de passe (optionnel)</label>
+          <div class="password-input-container">
+            <input
+              id="plainPassword"
+              formControlName="plainPassword"
+              type="password"
+              class="form-control"
+              placeholder="Laissez vide pour ne pas modifier"
+              [class.error]="hasError('plainPassword', 'minLength') ||
+                           hasError('plainPassword', 'uppercase') ||
+                           hasError('plainPassword', 'number') ||
+                           hasError('plainPassword', 'specialChars')"
+            />
+            <span class="toggle-password" (click)="togglePassword()">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </span>
+          </div>
+
+          <!-- Validation du mot de passe -->
+          <div class="validation-messages" *ngIf="profilForm.get('plainPassword')?.value">
+            <div *ngIf="hasError('plainPassword', 'minLength')" class="text-danger small">
+              ❌ Doit contenir au moins 10 caractères
+            </div>
+            <div *ngIf="!hasError('plainPassword', 'minLength') && profilForm.get('plainPassword')?.value" class="text-success small">
+              ✅ Longueur OK
+            </div>
+
+            <div *ngIf="hasError('plainPassword', 'uppercase')" class="text-danger small">
+              ❌ Doit contenir au moins 2 lettres majuscules
+            </div>
+            <div *ngIf="!hasError('plainPassword', 'uppercase') && profilForm.get('plainPassword')?.value" class="text-success small">
+              ✅ Majuscules OK
+            </div>
+
+            <div *ngIf="hasError('plainPassword', 'number')" class="text-danger small">
+              ❌ Doit inclure au moins 1 chiffre
+            </div>
+            <div *ngIf="!hasError('plainPassword', 'number') && profilForm.get('plainPassword')?.value" class="text-success small">
+              ✅ Chiffre OK
+            </div>
+
+            <div *ngIf="hasError('plainPassword', 'specialChars')" class="text-danger small">
+              ❌ Doit inclure au moins 2 caractères spéciaux
+            </div>
+            <div *ngIf="!hasError('plainPassword', 'specialChars') && profilForm.get('plainPassword')?.value" class="text-success small">
+              ✅ Caractères spéciaux OK
+            </div>
+          </div>
+        </div>
+
+        <!-- Confirmation mot de passe -->
+        <div class="form-group" *ngIf="profilForm.get('plainPassword')?.value">
+          <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+          <div class="password-input-container">
+            <input
+              id="confirmPassword"
+              formControlName="confirmPassword"
+              type="password"
+              class="form-control"
+              placeholder="Confirmez votre nouveau mot de passe"
+              [class.error]="hasPasswordMismatch()"
+            />
+            <span class="toggle-password" (click)="toggleConfirmPassword()">
+              {{ showConfirmPassword ? '🙈' : '👁️' }}
+            </span>
+          </div>
+
+          <div class="validation-messages">
+            <div *ngIf="hasPasswordMismatch()" class="text-danger small">
+              ❌ Les mots de passe ne correspondent pas
+            </div>
+            <div *ngIf="!hasPasswordMismatch() && profilForm.get('confirmPassword')?.value" class="text-success small">
+              ✅ Mots de passe identiques
+            </div>
+          </div>
+        </div>
+
+        <!-- Bouton de soumission -->
+        <button
+          type="submit"
+          class="profil-btn"
+          [disabled]="profilForm.invalid || isLoading"
+          [class.loading]="isLoading"
+        >
+          <span *ngIf="!isLoading">💾 Enregistrer</span>
+          <span *ngIf="isLoading">
+            <span class="spinner"></span>
+            Enregistrement...
+          </span>
+        </button>
+      </form>
+    </div>
   </div>
 
+  <!-- Bouton toggle -->
   <button
     id="profilSidebarToggle"
     class="profil-toggle-btn"

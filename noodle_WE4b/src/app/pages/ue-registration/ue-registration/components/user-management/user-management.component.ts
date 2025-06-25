@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { User } from '../../../../../models/user.model'
+import {UesService} from "../../../../../services/ues.service";
 
 @Component({
   selector: 'app-user-management',
@@ -9,7 +10,10 @@ import { User } from '../../../../../models/user.model'
 export class UserManagementComponent {
   @Input() users: User[] = [];
   @Input() assignedUsers: User[] = [];
+  @Input() ueId?: string;
+  @Input() ueData!: any;
 
+  @Output() ueUpdated = new EventEmitter<any>();
   @Output() userAdded = new EventEmitter<User>();
   @Output() userRemoved = new EventEmitter<User>();
 
@@ -17,6 +21,9 @@ export class UserManagementComponent {
   userSearchTerm = '';
   showSearchResults = false;
   loadingUsers = false;
+  loading = false;
+  error = '';
+  constructor(private uesService: UesService) {}
 
   async onUserSearch() {
     if (!this.userSearchTerm.trim()) {
@@ -49,9 +56,42 @@ export class UserManagementComponent {
     this.searchResults = this.searchResults.filter(result => result._id !== user._id);
   }
 
-  removeUser(user: User) {
-    this.userRemoved.emit(user);
+  removeUser(user: any) {
+    if (!this.ueId || !user?._id) {
+      this.error = "ID de l'UE ou de l'utilisateur manquant.";
+      return;
+    }
+
+
+    this.loading = true;
+    this.error = '';
+    console.log('Suppression du participant:', user._id);
+    // Supprimer côté backend (collection participants)
+    this.uesService.removeUserFromUe(this.ueId, user._id).subscribe({
+      next: () => {
+        console.log('Participant supprimé avec succès:', user._id);
+        if (!this.ueId || !user?._id) {
+          this.error = "ID de l'UE ou de l'utilisateur manquant.";
+          return;
+        }
+        // Émettre l'événement pour mettre à jour la liste des participants
+        this.userRemoved.emit(user);
+        // Retirer l'utilisateur de la liste des assignés
+        this.assignedUsers = this.assignedUsers.filter(u => u._id !== user._id);
+        this.loading = false;
+        this.error = '';
+        console.log('Participant supprimé avec succès:', user._id);
+        
+      },
+      error: (err) => {
+        console.error('Erreur suppression participant :', err);
+        this.error = 'Suppression échouée.';
+        this.loading = false;
+      }
+    });
   }
+
+
 
   closeSearchResults() {
     this.showSearchResults = false;
@@ -86,4 +126,5 @@ export class UserManagementComponent {
   trackByUserId(index: number, user: User): string {
     return user._id;
   }
+
 }

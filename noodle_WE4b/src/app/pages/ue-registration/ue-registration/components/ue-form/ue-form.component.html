@@ -116,11 +116,11 @@
     <!-- Gestion des utilisateurs -->
     <app-user-management
       [users]="users"
+      [ueId]="editingUe?._id"
       [assignedUsers]="assignedUsers"
       (userAdded)="onUserAdded($event)"
       (userRemoved)="onUserRemoved($event)"
     ></app-user-management>
-
     <!-- Actions du formulaire -->
     <div class="form-actions">
       <button

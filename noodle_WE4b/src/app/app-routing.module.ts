@@ -21,9 +21,9 @@ const routes: Routes = [
   // Routes protégées pour les utilisateurs connectés
   { path: 'choix-ue', component: ChoixUeComponent, canActivate: [AuthGuard] },
   { path: 'mes-ue/:id', component: MesUeComponent, canActivate: [AuthGuard] },
-  { path: 'mes-ue/:id/forums', component: ForumListComponent, canActivate: [AuthGuard] },
+  { path: 'mes-ue/:ueId/forums', component: ForumListComponent, canActivate: [AuthGuard] },
   { path: 'forums/:forumId', component: ForumDetailComponent, canActivate: [AuthGuard] },
-  { path: 'ues/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard] },
+  { path: 'mes-ue/:ueId/participants', component: ParticipantsListComponent, canActivate: [AuthGuard] },
 
   // Admin : création d'utilisateurs
   { path: 'admin/users-registration', component: UserRegistrationComponent, canActivate: [AuthGuard] },

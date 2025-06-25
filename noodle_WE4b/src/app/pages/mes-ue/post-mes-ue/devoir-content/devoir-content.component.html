@@ -21,7 +21,8 @@
         rel="noopener"
       >{{ renduUtilisateur.fichier_nom }}</a>
       <span *ngIf="!renduUtilisateur.fichier_chemin" class="devoir-file-name">{{ renduUtilisateur.fichier_nom }}</span>
-      <button class="devoir-submit-btn" (click)="enableModifyDevoir()">Modifier le fichier</button>
+      <!-- Afficher le bouton "Modifier le fichier" uniquement si l'état est "en attente" -->
+      <button *ngIf="etatRendu === 'en attente'" class="devoir-submit-btn" (click)="enableModifyDevoir()">Modifier le fichier</button>
     </ng-container>
     <ng-template #soumissionDevoir>
       <label class="devoir-upload-label">
@@ -51,7 +52,14 @@
 </div>
 
 <div *ngIf="isProf()">
-  <button class="rendus-btn" (click)="openRendus.emit()" *ngIf="post.rendus && post.rendus.length > 0">
-    Accéder aux rendus
-  </button>
+  <ng-container *ngIf="post.rendus && post.rendus.length > 0; else aucunRendu">
+    <button class="rendus-btn" (click)="openRendus.emit()">
+      Accéder aux rendus
+    </button>
+  </ng-container>
+  <ng-template #aucunRendu>
+    <button class="aucun-rendu-btn" disabled>
+      Aucun rendu pour le moment
+    </button>
+  </ng-template>
 </div>
