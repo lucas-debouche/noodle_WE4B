@@ -5,6 +5,7 @@ import { DepartementService } from '../../../services/departement.service';
 import { Ue } from '../../../models/ue.model';
 import { User } from '../../../models/user.model';
 import { Departement } from '../../../models/departement.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-ue-registration',
@@ -26,14 +27,36 @@ export class UeRegistrationComponent implements OnInit {
   editingUe: Ue | null = null;
 
   constructor(
+    private route: ActivatedRoute,
     private uesService: UesService,
     private utilisateurService: UtilisateurService,
     private departementService: DepartementService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadInitialData();
+    this.route.params.subscribe(params => {
+      const ueId = params['id'];
+      console.log('🔍 ID récupéré via params subscription:', ueId);
+
+      if (ueId) {
+        this.isEditMode = true;
+        this.loading = true;
+        this.uesService.getUeById(ueId).subscribe({
+          next: (ue) => {
+            this.editingUe = ue;
+            this.loading = false;
+          },
+          error: (err) => {
+            this.error = "Impossible de charger l'UE.";
+            this.loading = false;
+          }
+        });
+      }
+    });
   }
+
+
 
   async loadInitialData() {
     this.loading = true;
@@ -101,13 +124,15 @@ export class UeRegistrationComponent implements OnInit {
   }
 
 
-  async onUeUpdated(updatedUe: Ue) {
-    console.log('🔄 UE mise à jour, actualisation des données...');
-    this.success = 'UE mise à jour avec succès !';
-    this.exitEditMode();
+  async onUeUpdated(updatedUe: any) {
+    // Met à jour localement la liste après une édition réussie
+    this.ues = this.ues.map((ue) => (ue._id === updatedUe._id ? updatedUe : ue));
+    this.editingUe = null;
+    this.success = 'UE mise à jour avec succès';
+    this.isEditMode = false;
     this.clearMessages();
-
-    // Recharger toutes les UEs pour avoir la liste à jour
+    console.log('🔄 Liste des UEs actualisée après mise à jour');
+    // Actualiser uniquement la liste des UEs
     await this.refreshUesList();
   }
 
@@ -129,6 +154,8 @@ export class UeRegistrationComponent implements OnInit {
   onEditUe(ue: Ue) {
     this.isEditMode = true;
     this.editingUe = ue;
+    console.log('✏️ editingUe mis à jour :', this.editingUe);
+
     this.clearMessages();
   }
 
@@ -165,4 +192,5 @@ export class UeRegistrationComponent implements OnInit {
     console.log('🔄 Actualisation complète des données...');
     await this.loadInitialData();
   }
+
 }

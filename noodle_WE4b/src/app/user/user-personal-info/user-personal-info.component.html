@@ -1,0 +1,32 @@
+<div [formGroup]="form">
+  <div class="form-row">
+    <div class="form-group">
+      <label for="nom" class="required">Nom</label>
+      <input
+        id="nom"
+        class="form-control"
+        formControlName="nom"
+        placeholder="Nom de famille"
+        [class.is-valid]="form.get('nom')?.valid && form.get('nom')?.touched"
+        [class.is-invalid]="form.get('nom')?.invalid && form.get('nom')?.touched"
+      />
+      <div class="form-error" *ngIf="form.get('nom')?.invalid && form.get('nom')?.touched">
+        <span class="error-icon">!</span> Nom requis
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="prenom" class="required">Prénom</label>
+      <input
+        id="prenom"
+        class="form-control"
+        formControlName="prenom"
+        placeholder="Prénom"
+        [class.is-valid]="form.get('prenom')?.valid && form.get('prenom')?.touched"
+        [class.is-invalid]="form.get('prenom')?.invalid && form.get('prenom')?.touched"
+      />
+      <div class="form-error" *ngIf="form.get('prenom')?.invalid && form.get('prenom')?.touched">
+        <span class="error-icon">!</span> Prénom requis
+      </div>
+    </div>
+  </div>
+</div>

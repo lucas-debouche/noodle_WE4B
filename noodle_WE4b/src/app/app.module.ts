@@ -5,15 +5,17 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
-import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
+import { AuthInterceptor } from './services/auth.interceptor.service';
+
 import { NavbarComponent } from './navbar/navbar.component';
 import { FooterComponent } from './footer/footer.component';
 import { ProfilSidebarComponent } from './profil-sidebar/profil-sidebar.component';
-import { AuthInterceptor } from './services/auth.interceptor.service';
+
 import { LoginComponent } from './pages/login/login.component';
+import { ChoixUeComponent } from './pages/choix-ue/choix-ue.component';
+import { MesUeComponent } from './pages/mes-ue/mes-ue.component';
 import { UeBoxComponent } from './ue-box/ue-box.component';
-import { MesUeComponent } from "./pages/mes-ue/mes-ue.component";
+
 import { SectionsUeComponent } from './pages/mes-ue/sections-ue/sections-ue.component';
 import { SidebarMesUeComponent } from './pages/mes-ue/sidebar-mes-ue/sidebar-mes-ue.component';
 import { PostMesUeComponent } from './pages/mes-ue/post-mes-ue/post-mes-ue.component';
@@ -43,22 +45,32 @@ import { ParticipantsFiltersComponent } from './pages/partipants-ue/participants
 import { ParticipantsGridComponent } from './pages/partipants-ue/participants-grid/participants-grid.component';
 import { ParticipantCardComponent } from './pages/partipants-ue/participant-card/participant-card.component';
 import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participants-empty-state/participants-empty-state.component';
+
+import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
+
+// Composants création utilisateur
+import { UserRegistrationComponent } from './pages/user-registration/user-registration.component';
+import { UserPersonalInfoComponent } from './user/user-personal-info/user-personal-info.component';
+import { UserAccountInfoComponent } from './user/user-account-info/user-account-info.component';
+import { UserPhotoUploadComponent } from './user/user-photo-upload/user-photo-upload.component';
+import { UserRolesUesComponent } from './user/user-roles-ues/user-roles-ues.component';
+
+// Composants gestion des UE
 import { UeFormComponent } from './pages/ue-registration/ue-registration/components/ue-form/ue-form.component';
 import { UeListComponent } from './pages/ue-registration/ue-registration/components/ue-list/ue-list.component';
 import { UserManagementComponent } from './pages/ue-registration/ue-registration/components/user-management/user-management.component';
 import { UeCardComponent } from './pages/ue-registration/ue-registration/components/ue-card/ue-card.component';
 import { ImageUploadComponent } from './pages/ue-registration/ue-registration/components/image-upload/image-upload.component';
-import { UeRegistrationComponent} from "./pages/ue-registration/ue-registration/ue-registration.component";
+import { UeRegistrationComponent } from './pages/ue-registration/ue-registration/ue-registration.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    Admin_panelComponent,
-    ChoixUeComponent,
     NavbarComponent,
     FooterComponent,
     ProfilSidebarComponent,
     LoginComponent,
+    ChoixUeComponent,
     MesUeComponent,
     UeBoxComponent,
     SectionsUeComponent,
@@ -72,7 +84,6 @@ import { UeRegistrationComponent} from "./pages/ue-registration/ue-registration/
     DevoirContentComponent,
     ForumListComponent,
     ForumDetailComponent,
-    ParticipantsListComponent,
     ForumHeaderComponent,
     ForumCreateCardComponent,
     ForumFiltersCardComponent,
@@ -83,23 +94,29 @@ import { UeRegistrationComponent} from "./pages/ue-registration/ue-registration/
     ForumMessageFormComponent,
     ForumFileAttachmentComponent,
     ForumEmojiPickerComponent,
+    ParticipantsListComponent,
     UeHeaderComponent,
     ParticipantsFiltersComponent,
     ParticipantsGridComponent,
     ParticipantCardComponent,
     ParticipantsEmptyStateComponent,
+    Admin_panelComponent,
+    UserRegistrationComponent,
+    UserPersonalInfoComponent,
+    UserAccountInfoComponent,
+    UserPhotoUploadComponent,
+    UserRolesUesComponent,
     UeFormComponent,
     UeListComponent,
     UserManagementComponent,
     UeCardComponent,
     ImageUploadComponent,
-    UeRegistrationComponent
+    UeRegistrationComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    FormsModule,
     FormsModule,
     ReactiveFormsModule,
   ],
@@ -110,7 +127,6 @@ import { UeRegistrationComponent} from "./pages/ue-registration/ue-registration/
       multi: true,
     },
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
-
+export class AppModule {}
