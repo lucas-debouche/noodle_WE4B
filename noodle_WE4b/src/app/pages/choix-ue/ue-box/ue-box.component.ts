@@ -3,7 +3,7 @@ import { Ue } from '../../../models/ue.model';
 import {PostsService} from "../../../services/posts.service";
 import {Post} from "../../../models/post.model";
 import { User } from '../../../models/user.model';
-import { UtilisateurService } from '../../../services/utilisateur.service';
+import { UserService } from '../../../services/user.service';
 
 @Component({
   selector: 'app-ue-box',
@@ -18,7 +18,7 @@ export class UeBoxComponent implements OnInit {
 
   constructor(
     private postsService: PostsService,
-    private utilisateurService: UtilisateurService
+    private utilisateurService: UserService
   ) { }
 
   ngOnInit(): void {

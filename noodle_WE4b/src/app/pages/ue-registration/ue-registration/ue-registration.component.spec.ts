@@ -3,13 +3,13 @@ import { of, throwError } from 'rxjs';
 
 import { UeRegistrationComponent } from './ue-registration.component';
 import { UesService } from '../../../services/ues.service';
-import { UtilisateurService } from '../../../services/utilisateur.service';
+import { UserService } from '../../../services/user.service';
 
 describe('UeRegistrationComponent', () => {
   let component: UeRegistrationComponent;
   let fixture: ComponentFixture<UeRegistrationComponent>;
   let uesService: jasmine.SpyObj<UesService>;
-  let utilisateurService: jasmine.SpyObj<UtilisateurService>;
+  let utilisateurService: jasmine.SpyObj<UserService>;
 
   beforeEach(() => {
     const uesServiceSpy = jasmine.createSpyObj('UesService', ['getAllUes']);
@@ -19,14 +19,14 @@ describe('UeRegistrationComponent', () => {
       declarations: [UeRegistrationComponent],
       providers: [
         { provide: UesService, useValue: uesServiceSpy },
-        { provide: UtilisateurService, useValue: utilisateurServiceSpy }
+        { provide: UserService, useValue: utilisateurServiceSpy }
       ]
     });
 
     fixture = TestBed.createComponent(UeRegistrationComponent);
     component = fixture.componentInstance;
     uesService = TestBed.inject(UesService) as jasmine.SpyObj<UesService>;
-    utilisateurService = TestBed.inject(UtilisateurService) as jasmine.SpyObj<UtilisateurService>;
+    utilisateurService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
   });
 
   it('should create', () => {

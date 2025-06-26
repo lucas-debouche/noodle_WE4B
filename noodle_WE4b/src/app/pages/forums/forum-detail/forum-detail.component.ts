@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ForumService } from '../../../services/forum.service';
-import { UtilisateurService } from '../../../services/utilisateur.service';
+import { UserService } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
 import { Location } from '@angular/common';
 
@@ -54,7 +54,7 @@ export class ForumDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private forumService: ForumService,
-    private utilisateurService: UtilisateurService,
+    private utilisateurService: UserService,
     private authService: AuthService,
     private location: Location
 

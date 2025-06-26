@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { Post } from '../../../models/post.model';
 import { User } from "../../../models/user.model";
-import { UtilisateurService } from "../../../services/utilisateur.service";
+import { UserService } from "../../../services/user.service";
 import { PostsService } from "../../../services/posts.service";
 
 @Component({
@@ -25,7 +25,7 @@ export class PostMesUeComponent implements OnInit {
   showCorrectionModal = false;
 
   constructor(
-    private utilisateurService: UtilisateurService,
+    private utilisateurService: UserService,
     private postsService: PostsService
   ) { }
 

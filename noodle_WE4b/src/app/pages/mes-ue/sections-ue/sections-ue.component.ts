@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { PostsService } from '../../../services/posts.service';
 import { Post } from '../../../models/post.model';
-import { UtilisateurService } from "../../../services/utilisateur.service";
+import { UserService } from "../../../services/user.service";
 import { User } from "../../../models/user.model";
 
 @Component({
@@ -26,7 +26,7 @@ export class SectionsUeComponent implements OnInit, OnChanges {
 
   constructor(
     private postsService: PostsService,
-    private utilisateurService: UtilisateurService
+    private utilisateurService: UserService
   ) { }
 
   ngOnInit(): void {

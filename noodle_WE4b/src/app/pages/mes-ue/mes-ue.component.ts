@@ -4,7 +4,7 @@ import { NavbarService } from "../../services/navbar.service";
 import { UesService } from "../../services/ues.service";
 import { Ue } from "../../models/ue.model";
 import { Post } from "../../models/post.model";
-import { UtilisateurService } from "../../services/utilisateur.service";
+import { UserService } from "../../services/user.service";
 import { User } from "../../models/user.model";
 
 
@@ -30,7 +30,7 @@ export class MesUeComponent implements OnInit {
     private navbarService: NavbarService,
     private route: ActivatedRoute,
     private uesService: UesService,
-    private utilisateurService: UtilisateurService
+    private utilisateurService: UserService
   ) {}
 
   ngOnInit(): void {

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Ue } from "../../models/ue.model";
 import { User } from "../../models/user.model";
-import { UtilisateurService } from "../../services/utilisateur.service";
+import { UserService } from "../../services/user.service";
 import { NavbarService} from "../../services/navbar.service";
 
 @Component({
@@ -20,7 +20,7 @@ export class ChoixUeComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
-    private utilisateurService: UtilisateurService,
+    private utilisateurService: UserService,
     private navbarService: NavbarService,
   ) {}
 

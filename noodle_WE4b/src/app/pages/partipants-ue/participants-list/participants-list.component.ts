@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { UtilisateurService } from '../../../services/utilisateur.service';
+import { UserService } from '../../../services/user.service';
 import { UesService } from '../../../services/ues.service';
 import { Ue } from "../../../models/ue.model";
 import { ParticipantWithUeInfo } from "../../../models/participant-ue.model";
@@ -33,7 +33,7 @@ export class ParticipantsListComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private utilisateurService: UtilisateurService,
+    private utilisateurService: UserService,
     private ueService: UesService
   ) {}
 

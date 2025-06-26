@@ -1,8 +1,8 @@
 import { Component, Output, EventEmitter, OnInit } from '@angular/core';
 import { User } from "../models/user.model";
-import { UtilisateurService } from "../services/utilisateur.service";
 import { Router } from "@angular/router";
 import { FormBuilder, FormGroup, FormControl, Validators, ValidationErrors, AbstractControl } from '@angular/forms';
+import {UserService} from "../services/user.service";
 
 @Component({
   selector: 'app-profil',
@@ -24,7 +24,7 @@ export class ProfilSidebarComponent implements OnInit {
   isLoading = false;
 
   constructor(
-    private utilisateurService: UtilisateurService,
+    private utilisateurService: UserService,
     private router: Router,
     private fb: FormBuilder
   ) {}

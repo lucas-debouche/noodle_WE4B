@@ -1,7 +1,7 @@
 import {Component, OnInit, ChangeDetectorRef} from '@angular/core';
 import {FormControl, FormGroup, ValidationErrors, Validators} from '@angular/forms';
 import { ViewEncapsulation } from '@angular/core';
-import {UtilisateurService} from "../../services/utilisateur.service";
+import {UserService} from "../../services/user.service";
 import {UesService} from "../../services/ues.service";
 import {PostsService} from "../../services/posts.service";
 import {Router, ActivatedRoute} from "@angular/router";
@@ -30,7 +30,7 @@ export class LoginComponent implements OnInit{
   };
 
   constructor(
-    private utilisateurService: UtilisateurService,
+    private utilisateurService: UserService,
     private ueService: UesService,
     private postService: PostsService,
     private cdRef: ChangeDetectorRef,

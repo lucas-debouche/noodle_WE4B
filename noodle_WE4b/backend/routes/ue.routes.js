@@ -37,6 +37,9 @@ router.post('/:ueId/participants',
   ueController.addParticipantToUe
 );
 
+// Ajouter une UE (protégé)
+router.post('/', authMiddleware(['ROLE_ADMIN']), ueController.createUe);
+
 // Retirer un participant d'une UE (protégé)
 router.delete('/:ueId/participants/:utilisateurId',
   authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),

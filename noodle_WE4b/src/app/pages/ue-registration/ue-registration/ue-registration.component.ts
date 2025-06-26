@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UesService } from '../../../services/ues.service';
-import { UtilisateurService } from '../../../services/utilisateur.service';
+import { UserService } from '../../../services/user.service';
 import { DepartementService } from '../../../services/departement.service';
 import { Ue } from '../../../models/ue.model';
 import { User } from '../../../models/user.model';
@@ -29,7 +29,7 @@ export class UeRegistrationComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private uesService: UesService,
-    private utilisateurService: UtilisateurService,
+    private utilisateurService: UserService,
     private departementService: DepartementService
   ) {}
 

@@ -4,7 +4,7 @@ import { AuthService } from '../services/auth.service';
 import { User } from "../models/user.model";
 import { NavbarService } from '../services/navbar.service';
 import { Router } from '@angular/router';
-import { UtilisateurService } from '../services/utilisateur.service';
+import {UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-navbar',
@@ -24,7 +24,7 @@ export class NavbarComponent implements OnInit {
     private authService: AuthService,
     private navbarService: NavbarService,
     private router: Router,
-    private utilisateurService: UtilisateurService,
+    private utilisateurService: UserService,
   ) {}
 
   ngOnInit(): void {
