@@ -2,6 +2,7 @@ const Utilisateur = require('../models/utilisateur.model');
 const Ue = require('../models/ue.model');
 const mongoose = require('mongoose');
 const { logAction } = require('../utils/logActions');
+const bcrypt = require('bcrypt'); // Ajout de bcrypt
 
 // GET /api/utilisateur → récupérer tous les utilisateurs
 exports.getAllUtilisateurs = async (req, res) => {
@@ -126,6 +127,9 @@ exports.createUtilisateur = async (req, res) => {
       return res.status(400).json({ message: "Champs obligatoires manquants" });
     }
 
+    // Hash du mot de passe
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
     console.log('📝 Création utilisateur:', { nom, prenom, email, roles: roles.length, ues: ues.length });
 
     // 1. Créer l'utilisateur
@@ -133,7 +137,7 @@ exports.createUtilisateur = async (req, res) => {
       nom,
       prenom,
       email,
-      mot_passe: plainPassword,
+      mot_passe: hashedPassword, // Utilisation du hash
       photo,
       role: roles,
       ues: ues // Stockage optionnel dans le modèle utilisateur
@@ -422,7 +426,8 @@ exports.updateUtilisateur = async (req, res) => {
     }
 
     if (plainPassword) {
-      updateData.mot_passe = plainPassword;
+      // Hash du mot de passe si fourni
+      updateData.mot_passe = await bcrypt.hash(plainPassword, 10);
     }
 
     const utilisateur = await Utilisateur.findByIdAndUpdate(
