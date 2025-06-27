@@ -226,7 +226,7 @@ exports.createUe = [
         intitule,
         description: description ? description.trim() : '',
         ects: parseInt(ects),
-        image: imageFilename,
+        image: `/uploads/ue/${nomUeSafe}/photo/${req.file.filename}`,
         departementId,
         participants
       });
