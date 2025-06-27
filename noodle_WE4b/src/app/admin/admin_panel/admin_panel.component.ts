@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../../services/admin.service';
+import {User} from "../../models/user.model";
+import {NavbarService} from "../../services/navbar.service";
+import {UserService} from "../../services/user.service";
+
 
 @Component({
   selector: 'app-admin_panel',
@@ -44,10 +48,19 @@ export class Admin_panelComponent implements OnInit {
   notificationType: 'success' | 'error' = 'success';
   isLoading: boolean = false;
 
-  constructor(private adminService: AdminService) { }
+  constructor(private adminService: AdminService, private navbarService: NavbarService, private utilisateurService: UserService) {}
 
   ngOnInit(): void {
     this.loadData();
+    this.utilisateurService.getUtilisateurActuel().subscribe({
+      next: (user: User) => {
+        this.navbarService.setTitle('Pannel Admin');
+        this.navbarService.setCurrentUser(user); // Met à jour l'utilisateur dans le NavbarService
+      },
+      error: (err: any) => {
+        console.error('Erreur lors de la récupération de l\'utilisateur actuel :', err);
+      }
+    });
   }
 
   loadData() {

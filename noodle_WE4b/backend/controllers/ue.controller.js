@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Configuration Multer pour les images d'UE
-const storage = multer.diskStorage({
+const tempStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(__dirname, '../uploads/ue');
     if (!fs.existsSync(dir)) {
@@ -32,11 +32,9 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB max
-  }
+  storage: tempStorage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 // GET /api/ue → récupérer toutes les UEs
@@ -165,124 +163,76 @@ exports.getUeById = async (req, res) => {
 exports.createUe = [
   upload.single('image'),
   async (req, res) => {
-    console.log('📝 createUe → req.body =', req.body);
-    console.log('📁 createUe → req.file =', req.file);
-
     try {
       const { code, intitule, description, ects, departement, assigned_users } = req.body;
 
-      // Vérifier si le code UE existe déjà
       const existingUe = await Ue.findOne({ code: code.toUpperCase() });
       if (existingUe) {
-        return res.status(400).json({
-          success: false,
-          message: 'Ce code UE existe déjà'
-        });
+        return res.status(400).json({ success: false, message: 'Ce code UE existe déjà' });
       }
 
-      // Gestion du département
       let departementId = null;
-      console.log('🏢 Département reçu:', departement, 'Type:', typeof departement);
-
       if (departement && departement !== 'null' && departement !== '' && departement !== 'undefined') {
         if (mongoose.Types.ObjectId.isValid(departement)) {
-          console.log('✅ ObjectId valide détecté');
           const departementExists = await Departement.findById(departement);
-          if (departementExists) {
-            departementId = new mongoose.Types.ObjectId(departement);
-            console.log('✅ Département trouvé par ObjectId:', departementExists.nom);
-          }
+          if (departementExists) departementId = departementExists._id;
         } else {
-          console.log('🔍 Recherche département par nom/code:', departement);
           const departementExists = await Departement.findOne({
             $or: [
               { nom: new RegExp(departement, 'i') },
               { code: departement.toUpperCase() }
             ]
           });
-
-          if (departementExists) {
-            departementId = departementExists._id;
-            console.log('✅ Département trouvé par recherche:', departementExists.nom);
-          }
+          if (departementExists) departementId = departementExists._id;
         }
       }
 
-      // Traitement de l'image
+      // Créer les dossiers dédiés à cette UE
+      const nomUeSafe = intitule.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9-_]/g, "_").toLowerCase();
+      const ueDir = path.join(__dirname, '../uploads/ue', nomUeSafe);
+      const photoDir = path.join(ueDir, 'photo');
+      const postsDir = path.join(ueDir, 'posts');
+
+      if (!fs.existsSync(photoDir)) fs.mkdirSync(photoDir, { recursive: true });
+      if (!fs.existsSync(postsDir)) fs.mkdirSync(postsDir, { recursive: true });
+
       let imageFilename = null;
       if (req.file) {
-        imageFilename = req.file.filename;
-        console.log('🖼️ Image uploadée:', imageFilename);
+        imageFilename = path.join(nomUeSafe, 'photo', req.file.filename);
+        const destPath = path.join(__dirname, '../uploads/ue', imageFilename);
+        fs.renameSync(
+          path.join(__dirname, '../uploads/ue', req.file.filename),
+          destPath
+        );
       }
 
-      // Traitement des utilisateurs assignés
       let participants = [];
       if (assigned_users && Array.isArray(assigned_users)) {
-        console.log('👥 Traitement des utilisateurs assignés:', assigned_users.length);
-
         for (const userId of assigned_users) {
-          try {
-            let user = null;
-
-            // Recherche de l'utilisateur
-            if (mongoose.Types.ObjectId.isValid(userId)) {
-              user = await Utilisateur.findById(userId);
-            }
-            if (!user) {
-              user = await Utilisateur.findOne({ id: userId });
-            }
-            if (!user && typeof userId === 'string') {
-              user = await Utilisateur.findOne({ email: userId });
-            }
-
-            if (user) {
-              // Utiliser l'ID MongoDB pour cohérence
-              participants.push(user._id.toString());
-              console.log('✅ Utilisateur ajouté:', user.email);
-            } else {
-              console.log('⚠️ Utilisateur non trouvé pour ID:', userId);
-            }
-          } catch (error) {
-            console.error(`❌ Erreur traitement utilisateur ${userId}:`, error.message);
+          let user = null;
+          if (mongoose.Types.ObjectId.isValid(userId)) {
+            user = await Utilisateur.findById(userId);
           }
+          if (!user) user = await Utilisateur.findOne({ id: userId });
+          if (!user && typeof userId === 'string') {
+            user = await Utilisateur.findOne({ email: userId });
+          }
+          if (user) participants.push(user._id.toString());
         }
       }
 
-      // Créer la nouvelle UE
       const newUe = new Ue({
         code: code.toUpperCase(),
         intitule,
         description: description ? description.trim() : '',
         ects: parseInt(ects),
         image: imageFilename,
-        departementId: departementId,
-        participants: participants
-      });
-
-      console.log('💾 Sauvegarde UE:', {
-        code: newUe.code,
-        intitule: newUe.intitule,
-        departementId: newUe.departementId,
-        participantCount: newUe.participants.length
+        departementId,
+        participants
       });
 
       const savedUe = await newUe.save();
-      console.log('✅ UE sauvegardée avec succès:', savedUe._id);
 
-      // Logger l'action
-      await logAction({
-        action: 'create_ue',
-        category: 'ue',
-        userId: req.user ? req.user.userId : null,
-        targetId: savedUe._id.toString(),
-        details: {
-          code: savedUe.code,
-          intitule: savedUe.intitule,
-          participantCount: savedUe.participants.length
-        }
-      });
-
-      // Récupérer l'UE créée avec les informations du département
       const ueWithDepartement = await Ue.aggregate([
         { $match: { _id: savedUe._id } },
         {
@@ -318,37 +268,29 @@ exports.createUe = [
           success: true
         }
       });
-      res.status(201).json({
-        success: true,
-        message: 'UE créée avec succès!',
-        ue: formattedUe
-      });
+
+      res.status(201).json({ success: true, message: 'UE créée avec succès!', ue: formattedUe });
 
     } catch (err) {
       console.error('❌ Error in createUe:', err);
 
-      // Nettoyer le fichier uploadé en cas d'erreur
       if (req.file) {
-        const filePath = path.join(__dirname, '../uploads/ue', req.file.filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
+        const tempFile = path.join(__dirname, '../uploads/ue', req.file.filename);
+        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
       }
 
       await logAction({
         action: 'create_ue_error',
         category: 'ue',
-        userId: req.user? req.user.userId : null,
-        targetId: req.params.ueId,
+        userId: req.user ? req.user.userId : null,
         details: { error: err.message }
       });
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la création de l\'UE: ' + err.message
-      });
+
+      res.status(500).json({ success: false, message: 'Erreur lors de la création de l\'UE: ' + err.message });
     }
   }
 ];
+
 
 // PUT /api/ue/:ueId → modifier une UE existante
 exports.updateUe = [
