@@ -27,6 +27,7 @@ const routes: Routes = [
 
   // Admin : création d'utilisateurs
   { path: 'admin/users-registration', component: UserRegistrationComponent, canActivate: [AuthGuard] },
+  { path: 'admin/users-registration/:id', component: UserRegistrationComponent, canActivate: [AuthGuard] },
 
   // Admin : enregistrement des UE
   { path: 'admin/ue-registration/:id', component: UeRegistrationComponent, canActivate: [AuthAdminGuard] },

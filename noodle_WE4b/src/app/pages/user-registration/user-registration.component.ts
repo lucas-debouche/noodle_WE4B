@@ -2,6 +2,8 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UserService, passwordValidator } from '../../services/user.service';
 import { UserPhotoUploadComponent } from "../../user/user-photo-upload/user-photo-upload.component";
+import { ActivatedRoute } from '@angular/router';
+
 
 @Component({
   selector: 'app-user-registration',
@@ -24,8 +26,9 @@ export class UserRegistrationComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private userService: UserService
-  ) {
+    private userService: UserService,
+    private route: ActivatedRoute
+) {
     this.registrationForm = this.fb.group({
       nom: ['', Validators.required],
       prenom: ['', Validators.required],
@@ -42,6 +45,11 @@ export class UserRegistrationComponent implements OnInit {
     this.loadRoles();
     this.loadDepartements();
     this.updateCurrentStep();
+
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.loadUser(id);
+    }
 
     this.registrationForm.valueChanges.subscribe(() => {
       this.updateCurrentStep();
