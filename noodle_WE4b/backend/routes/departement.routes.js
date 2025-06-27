@@ -28,6 +28,12 @@ router.get('/search', async (req, res) => {
       .sort({ nom: 1 })
       .limit(20);
 
+    await logAction({
+      action: 'search_departements',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      details: { query: q }
+    });
     res.json({
       success: true,
       data: departements
@@ -35,6 +41,12 @@ router.get('/search', async (req, res) => {
 
   } catch (error) {
     console.error('Erreur lors de la recherche de départements:', error);
+    await logAction({
+      action: 'search_departements_error',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      details: { query: req.query.q, error: error.message }
+    })
     res.status(500).json({
       success: false,
       message: 'Erreur serveur'
@@ -48,12 +60,24 @@ router.get('/actifs', async (req, res) => {
     const departements = await Departement.findActifs()
       .populate('responsable', 'nom prenom email');
 
+    await logAction({
+      action: 'get_active_departements',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      details: { success: true }
+    });
     res.json({
       success: true,
       data: departements
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des départements actifs:', error);
+    await logAction({
+      action: 'get_active_departements_error',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      details: { error: error.message }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur'
@@ -68,12 +92,24 @@ router.get('/', async (req, res) => {
       .populate('responsable', 'nom prenom email')
       .sort({ nom: 1 });
 
+    await logAction({
+      action: 'get_all_departements',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      details: { success: true }
+    });
     res.json({
       success: true,
       data: departements
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des départements:', error);
+    await logAction({
+      action: 'get_all_departements_error',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      details: { error: error.message }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur'
@@ -94,12 +130,26 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    await logAction({
+      action: 'get_departement_by_id',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.id,
+      details: { nom: departement.nom, success: true }
+    });
     res.json({
       success: true,
       data: departement
     });
   } catch (error) {
     console.error('Erreur lors de la récupération du département:', error);
+    await logAction({
+      action: 'get_departement_by_id_error',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.id,
+      details: { error: error.message }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur'
@@ -152,12 +202,24 @@ router.post('/', async (req, res) => {
     console.error('Erreur lors de la création du département:', error);
 
     if (error.message.includes('existe déjà')) {
+      await logAction({
+        action: 'create_departement_error',
+        category: 'departement',
+        userId: req.user ? req.user.userId : null,
+        details: { error: "already exist" }
+      });
       return res.status(400).json({
         success: false,
         message: error.message
       });
     }
 
+    await logAction({
+      action: 'create_departement_error',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      details: { error: error.message }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la création du département'
@@ -194,7 +256,7 @@ router.put('/:id', async (req, res) => {
         category: 'departement',
         userId: req.user ? req.user.userId : null,
         targetId: departementMisAJour._id.toString(),
-        details: { nom: departementMisAJour.nom }
+        details: { nom: departementMisAJour.nom, success: true  }
       });
     } catch (logError) {
       console.log('⚠️ Erreur de logging (non bloquante):', logError.message);
@@ -210,12 +272,24 @@ router.put('/:id', async (req, res) => {
     console.error('Erreur lors de la mise à jour du département:', error);
 
     if (error.message.includes('existe déjà')) {
+      await logAction({
+        action: 'update_departement_error',
+        category: 'departement',
+        userId: req.user ? req.user.userId : null,
+        details: { error: "already exist" }
+      });
       return res.status(400).json({
         success: false,
         message: error.message
       });
     }
 
+    await logAction({
+      action: 'update_departement_error',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      details: { error: error.message }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du département'
@@ -254,7 +328,7 @@ router.delete('/:id', async (req, res) => {
         category: 'departement',
         userId: req.user ? req.user.userId : null,
         targetId: req.params.id,
-        details: { nom: departement.nom }
+        details: { nom: departement.nom, success: true  }
       });
     } catch (logError) {
       console.log('⚠️ Erreur de logging (non bloquante):', logError.message);
@@ -267,6 +341,13 @@ router.delete('/:id', async (req, res) => {
 
   } catch (error) {
     console.error('Erreur lors de la suppression du département:', error);
+    await logAction({
+      action: 'delete_departement_error',
+      category: 'departement',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.id,
+      details: { error: error.message }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression du département'

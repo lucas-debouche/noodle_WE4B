@@ -6,6 +6,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const authMiddleware = require("../security/middleware_auth");
+const { logAction } = require('../utils/logActions');
+
 
 // Multer storage dynamique selon l'UE et la catégorie
 const storage = multer.diskStorage({
@@ -69,8 +71,20 @@ router.get('/', async (req, res) => {
       .populate('type_id', 'nom')
       .populate('priorite_id', 'nom')
       .populate('rendus.utilisateur_id', 'nom prenom');
+    await logAction({
+      action: 'get_all_posts',
+      category: 'post',
+      userId: req.user ? req.user._id : null,
+      details: { success: true, postsCount: posts.length }
+    });
     res.json(posts);
   } catch (err) {
+    await logAction({
+      action: 'error_get_posts',
+      category: 'post',
+      userId: req.user? req.user._id : null,
+      details: { success: false, error: err.message }
+    });
     res.status(500).json({ error: err.message });
   }
 });
@@ -83,8 +97,20 @@ router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'])
       .populate('type_id', 'nom')
       .populate('priorite_id', 'nom')
       .populate('rendus.utilisateur_id', 'nom prenom');
+    await logAction({
+      action: 'get_posts_by_ue',
+      category: 'post',
+      userId: req.user? req.user._id : null,
+      details: { success: true, postsCount: posts.length }
+    });
     res.json(posts);
   } catch (err) {
+    await logAction({
+      action: 'error_get_posts_by_ue',
+      category: 'post',
+      userId: req.user? req.user._id : null,
+      details: { success: false, error: err.message }
+    });
     res.status(500).json({ error: err.message });
   }
 });
@@ -98,10 +124,31 @@ router.get('/:id', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), asy
       .populate('priorite_id', 'nom')
       .populate('rendus.utilisateur_id', 'nom prenom');
     if (!post) {
+      await logAction({
+        action: 'error_get_post_by_id',
+        category: 'post',
+        userId: req.user ? req.user._id : null,
+        targetId: req.params.id,
+        details: { error: 'Post not found' }
+      });
       return res.status(404).json({ message: 'Post not found' });
     }
+    await logAction({
+      action: 'get_post_by_id',
+      category: 'post',
+      userId: req.user? req.user._id : null,
+      targetId: req.params.id,
+      details: { success: true }
+    });
     res.json(post);
   } catch (err) {
+    await logAction({
+      action: 'error_get_post_by_id',
+      category: 'post',
+      userId: req.user ? req.user._id : null,
+      targetId: req.params.id,
+      details: { error: err.message }
+    });
     res.status(500).json({ error: err.message });
   }
 });
@@ -147,8 +194,22 @@ router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploa
       .populate('type_id', 'nom')
       .populate('priorite_id', 'nom')
       .populate('rendus.utilisateur_id', 'nom prenom');
+    await logAction({
+      action: 'create_post',
+      category: 'post',
+      userId: req.user? req.user._id : null,
+      targetId: post._id,
+      details: { success: true }
+    });
     res.status(201).json(populatedPost);
   } catch (err) {
+    await logAction({
+      action: 'error_create_post',
+      category: 'post',
+      userId: req.user? req.user._id : null,
+      targetId: post._id,
+      details: { error: err.message }
+    });
     res.status(400).json({ error: err.message });
   }
 });
@@ -170,8 +231,22 @@ router.patch('/:id/fait', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'
       post.faitPar.splice(index, 1);
     }
     await post.save();
+    await logAction({
+      action: 'update_post_fait',
+      category: 'post',
+      userId: req.user ? req.user._id : null,
+      targetId: post._id,
+      details: { utilisateurId, fait, success: true }
+    });
     res.json({ success: true, faitPar: post.faitPar });
   } catch (err) {
+    await logAction({
+      action: 'error_update_post_fait',
+      category: 'post',
+      userId: req.user? req.user._id : null,
+      targetId: req.params.id,
+      details: { error: err.message }
+    });
     res.status(500).json({ error: err.message });
   }
 });
@@ -196,8 +271,22 @@ router.post('/:id/rendu', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'
     });
 
     await post.save();
+    await logAction({
+      action: 'submit_rendu',
+      category: 'post',
+      userId: req.user ? req.user._id : null,
+      targetId: post._id,
+      details: { utilisateurId: userId, renduFile: file.originalname, success: true }
+    });
     res.status(201).json({ success: true });
   } catch (err) {
+    await logAction({
+      action: 'error_submit_rendu',
+      category: 'post',
+      userId: req.user ? req.user._id : null,
+      targetId: req.params.id,
+      details: { error: err.message }
+    });
     res.status(400).json({ error: err.message });
   }
 });
@@ -217,8 +306,22 @@ router.patch('/:postId/rendu/:userId/note', authMiddleware(['ROLE_USER', 'ROLE_P
     rendu.etat_rendu = 'corrigé';
 
     await post.save();
+    await logAction({
+      action: 'update_rendu_note',
+      category: 'post',
+      userId: req.user ? req.user._id : null,
+      targetId: post._id,
+      details: { utilisateurId: req.params.userId, note, success: true }
+    });
     res.json({ success: true, rendu });
   } catch (err) {
+    await logAction({
+      action: 'error_update_rendu_note',
+      category: 'post',
+      userId: req.user ? req.user._id : null,
+      targetId: req.params.postId,
+      details: { error: err.message }
+    });
     res.status(400).json({ error: err.message });
   }
 });
@@ -233,8 +336,22 @@ router.patch('/:postId/rendu/:userId/commentaire', authMiddleware(['ROLE_USER', 
     rendu.commentaire = commentaire;
 
     await post.save();
+    await logAction({
+      action: 'update_rendu_commentaire',
+      category: 'post',
+      userId: req.user ? req.user._id : null,
+      targetId: post._id,
+      details: { utilisateurId: req.params.userId, commentaire, success: true }
+    });
     res.json({ success: true, rendu });
   } catch (err) {
+  await logAction({
+    action: 'error_update_rendu_commentaire',
+    category: 'post',
+    userId: req.user ? req.user._id : null,
+    targetId: req.params.postId,
+    details: { error: err.message }
+  });
     res.status(400).json({ error: err.message });
   }
 });

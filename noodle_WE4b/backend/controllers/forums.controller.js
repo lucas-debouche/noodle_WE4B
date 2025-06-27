@@ -63,9 +63,22 @@ exports.getForumsByUe = async (req, res) => {
       forums = await Forum.find({ ueId: new ObjectId(ueIdParam) });
     }
 
+    await logAction({
+      action: 'get_forum_by_id',
+      category: 'forum',
+      userId: req.user.id,
+      details: { targetForumId: forums, success: true }
+    });
+
     res.json(forums);
   } catch (err) {
     console.error('Error in getForumsByUe:', err);
+    await logAction({
+      action: 'get_forum_by_id_error',
+      category: 'forum',
+      userId: req.user.userId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -78,7 +91,7 @@ exports.createForum = async (req, res) => {
   const newForum = new Forum({
     ueId: ueId,
     title: title,
-    creatorId: req.user ? req.user.userId : null,
+    creatorId: req.user.userId,
     createdAt: new Date(),
     messages: []
   });
@@ -97,6 +110,12 @@ exports.createForum = async (req, res) => {
     res.status(201).json(savedForum);
   } catch (err) {
     console.error('Error in createForum:', err);
+    await logAction({
+      action: 'create_forum_error',
+      category: 'forum',
+      userId: req.user.userId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -111,9 +130,22 @@ exports.getForumDetail = async (req, res) => {
     if (!forum) {
       return res.status(404).json({ message: 'Forum non trouvé' });
     }
+    await logAction({
+      action: 'get_detail_forum',
+      category: 'forum',
+      userId: req.user.userId,
+      targetId: forumId,
+      details: { title: forum.title, messageCount: forum.messages.length }
+    });
     res.json(forum);
   } catch (err) {
     console.error('Error in getForumDetail:', err);
+    await logAction({
+      action: 'get_detail_forum_error',
+      category: 'forum',
+      userId: req.user.userId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -169,7 +201,7 @@ exports.addMessage = [
       await forum.save();
 
       await logAction({
-        action: 'add_message',
+        action: 'add_message_forum',
         category: 'forum',
         userId: req.user ? req.user.userId : null,
         targetId: forumId,
@@ -190,6 +222,13 @@ exports.addMessage = [
         });
       }
 
+      await logAction({
+        action: 'add_message_forum_error',
+        category: 'forum',
+        userId: req.user ? req.user.userId : null,
+        targetId: forumId,
+        details: { error: err.message }
+      });
       res.status(500).json({ message: 'Erreur serveur' });
     }
   }
@@ -255,7 +294,7 @@ exports.addReply = [
       await forum.save();
 
       await logAction({
-        action: 'add_reply',
+        action: 'add_reply_forum',
         category: 'forum',
         userId: req.user ? req.user.userId : null,
         targetId: forumId,
@@ -276,6 +315,13 @@ exports.addReply = [
         });
       }
 
+      await logAction({
+        action: 'add_reply_forum_error',
+        category: 'forum',
+        userId: req.user ? req.user.userId : null,
+        targetId: forumId,
+        details: { error: err.message }
+      });
       res.status(500).json({ message: 'Erreur serveur' });
     }
   }
@@ -309,6 +355,13 @@ exports.updateForumTitle = async (req, res) => {
     res.json({ message: 'Titre du forum mis à jour', forum });
   } catch (err) {
     console.error('Error in updateForumTitle:', err);
+    await logAction({
+      action: 'update_forum_title_error',
+      category: 'forum',
+      userId: req.user.userId,
+      targetId: forumId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -411,7 +464,7 @@ exports.deleteMessage = async (req, res) => {
     await forum.save();
 
     await logAction({
-      action: 'delete_message',
+      action: 'delete_message_forum',
       category: 'forum',
       userId: req.user.userId,
       targetId: forumId,
@@ -421,6 +474,13 @@ exports.deleteMessage = async (req, res) => {
     res.json({ message: 'Message supprimé avec succès' });
   } catch (err) {
     console.error('Error in deleteMessage:', err);
+    await logAction({
+      action: 'delete_message_forum_error',
+      category: 'forum',
+      userId: req.user.userId,
+      targetId: forumId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -462,7 +522,7 @@ exports.deleteReply = async (req, res) => {
     await forum.save();
 
     await logAction({
-      action: 'delete_reply',
+      action: 'delete_reply_forum',
       category: 'forum',
       userId: req.user.userId,
       targetId: forumId,
@@ -472,6 +532,13 @@ exports.deleteReply = async (req, res) => {
     res.json({ message: 'Réponse supprimée avec succès' });
   } catch (err) {
     console.error('Error in deleteReply:', err);
+    await logAction({
+      action: 'delete_reply_forum_error',
+      category: 'forum',
+      userId: req.user.userId,
+      targetId: forumId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -500,7 +567,7 @@ exports.updateMessage = async (req, res) => {
     await forum.save();
 
     await logAction({
-      action: 'update_message',
+      action: 'update_message_forum',
       category: 'forum',
       userId: req.user.userId,
       targetId: forumId,
@@ -510,6 +577,13 @@ exports.updateMessage = async (req, res) => {
     res.json({ message: 'Message mis à jour avec succès', updatedMessage: messageToUpdate });
   } catch (err) {
     console.error('Error in updateMessage:', err);
+    await logAction({
+      action: 'update_message_forum_error',
+      category: 'forum',
+      userId: req.user.userId,
+      targetId: forumId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -565,7 +639,7 @@ exports.updateReply = async (req, res) => {
     console.log('Reply updated successfully');
 
     await logAction({
-      action: 'update_reply',
+      action: 'update_reply_forum',
       category: 'forum',
       userId: req.user.userId,
       targetId: forumId,
@@ -575,6 +649,13 @@ exports.updateReply = async (req, res) => {
     res.json({ message: 'Réponse mise à jour avec succès', updatedReply: replyToUpdate });
   } catch (err) {
     console.error('Error in updateReply:', err);
+    await logAction({
+      action: 'update_reply_forum_error',
+      category: 'forum',
+      userId: req.user.userId,
+      targetId: forumId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -586,12 +667,31 @@ exports.downloadFile = async (req, res) => {
 
   try {
     if (!fs.existsSync(filePath)) {
+      console.error(`File not found: ${filePath}`);
+      await logAction({
+        action: 'download_file_forum_error',
+        category: 'forum',
+        userId: req.user ? req.user.userId : null,
+        details: { filename, error: 'File not found' }
+      });
       return res.status(404).json({ message: 'Fichier non trouvé' });
     }
 
+    await logAction({
+      action: 'download_file_forum',
+      category: 'forum',
+      userId: req.user ? req.user.userId : null,
+      details: { filename }
+    });
     res.download(filePath);
   } catch (err) {
     console.error('Error in downloadFile:', err);
+    await logAction({
+      action: 'download_file_forum_error',
+      category: 'forum',
+      userId: req.user ? req.user.userId : null,
+      details: { filename, error: err.message }
+    });
     res.status(500).json({ message: 'Erreur lors du téléchargement' });
   }
 };

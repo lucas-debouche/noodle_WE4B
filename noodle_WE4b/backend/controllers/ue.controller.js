@@ -72,9 +72,21 @@ exports.getAllUes = async (req, res) => {
       participantCount: ue.participants ? ue.participants.length : 0
     }));
 
+    await logAction({
+      action: 'get_all_ues',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      details: { success: true }
+    });
     res.json(uesWithMetadata);
   } catch (err) {
     console.error('Error in getAllUes:', err);
+    await logAction({
+      action: 'get_all_ues_error',
+      category: 'ue',
+      userId: req.user? req.user.userId : null,
+      details: { error: err.message }
+    });
     res.status(500).json({ error: err.message });
   }
 };
@@ -128,9 +140,23 @@ exports.getUeById = async (req, res) => {
       updatedAt: ue.updatedAt
     };
 
+    await logAction({
+      action: 'get_ue_by_id',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: ueId,
+      details: { success: true }
+    });
     res.json(formattedUe);
   } catch (err) {
     console.error('Error in getUeById:', err);
+    await logAction({
+      action: 'get_ue_by_id_error',
+      category: 'ue',
+      userId: req.user? req.user.userId : null,
+      targetId: req.params.ueId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -280,6 +306,18 @@ exports.createUe = [
         participantCount: ueWithDepartement[0].participants ? ueWithDepartement[0].participants.length : 0
       };
 
+      await logAction({
+        action: 'create_ue',
+        category: 'ue',
+        userId: req.user ? req.user.userId : null,
+        targetId: savedUe._id.toString(),
+        details: {
+          code: savedUe.code,
+          intitule: savedUe.intitule,
+          participantCount: savedUe.participants.length,
+          success: true
+        }
+      });
       res.status(201).json({
         success: true,
         message: 'UE créée avec succès!',
@@ -297,6 +335,13 @@ exports.createUe = [
         }
       }
 
+      await logAction({
+        action: 'create_ue_error',
+        category: 'ue',
+        userId: req.user? req.user.userId : null,
+        targetId: req.params.ueId,
+        details: { error: err.message }
+      });
       res.status(500).json({
         success: false,
         message: 'Erreur lors de la création de l\'UE: ' + err.message
@@ -437,7 +482,8 @@ exports.updateUe = [
           newCode: updateData.code || existingUe.code,
           oldIntitule: existingUe.intitule,
           newIntitule: updateData.intitule || existingUe.intitule,
-          participantCount: updatedUe.participants ? updatedUe.participants.length : 0
+          participantCount: updatedUe.participants ? updatedUe.participants.length : 0,
+          success: true
         }
       });
 
@@ -482,6 +528,13 @@ exports.updateUe = [
         }
       }
 
+      await logAction({
+        action: 'update_ue_error',
+        category: 'ue',
+        userId: req.user? req.user.userId : null,
+        targetId: req.params.ueId,
+        details: { error: err.message }
+      });
       res.status(500).json({
         success: false,
         message: 'Erreur lors de la mise à jour de l\'UE: ' + err.message
@@ -543,7 +596,8 @@ exports.deleteUe = async (req, res) => {
       details: {
         code: ue.code,
         intitule: ue.intitule,
-        participantCount: ue.participants ? ue.participants.length : 0
+        participantCount: ue.participants ? ue.participants.length : 0,
+        success: true
       }
     });
 
@@ -554,6 +608,13 @@ exports.deleteUe = async (req, res) => {
 
   } catch (err) {
     console.error('❌ Error in deleteUe:', err);
+    await logAction({
+      action: 'delete_ue_error',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: ueId,
+      details: { error: err.message }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de l\'UE: ' + err.message
@@ -590,9 +651,21 @@ exports.searchUes = async (req, res) => {
       participantCount: ue.participants ? ue.participants.length : 0
     }));
 
+    await logAction({
+      action: 'search_ues',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      details: { query: searchTerm, success: true }
+    });
     res.json(formattedUes);
   } catch (err) {
     console.error('Error in searchUes:', err);
+    await logAction({
+      action:'search_ues_error',
+      category: 'ue',
+      userId: req.user? req.user.userId : null,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -672,6 +745,13 @@ exports.getParticipantsByUe = async (req, res) => {
 
     console.log(`🎉 Total participants récupérés: ${participants.length}`);
 
+    await logAction({
+      action: 'get_participants_by_ue',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: ueId,
+      details: { success: true }
+    });
     res.json({
       success: true,
       data: participants
@@ -679,6 +759,13 @@ exports.getParticipantsByUe = async (req, res) => {
 
   } catch (err) {
     console.error('❌ Error in getParticipantsByUe:', err);
+    await logAction({
+      action: 'get_participants_by_ue_error',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.ueId,
+      details: { error: err.message }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -744,7 +831,8 @@ exports.addParticipantToUe = async (req, res) => {
       targetId: ueId,
       details: {
         participantId: utilisateur._id.toString(),
-        participantName: `${utilisateur.prenom} ${utilisateur.nom}`
+        participantName: `${utilisateur.prenom} ${utilisateur.nom}`,
+        success: true
       }
     });
 
@@ -759,6 +847,16 @@ exports.addParticipantToUe = async (req, res) => {
 
   } catch (err) {
     console.error('Error in addParticipantToUe:', err);
+    await logAction({
+      action:'remove_participant_ue_error',
+      category: 'ue',
+      userId: req.user? req.user.userId : null,
+      targetId: req.params.ueId,
+      details: {
+        participantId: req.body.utilisateurId,
+        error: err.message
+      }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -816,7 +914,8 @@ exports.removeParticipantFromUe = async (req, res) => {
       targetId: ueId,
       details: {
         participantId: utilisateur._id.toString(),
-        participantName: `${utilisateur.prenom} ${utilisateur.nom}`
+        participantName: `${utilisateur.prenom} ${utilisateur.nom}`,
+        success: true
       }
     });
 
@@ -827,6 +926,16 @@ exports.removeParticipantFromUe = async (req, res) => {
 
   } catch (err) {
     console.error('Error in removeParticipantFromUe:', err);
+    await logAction({
+      action:'remove_participant_ue_error',
+      category: 'ue',
+      userId: req.user? req.user.userId : null,
+      targetId: req.params.ueId,
+      details: {
+        participantId: req.params.utilisateurId,
+        error: err.message
+      }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -904,6 +1013,13 @@ exports.getParticipantsStats = async (req, res) => {
       { _id: 'actif', count: totalParticipants }
     ];
 
+    await logAction({
+      action: 'get_participants_stats',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: ueId,
+      details: { success: true }
+    });
     res.json({
       success: true,
       data: {
@@ -915,6 +1031,13 @@ exports.getParticipantsStats = async (req, res) => {
 
   } catch (err) {
     console.error('Error in getParticipantsStats:', err);
+    await logAction({
+      action: 'get_participants_stats_error',
+      category: 'ue',
+      userId: req.user? req.user.userId : null,
+      targetId: req.params.ueId,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };

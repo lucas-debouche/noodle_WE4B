@@ -7,6 +7,7 @@ const { diskStorage } = require("multer");
 const fs = require('fs');
 const path = require('path');
 const Ue = require('../models/ue.model'); // nécessaire pour upload-photo
+const { logAction } = require('../utils/logActions');
 
 // ===============================
 // ROUTES PUBLIQUES OU SPÉCIFIQUES
@@ -76,13 +77,34 @@ router.post('/:code/upload-photo', authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']), 
   try {
     const ue = await Ue.findOne({ code: req.params.code });
     if (!ue) {
+      await logAction({
+        action: 'error_upload_ue_image',
+        category: 'ue',
+        userId: req.user ? req.user.userId : null,
+        targetId: req.params.code,
+        details: { error: 'UE not found' }
+      });
       return res.status(404).json({ message: 'Ue non trouvée' });
     }
     const relativePath = `/uploads/ue/${req.params.code}/photo/${req.file.filename}`;
     ue.image = relativePath;
     await ue.save();
+    await logAction({
+      action: 'upload_ue_image',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.code,
+      details: { success: true, imagePath: relativePath }
+    });
     res.status(200).json({ message: 'Image téléchargée avec succès', ue });
   } catch (error) {
+    await logAction({
+      action: 'error_upload_ue_image',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.code,
+      details: { error: error.message }
+    });
     res.status(500).json({ message: 'Erreur lors de l\'enregistrement de l\'image', error });
   }
 });

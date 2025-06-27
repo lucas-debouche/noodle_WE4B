@@ -16,6 +16,11 @@ exports.login = async (req, res) => {
 
     if (!user) {
       console.log('Erreur : utilisateur non trouvé');
+      await logAction({
+        action: 'login_attempt',
+        category: 'auth',
+        details: { success: false, reason: 'user_not_found', email }
+      });
       return res.status(401).json({ message: "Utilisateur non trouvé !" });
     }
 
@@ -27,6 +32,12 @@ exports.login = async (req, res) => {
 
     if (!ismot_passeValid) {
       console.log('Erreur : Mot de passe incorrect');
+      await logAction({
+        action: 'login_attempt',
+        category: 'auth',
+        userId: user._id,
+        details: { success: false, reason: 'invalid_password' }
+      });
       return res.status(401).json({ message: "Mot de passe incorrect !" });
     }
 
@@ -46,15 +57,14 @@ exports.login = async (req, res) => {
     console.log('Token créé avec succès:', token);
 
     await logAction({
-      action:"connexion",
-      category:"authentification",
-      userId:user._id,
-      targetId:null,
+      action: "login_success",
+      category: "auth",
+      userId: user._id,
       details: {
-      email: user.email,
-      roles:user.role
-    }
-  });
+        email: user.email,
+        roles: user.role
+      }
+    });
 
     return res.status(200).json({
       message: "Connexion réussie",

@@ -8,6 +8,8 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require("path");
 const fs = require('fs');
+const { logAction } = require('../utils/logActions');
+
 
 // GET / → obtenir tous les utilisateurs
 router.get('/', utilisateurController.getAllUtilisateurs);
@@ -55,6 +57,13 @@ router.put('/update_photo/:nom', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE
 
     const utilisateur = await Utilisateur.findOne({ nom, prenom });
     if (!utilisateur) {
+      await logAction({
+        action: 'error_update_user_photo',
+        category: 'utilisateur',
+        userId: req.user ? req.user._id : null,
+        targetId: utilisateur ? utilisateur._id : null,
+        details: { error: 'Utilisateur non trouvé' }
+      });
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
 
@@ -71,12 +80,25 @@ router.put('/update_photo/:nom', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE
 
     await utilisateur.save();
 
+    await logAction({
+      action: 'update_user_photo',
+      category: 'utilisateur',
+      userId: req.user ? req.user._id : null,
+      targetId: utilisateur._id,
+      details: { success: true, photo: utilisateur.photo }
+    });
     res.status(200).json({
       message: 'Utilisateur mis à jour avec succès',
       utilisateur,
     });
   } catch (err) {
     console.error(err);
+    await logAction({
+      action: 'error_update_user_photo',
+      category: 'utilisateur',
+      userId: req.user ? req.user._id : null,
+      details: { error: err.message }
+    });
     res.status(500).json({ message: 'Erreur lors de la mise à jour de l\'utilisateur' });
   }
 });
@@ -117,9 +139,22 @@ router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'])
       _id: { $in: ue.participants }
     });
 
+    await logAction({
+      action: 'get_users_by_ue',
+      category: 'utilisateur',
+      userId: req.user ? req.user._id : null,
+      targetId: ue._id,
+      details: { success: true, count: utilisateurs.length }
+    });
     res.json(utilisateurs);
   } catch (err) {
     console.error('Erreur lors de la récupération des utilisateurs par UE:', err);
+    await logAction({
+      action: 'error_get_users_by_ue',
+      category: 'utilisateur',
+      userId: req.user ? req.user._id : null,
+      details: { error: err.message }
+    });
     res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs par UE.' });
   }
 });

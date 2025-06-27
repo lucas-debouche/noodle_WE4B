@@ -1,16 +1,33 @@
 const Utilisateur = require('../models/utilisateur.model');
 const Ue = require('../models/ue.model');
 const mongoose = require('mongoose');
+const { logAction } = require('../utils/logActions');
 
 // GET /api/utilisateur → récupérer tous les utilisateurs
 exports.getAllUtilisateurs = async (req, res) => {
   try {
     const utilisateurs = await Utilisateur.find();
     if (utilisateurs.length === 0) {
+      await logAction({
+        action: 'get_all_users_not_found',
+        category: 'user',
+        userId: req.params.userId,
+        details: { success: false }
+      });
       return res.status(404).json({ error: 'Aucun utilisateur trouvé.' });
     }
+    await logAction({
+      action: 'get_all_users',
+      category: 'user',
+      details: { count: utilisateurs.length }
+    });
     res.json(utilisateurs);
   } catch (err) {
+    await logAction({
+      action: 'get_all_users_error',
+      category: 'user',
+      details: { error: error.message }
+    });
     res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs.' });
   }
 };
@@ -26,13 +43,31 @@ exports.getCurrentUtilisateur = async (req, res) => {
     const utilisateur = await Utilisateur.findById(new mongoose.Types.ObjectId(req.user.userId));
     if (!utilisateur) {
       console.log('/current : Aucun utilisateur trouvé avec cet ID');
+      await logAction({
+        action: 'get_current_user_not_found',
+        category: 'user',
+        userId: req.user.userId,
+        details: { success: false }
+      });
       return res.status(404).json({ error: 'Utilisateur non trouvé.' });
     }
 
     console.log('/current : Utilisateur trouvé, envoi de la réponse...');
+    await logAction({
+      action: 'get_current_user',
+      category: 'user',
+      userId: req.user.userId,
+      details: { success: true }
+    });
     res.status(200).json(utilisateur);
   } catch (err) {
     console.error('/current : Erreur lors de la récupération des données utilisateur :', err);
+    await logAction({
+      action: 'get_current_user_error',
+      category: 'user',
+      userId: req.user.userId,
+      details: { error: err.message }
+    });
     res.status(500).json({ error: 'Erreur lors de la récupération des données utilisateur.' });
   }
 };
@@ -42,10 +77,25 @@ exports.getUtilisateurById = async (req, res) => {
   try {
     const utilisateur = await Utilisateur.findById(req.params.userId);
     if (!utilisateur) {
+      await logAction({
+        action: 'get_user_by_id_not_found',
+        category: 'user',
+        details: { targetUserId: req.params.userId }
+      });
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
+    await logAction({
+      action: 'get_user_by_id',
+      category: 'user',
+      details: { targetUserId: req.params.userId, success: true }
+    });
     res.json(utilisateur);
   } catch (err) {
+    await logAction({
+      action: 'get_user_by_id_error',
+      category: 'user',
+      details: { targetUserId: req.params.userId, error: err.message }
+    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -67,6 +117,12 @@ exports.createUtilisateur = async (req, res) => {
     const { nom, prenom, email, plainPassword } = req.body;
 
     if (!nom || !prenom || !email || !plainPassword || roles.length === 0) {
+      await logAction({
+        action: 'create_user_missing_fields',
+        category: 'user',
+        userId: req.params.userId,
+        details: { success: false }
+      });
       return res.status(400).json({ message: "Champs obligatoires manquants" });
     }
 
@@ -153,6 +209,13 @@ exports.createUtilisateur = async (req, res) => {
       }
     }
 
+    await logAction({
+      action: 'create_user',
+      category: 'user',
+      userId: req.params.userId,
+      details: { targetId: savedUser,uesProcessed: uesProcessed, success: true }
+    });
+
     res.status(201).json({
       message: 'Utilisateur créé avec succès',
       utilisateur: savedUser,
@@ -166,6 +229,12 @@ exports.createUtilisateur = async (req, res) => {
 
     // En cas d'erreur, essayer de nettoyer les données partielles
     if (err.name === 'ValidationError') {
+      await logAction({
+        action: 'create_user_error',
+        category: 'user',
+        userId: req.params.userId,
+        details: { error: err.message }
+      });
       return res.status(400).json({
         message: "Données invalides",
         errors: Object.keys(err.errors).map(key => ({
@@ -175,6 +244,12 @@ exports.createUtilisateur = async (req, res) => {
       });
     }
 
+    await logAction({
+      action: 'create_user_error',
+      category: 'user',
+      userId: req.params.userId,
+      details: { error: err.message }
+    });
     res.status(500).json({
       message: "Erreur lors de la création de l'utilisateur",
       error: err.message
@@ -204,6 +279,12 @@ exports.updateUtilisateur = async (req, res) => {
     // Récupérer l'utilisateur actuel pour comparer les UEs
     const currentUser = await Utilisateur.findById(req.params.userId);
     if (!currentUser) {
+      await logAction({
+        action: 'update_user_not_found',
+        category: 'user',
+        userId: req.params.userId,
+        details: { success: false }
+      });
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
@@ -350,6 +431,18 @@ exports.updateUtilisateur = async (req, res) => {
       { new: true }
     );
 
+    await logAction({
+      action: 'update_user',
+      category: 'user',
+      userId: req.params.userId,
+      details: {
+        updatedFields: Object.keys(updateData),
+        uesAdded: uesProcessed.filter(ue => ue.action === 'added').length,
+        uesRemoved: uesProcessed.filter(ue => ue.action === 'removed').length,
+        success: true
+      }
+    });
+
     res.json({
       message: 'Utilisateur modifié avec succès',
       utilisateur: utilisateur,
@@ -364,6 +457,12 @@ exports.updateUtilisateur = async (req, res) => {
 
   } catch (err) {
     console.error("Erreur lors de la maj de l'utilisateur :", err);
+    await logAction({
+      action: 'update_user_error',
+      category: 'user',
+      userId: req.params.userId,
+      details: { error: err.message }
+    });
     res.status(500).json({
       message: "Erreur lors de la modification de l'utilisateur",
       error: err.message
@@ -410,6 +509,21 @@ exports.getParticipantsByUe = async (req, res) => {
       ues: participant.ues || []
     }));
 
+    await logAction({
+      action: 'get_participants_by_ue',
+      category: 'user',
+      userId: req.params.userId,
+      details: { data: formattedParticipants,
+        ue: {
+          id: ue._id.toString(),
+          code: ue.code,
+          intitule: ue.intitule,
+          participantCount: ue.participants.length
+        },
+        success: true
+      }
+    });
+
     res.json({
       success: true,
       data: formattedParticipants,
@@ -423,6 +537,12 @@ exports.getParticipantsByUe = async (req, res) => {
 
   } catch (err) {
     console.error('❌ Error in getParticipantsByUe:', err);
+    await logAction({
+      action: 'get_participants_by_ue_error',
+      category: 'user',
+      userId: req.params.userId,
+      details: { error: err.message }
+    })
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
