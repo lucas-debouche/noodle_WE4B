@@ -312,7 +312,6 @@ exports.createUe = [
 ];
 
 // PUT /api/ue/:ueId → modifier une UE existante
-// PUT /api/ue/:ueId → modifier une UE existante (CORRECTION ID UNDEFINED)
 exports.updateUe = [
   upload.single('image'),
 
