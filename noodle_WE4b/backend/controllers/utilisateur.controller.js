@@ -448,7 +448,8 @@ exports.getUesByUserId = async (req, res) => {
       code: ue.code,
       intitule: ue.intitule,
       description: ue.description,
-      participantsCount: ue.participants ? ue.participants.length : 0
+      participantsCount: ue.participants ? ue.participants.length : 0,
+      image: ue.image ? ue.image : null
     }));
 
     await logAction({

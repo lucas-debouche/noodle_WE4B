@@ -53,25 +53,25 @@ export class ChoixUeComponent implements OnInit {
     });
   }
 
-displayUes(): void {
-  if (!this.isExpandedUe) {
-    // Afficher un lot de UEs
-    const currentBatch = this.UesOfUser.slice(this.offset_ue, this.offset_ue + this.limit_ue);
-    this.displayedUes = [...this.displayedUes, ...currentBatch];
-    this.offset_ue += this.limit_ue;
+  displayUes(): void {
+    if (!this.isExpandedUe) {
+      // Afficher un lot de UEs
+      const currentBatch = this.UesOfUser.slice(this.offset_ue, this.offset_ue + this.limit_ue);
+      this.displayedUes = [...this.displayedUes, ...currentBatch];
+      this.offset_ue += this.limit_ue;
 
-    if (this.offset_ue >= this.UesOfUser.length) {
-      this.isExpandedUe = true;
+      if (this.offset_ue >= this.UesOfUser.length) {
+        this.isExpandedUe = true;
+      }
+    } else {
+      // Mode "Voir moins"
+      this.displayedUes = this.UesOfUser.slice(0, this.limit_ue);
+      this.offset_ue = this.limit_ue;
+      this.isExpandedUe = false;
     }
-  } else {
-    // Mode "Voir moins"
-    this.displayedUes = this.UesOfUser.slice(0, this.limit_ue);
-    this.offset_ue = this.limit_ue;
-    this.isExpandedUe = false;
   }
-}
 
-get toggleButtonTextUe(): string {
-  return this.isExpandedUe ? 'Voir moins' : 'Voir plus';
-}
+  get toggleButtonTextUe(): string {
+    return this.isExpandedUe ? 'Voir moins' : 'Voir plus';
+  }
 }
