@@ -8,33 +8,14 @@ import { Subscription, interval } from 'rxjs';
 // IMPORTS CHART.JS
 import {
   Chart,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-  RadialLinearScale
+  ChartConfiguration,
+  ChartData,
+  ChartType,
+  registerables
 } from 'chart.js';
 
-// ENREGISTREMENT DES COMPOSANTS CHART.JS
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-  RadialLinearScale
-);
+// Enregistrer tous les composants de Chart.js
+Chart.register(...registerables);
 
 export interface DashboardData {
   overview: {
@@ -80,15 +61,13 @@ export interface DashboardData {
   styleUrls: ['./admin-dashboard.component.scss']
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
-
-  // RÉFÉRENCES AUX CANVAS
-  @ViewChild('pieChart', { static: false }) pieChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('lineChart', { static: false }) lineChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('heatmapChart', { static: false }) heatmapChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('trendChart', { static: false }) trendChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('connectionChart', { static: false }) connectionChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('responseTimeChart', { static: false }) responseTimeChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('errorRateChart', { static: false }) errorRateChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('pieChart') pieChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('lineChart') lineChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('heatmapChart') heatmapChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('trendChart') trendChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('connectionChart') connectionChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('responseTimeChart') responseTimeChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('errorRateChart') errorRateChartRef!: ElementRef<HTMLCanvasElement>;
 
   // DONNÉES PRINCIPALES
   dashboardData: DashboardData | null = null;
@@ -106,11 +85,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
 
   // STOCKAGE DES INSTANCES CHART
   private charts: { [key: string]: Chart } = {};
+  private realtimeIntervalSub?: Subscription;
+  private metricsIntervalSub?: Subscription;
 
   // ÉTATS INTERFACE
   activeTab = 'overview';
   showFilters = true;
-  compactView = false;
+  showExportModal = false;
 
   // DONNÉES TEMPS RÉEL
   realtimeMetrics = {
@@ -121,7 +102,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   };
 
   // EXPORT
-  showExportModal = false;
   exportConfig = {
     includeCharts: true,
     includeRawData: false,
@@ -140,13 +120,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   ngOnInit(): void {
     this.initializeNavbar();
     this.loadDashboardData();
-    this.setupRealTimeUpdates();
   }
 
   ngAfterViewInit(): void {
+    // Attendre que le DOM soit complètement chargé
     setTimeout(() => {
       this.initializeCharts();
-    }, 500);
+    }, 1000);
   }
 
   ngOnDestroy(): void {
@@ -154,6 +134,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
       if (chart) chart.destroy();
     });
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.clearRealtimeIntervals();
   }
 
   private initializeNavbar(): void {
@@ -176,18 +157,20 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
       includeRealtime: true
     }).subscribe({
       next: (data) => {
-        console.log('✅ Données dashboard reçues:', data);
         this.dashboardData = data;
         this.isLoading = false;
-
+        // Attendre que la vue soit prête avant d'initialiser les graphiques
         setTimeout(() => {
-          this.updateCharts();
+          this.initializeCharts();
+          if (this.autoRefresh) {
+            this.setupRealTimeUpdates();
+          }
         }, 100);
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des données du dashboard';
         this.isLoading = false;
-        console.error('Dashboard error:', err);
+        console.error('Erreur dashboard:', err);
       }
     });
 
@@ -195,16 +178,25 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   private setupRealTimeUpdates(): void {
+    this.clearRealtimeIntervals();
     if (this.autoRefresh) {
-      const realtimeSub = interval(30000).subscribe(() => {
+      this.realtimeIntervalSub = interval(30000).subscribe(() => {
         this.refreshRealTimeData();
       });
-      this.subscriptions.push(realtimeSub);
-
-      const metricsSub = interval(5000).subscribe(() => {
+      this.metricsIntervalSub = interval(5000).subscribe(() => {
         this.updateRealTimeMetrics();
       });
-      this.subscriptions.push(metricsSub);
+    }
+  }
+
+  private clearRealtimeIntervals(): void {
+    if (this.realtimeIntervalSub) {
+      this.realtimeIntervalSub.unsubscribe();
+      this.realtimeIntervalSub = undefined;
+    }
+    if (this.metricsIntervalSub) {
+      this.metricsIntervalSub.unsubscribe();
+      this.metricsIntervalSub = undefined;
     }
   }
 
@@ -215,10 +207,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
       next: (data) => {
         if (this.dashboardData) {
           this.dashboardData.realtime = data;
-          console.log('🔄 Données temps réel mises à jour:', data);
         }
       },
-      error: (err) => console.error('Erreur temps réel:', err)
+      error: (err) => {}
     });
     this.subscriptions.push(realtimeSub);
   }
@@ -233,64 +224,57 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
           throughput: metrics.requestsPerHour || 0
         };
       },
-      error: (err) => console.error('Erreur métriques système:', err)
+      error: (err) => {}
     });
     this.subscriptions.push(metricsSub);
   }
 
   private initializeCharts(): void {
-    if (this.activeTab === 'overview') {
-      this.createPieChart();
-      this.createLineChart();
-    }
-  }
-
-  private updateCharts(): void {
-    setTimeout(() => {
-      if (this.activeTab === 'overview') {
-        this.createPieChart();
-        this.createLineChart();
-      } else if (this.activeTab === 'analytics') {
-        this.createTrendChart();
-      } else if (this.activeTab === 'olap') {
-        this.createHeatmapChart();
-      } else if (this.activeTab === 'realtime') {
-        this.createConnectionChart();
-      } else if (this.activeTab === 'performance') {
-        this.createResponseTimeChart();
-        this.createErrorRateChart();
+    if (this.dashboardData) {
+      switch (this.activeTab) {
+        case 'overview':
+          this.createPieChart();
+          this.createLineChart();
+          break;
+        case 'analytics':
+          this.createTrendChart();
+          break;
+        case 'olap':
+          this.createHeatmapChart();
+          break;
+        case 'realtime':
+          this.createConnectionChart();
+          break;
+        case 'performance':
+          this.createResponseTimeChart();
+          this.createErrorRateChart();
+          break;
       }
-    }, 200);
+    }
   }
 
   private createPieChart(): void {
     if (!this.pieChartRef?.nativeElement || !this.dashboardData?.analytics?.usersByRole) {
-      console.log('❌ Pie chart: Canvas ou données manquants');
       return;
     }
 
-    const canvas = this.pieChartRef.nativeElement;
-    const ctx = canvas.getContext('2d');
+    const ctx = this.pieChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    if (this.charts['pie']) {
-      this.charts['pie'].destroy();
-    }
-
     const data = this.dashboardData.analytics.usersByRole;
-    console.log('📊 Création pie chart avec données:', data);
+    const chartData = {
+      labels: data.map((item: any) => this.formatRoleName(item._id)),
+      datasets: [{
+        data: data.map((item: any) => item.count || 0),
+        backgroundColor: ['#f47d42', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    };
 
-    this.charts['pie'] = new Chart(ctx, {
+    const config: ChartConfiguration = {
       type: 'doughnut',
-      data: {
-        labels: data.map((item: any) => this.formatRoleName(item._id)),
-        datasets: [{
-          data: data.map((item: any) => item.count || 0),
-          backgroundColor: ['#f47d42', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
-          borderWidth: 2,
-          borderColor: '#ffffff'
-        }]
-      },
+      data: chartData,
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -298,38 +282,34 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
           legend: {
             position: 'right',
             labels: {
-              padding: 20,
-              usePointStyle: true
+              padding: 20
             }
           },
           title: {
             display: true,
-            text: 'Répartition des utilisateurs',
-            font: { size: 16, weight: 'bold' }
+            text: 'Répartition des utilisateurs'
           }
         }
       }
-    });
+    };
+
+    if (this.charts['pie']) {
+      this.charts['pie'].destroy();
+    }
+    this.charts['pie'] = new Chart(ctx, config);
   }
 
   private createLineChart(): void {
     if (!this.lineChartRef?.nativeElement || !this.dashboardData?.analytics?.activityTrends) {
-      console.log('❌ Line chart: Canvas ou données manquants');
       return;
     }
 
-    const canvas = this.lineChartRef.nativeElement;
-    const ctx = canvas.getContext('2d');
+    const ctx = this.lineChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    if (this.charts['line']) {
-      this.charts['line'].destroy();
-    }
-
     const data = this.dashboardData.analytics.activityTrends;
-    console.log('📈 Création line chart avec données:', data);
 
-    this.charts['line'] = new Chart(ctx, {
+    const config: ChartConfiguration = {
       type: 'line',
       data: {
         labels: data.map((item: any) => this.formatDateSimple(item.date)),
@@ -338,15 +318,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
           data: data.map((item: any) => item.totalActions || 0),
           borderColor: '#f47d42',
           backgroundColor: 'rgba(244, 125, 66, 0.1)',
-          tension: 0.4,
-          fill: true
+          fill: true,
+          tension: 0.4
         }, {
           label: 'Utilisateurs Uniques',
           data: data.map((item: any) => item.uniqueUsers || 0),
           borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4,
-          fill: true
+          fill: true,
+          tension: 0.4
         }]
       },
       options: {
@@ -376,14 +356,19 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
           }
         }
       }
-    });
+    };
+
+    if (this.charts['line']) {
+      this.charts['line'].destroy();
+    }
+
+    this.charts['line'] = new Chart(ctx, config);
   }
 
   private createTrendChart(): void {
-    if (!this.trendChartRef?.nativeElement || !this.dashboardData?.analytics?.activityTrends) {
+    if (!this.trendChartRef || !this.trendChartRef.nativeElement || !this.dashboardData?.analytics?.activityTrends) {
       return;
     }
-
     const canvas = this.trendChartRef.nativeElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -421,10 +406,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   private createHeatmapChart(): void {
-    if (!this.heatmapChartRef?.nativeElement || !this.dashboardData?.olap?.userActivityCube) {
+    if (!this.heatmapChartRef || !this.heatmapChartRef.nativeElement || !this.dashboardData?.olap?.userActivityCube) {
       return;
     }
-
     const canvas = this.heatmapChartRef.nativeElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -443,7 +427,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
           label: 'Activité par heure et rôle',
           data: processedData,
           backgroundColor: (context: any) => {
-            const value = context.parsed.v || 0;
+            const value = context.raw.v || 0;
             const intensity = Math.min(value / 10, 1);
             return `rgba(244, 125, 66, ${intensity})`;
           },
@@ -479,8 +463,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
       return;
     }
 
-    const canvas = this.connectionChartRef.nativeElement;
-    const ctx = canvas.getContext('2d');
+    const ctx = this.connectionChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
     if (this.charts['connection']) {
@@ -520,10 +503,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   private createResponseTimeChart(): void {
-    if (!this.responseTimeChartRef?.nativeElement) {
+    if (!this.responseTimeChartRef || !this.responseTimeChartRef.nativeElement) {
       return;
     }
-
     const canvas = this.responseTimeChartRef.nativeElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -564,10 +546,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   private createErrorRateChart(): void {
-    if (!this.errorRateChartRef?.nativeElement) {
+    if (!this.errorRateChartRef || !this.errorRateChartRef.nativeElement) {
       return;
     }
-
     const canvas = this.errorRateChartRef.nativeElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -608,7 +589,73 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
     });
   }
 
+  formatDateSimple(date: string): string {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  }
+
+  updateAnalytics(): void {
+    const analyticsSub = this.dashboardService.getAnalytics({
+      metric: this.selectedMetric,
+      timeRange: this.selectedTimeRange
+    }).subscribe({
+      next: (data) => {
+        if (this.dashboardData) {
+          this.dashboardData.analytics = data;
+          this.initializeCharts();
+        }
+      },
+      error: (err) => console.error('Erreur mise à jour analytics:', err)
+    });
+    this.subscriptions.push(analyticsSub);
+  }
+
+  updateOlapAnalysis(): void {
+    const olapSub = this.dashboardService.getDetailedOlapAnalysis({
+      dimensions: [this.selectedOlapDimension],
+      timeRange: this.selectedTimeRange
+    }).subscribe({
+      next: (data) => {
+        if (this.dashboardData) {
+          this.dashboardData.olap = data;
+          this.initializeCharts();
+        }
+      },
+      error: (err) => console.error('Erreur mise à jour OLAP:', err)
+    });
+    this.subscriptions.push(olapSub);
+  }
+
+  getUserDisplayName(user: any): string {
+    if (!user) return 'Système';
+    if (user.prenom && user.nom) return `${user.prenom} ${user.nom}`;
+    if (user.nom) return user.nom;
+    return user.email || 'Utilisateur';
+  }
+
+  formatTime(date: string | Date): string {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  formatTimePoint(point: any): string {
+    if (!point) return '';
+    if (typeof point === 'string') return point;
+
+    let parts = [];
+    if (point.year) parts.push(point.year);
+    if (point.month) parts.push(point.month.toString().padStart(2, '0'));
+    if (point.day) parts.push(point.day.toString().padStart(2, '0'));
+    if (point.hour !== undefined) parts.push(`${point.hour}h`);
+
+    if (parts.length === 0) return JSON.stringify(point);
+    return parts.join('-');
+  }
+
   private processHeatmapData(data: any[]): any[] {
+    if (!data) return [];
+
     const roleMap: { [key: string]: number } = {
       'ROLE_USER': 0,
       'ROLE_PROF': 1,
@@ -618,8 +665,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
     return data.map(item => ({
       x: item.hour || 0,
       y: roleMap[item.role] || 0,
-      v: item.activityCount || 0,
-      role: item.role
+      v: item.activityCount || 0
     }));
   }
 
@@ -647,290 +693,140 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   switchTab(tab: string): void {
-    console.log('🔄 Changement onglet:', tab);
     this.activeTab = tab;
-
+    // Détruire les graphiques existants
     Object.values(this.charts).forEach(chart => {
       if (chart) chart.destroy();
     });
     this.charts = {};
 
+    // Attendre que le DOM soit mis à jour
     setTimeout(() => {
-      this.updateCharts();
-    }, 100);
+      this.initializeCharts();
+    }, 200);
   }
 
   toggleAutoRefresh(): void {
-    console.log('🔄 Toggle auto-refresh:', !this.autoRefresh);
     this.autoRefresh = !this.autoRefresh;
-
+    this.clearRealtimeIntervals();
     if (this.autoRefresh) {
       this.setupRealTimeUpdates();
-    } else {
-      this.subscriptions = this.subscriptions.filter(sub => {
-        return sub !== this.subscriptions[this.subscriptions.length - 1];
-      });
     }
   }
 
-  toggleCompactView(): void {
-    console.log('📱 Toggle vue compacte:', !this.compactView);
-    this.compactView = !this.compactView;
-  }
 
   refresh(): void {
-    console.log('🔄 Actualisation dashboard');
-    this.currentDate = new Date();
     this.loadDashboardData();
   }
 
   exportData(format: 'csv' | 'excel' | 'pdf'): void {
-    console.log('📤 Export format:', format);
     this.showExportModal = true;
+    // La logique d'export réel sera dans confirmExport()
   }
 
   confirmExport(): void {
-    console.log('✅ Confirmation export avec config:', this.exportConfig);
+    // À adapter selon votre logique d'export
     this.showExportModal = false;
-
-    this.dashboardService.exportDashboardData('csv', {
-      timeRange: this.selectedTimeRange,
-      config: this.exportConfig
-    }).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `dashboard-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        console.log('📥 Export terminé');
-      },
-      error: (err) => {
-        console.error('❌ Erreur export:', err);
-        alert('Erreur lors de l\'export. Vérifiez la console pour plus de détails.');
-      }
-    });
   }
 
   cancelExport(): void {
-    console.log('❌ Annulation export');
     this.showExportModal = false;
   }
 
-  private updateAnalytics(): void {
-    const analyticsSub = this.dashboardService.getAnalytics({
-      metric: this.selectedMetric,
-      timeRange: this.selectedTimeRange
-    }).subscribe({
-      next: (analytics) => {
-        if (this.dashboardData) {
-          this.dashboardData.analytics = analytics;
-          this.updateCharts();
-        }
-      },
-      error: (err) => console.error('Erreur analytics:', err)
-    });
-    this.subscriptions.push(analyticsSub);
-  }
-
-  private updateOlapAnalysis(): void {
-    const olapSub = this.dashboardService.getOlapAnalysis({
-      dimensions: [this.selectedOlapDimension],
-      timeRange: this.selectedTimeRange
-    }).subscribe({
-      next: (olap) => {
-        if (this.dashboardData) {
-          this.dashboardData.olap = olap;
-          this.updateCharts();
-        }
-      },
-      error: (err) => console.error('Erreur OLAP:', err)
-    });
-    this.subscriptions.push(olapSub);
-  }
-
-  // MÉTHODES DE FORMATAGE
-
-  formatNumber(num: number): string {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
-  }
-
-  formatDateSimple(dateStr: string): string {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', {
-      month: 'short',
-      day: 'numeric'
-    });
-  }
-
-  formatRoleName(role: string): string {
-    const roleMap: { [key: string]: string } = {
-      'ROLE_ADMIN': 'Admins',
-      'ROLE_PROF': 'Profs',
-      'ROLE_USER': 'Étudiants'
-    };
-    return roleMap[role] || role;
-  }
-
-  getGrowthIcon(current: number, previous: number): string {
-    if (current > previous) return '📈';
-    if (current < previous) return '📉';
-    return '➡️';
-  }
-
   getTabLabel(tab: string): string {
-    const labels: { [key: string]: string } = {
-      'overview': '📊 Vue d\'ensemble',
-      'analytics': '📈 Analytics',
-      'olap': '🧊 OLAP',
-      'realtime': '⚡ Temps Réel',
-      'performance': '🚀 Performance'
+    const labels: any = {
+      overview: 'Vue d\'ensemble',
+      analytics: 'Analyses',
+      olap: 'OLAP',
+      realtime: 'Temps réel',
+      performance: 'Performance'
     };
     return labels[tab] || tab;
   }
 
+  formatRoleName(role: string): string {
+    const roleMap: any = {
+      'ROLE_ADMIN': 'Administrateur',
+      'ROLE_PROF': 'Professeur',
+      'ROLE_USER': 'Étudiant'
+    };
+    return roleMap[role] || role;
+  }
+
+  formatNumber(val: number): string {
+    return val.toLocaleString('fr-FR');
+  }
+
+  getGrowthIcon(current: number, previous: number): string {
+    if (current > previous) return '⬆️';
+    if (current < previous) return '⬇️';
+    return '➡️';
+  }
+
+  isRecentActivity(timestamp: string): boolean {
+    const now = Date.now();
+    const date = new Date(timestamp).getTime();
+    return now - date < 1000 * 60 * 60; // moins d'1h
+  }
+
   getActivityIcon(category: string): string {
-    const icons: { [key: string]: string } = {
-      'auth': '🔐',
+    const map: any = {
       'user': '👤',
-      'utilisateur': '👤',
-      'ue': '📚',
       'forum': '💬',
       'post': '📝',
-      'admin': '⚙️',
-      'system': '🖥️',
-      'admin_panel': '⚙️',
-      'departement': '🏢',
-      'role': '🎭',
-      'priorite': '⭐',
-      'type': '🏷️',
-      'error': '❌',
-      'warning': '⚠️',
-      'success': '✅'
+      'ue': '📚',
+      'system': '🖥️'
     };
-    return icons[category] || '📄';
+    return map[category] || '🔔';
   }
 
   formatActivityAction(action: string): string {
-    const actionMap: { [key: string]: string } = {
-      'login': 'Connexion',
-      'logout': 'Déconnexion',
-      'create_user': 'Création utilisateur',
-      'update_user': 'Modification utilisateur',
-      'delete_user': 'Suppression utilisateur',
-      'create_ue': 'Création UE',
-      'update_ue': 'Modification UE',
-      'delete_ue': 'Suppression UE',
-      'create_forum': 'Création forum',
-      'add_message_forum': 'Message forum',
-      'add_reply_forum': 'Réponse forum',
-      'create_post': 'Création publication',
-      'get_all_users': 'Consultation utilisateurs',
-      'get_all_ues': 'Consultation UEs',
-      'get_current_user': 'Consultation profil',
-      'dashboard_overview_accessed': 'Accès dashboard',
-      'get_forum_by_id': 'Consultation forum',
-      'get_detail_forum': 'Détails forum',
-      'get_ue_by_id': 'Consultation UE',
-      'get_participants_by_ue': 'Liste participants UE'
-    };
-
-    return actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    if (!action) return '';
+    return action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  formatRelativeTime(timestamp: string | Date): string {
+  // Méthodes manquantes
+  formatRelativeTime(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
     const now = new Date();
-    const time = new Date(timestamp);
-    const diffMs = now.getTime() - time.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'À l\'instant';
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
-    return time.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-  }
-
-  formatTime(timestamp: string | Date): string {
-    return new Date(timestamp).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  }
-
-  formatTimePoint(timePoint: any): string {
-    if (timePoint.year && timePoint.month && timePoint.day && timePoint.hour) {
-      return `${timePoint.day}/${timePoint.month} ${timePoint.hour}h`;
-    }
-    if (timePoint.year && timePoint.month && timePoint.day) {
-      return `${timePoint.day}/${timePoint.month}/${timePoint.year}`;
-    }
-    if (timePoint.year && timePoint.month) {
-      return `${timePoint.month}/${timePoint.year}`;
-    }
-    return JSON.stringify(timePoint);
-  }
-
-  getUserDisplayName(user: any): string {
-    if (!user) return 'Utilisateur inconnu';
-
-    if (user.prenom && user.nom) {
-      return `${user.prenom} ${user.nom}`;
-    }
-
-    if (user.email) {
-      return user.email.split('@')[0];
-    }
-
-    return 'Utilisateur';
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diff < 60) return 'il y a quelques secondes';
+    if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
+    return date.toLocaleDateString('fr-FR');
   }
 
   getUserAvatar(user: any): string {
-    if (user?.photo) {
-      return user.photo.startsWith('http') ? user.photo : `http://localhost:3000/uploads/user/${user.photo}`;
+    if (!user?.photo) {
+      return 'assets/images/default-avatar.png';
     }
-    return '/assets/default-avatar.png';
-  }
-
-  isRecentActivity(timestamp: string | Date): boolean {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffMins = Math.floor((now.getTime() - time.getTime()) / 60000);
-    return diffMins < 30;
+    return `/uploads/photos/${user.photo}`;
   }
 
   getSeverityClass(severity: string): string {
-    return `severity-${severity.toLowerCase()}`;
+    if (!severity) return '';
+    const severityMap: { [key: string]: string } = {
+      high: 'high',
+      medium: 'medium',
+      low: 'low'
+    };
+    return severityMap[severity.toLowerCase()] || '';
   }
 
   getHealthStatus(): string {
-    if (!this.dashboardData?.realtime?.systemHealth) return 'unknown';
-
-    const health = this.dashboardData.realtime.systemHealth;
-    const errorRate = health.errorRate || 0;
-    const avgResponseTime = health.avgResponseTime || 0;
-
-    if (errorRate > 5 || avgResponseTime > 2000) return 'error';
-    if (errorRate > 2 || avgResponseTime > 1000) return 'warning';
+    if (!this.realtimeMetrics) return 'healthy';
+    if (this.realtimeMetrics.errorRate > 5) return 'error';
+    if (this.realtimeMetrics.errorRate > 2) return 'warning';
     return 'healthy';
   }
 
   getHealthStatusText(): string {
     const status = this.getHealthStatus();
     const statusMap: { [key: string]: string } = {
-      'healthy': '🟢 Système opérationnel',
-      'warning': '🟡 Attention requise',
-      'error': '🔴 Problème détecté',
-      'unknown': '⚫ Statut inconnu'
+      healthy: 'Système sain',
+      warning: 'Attention',
+      error: 'Problème détecté'
     };
     return statusMap[status] || 'Statut inconnu';
   }

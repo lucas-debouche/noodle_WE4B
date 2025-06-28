@@ -181,22 +181,6 @@
 .dashboard-content {
   padding: 32px;
   min-height: calc(100vh - 200px);
-
-  &.compact {
-    padding: 16px;
-
-    .metric-card {
-      padding: 16px;
-
-      h3 {
-        font-size: 20px;
-      }
-    }
-
-    .chart-card {
-      padding: 16px;
-    }
-  }
 }
 
 // ===============================

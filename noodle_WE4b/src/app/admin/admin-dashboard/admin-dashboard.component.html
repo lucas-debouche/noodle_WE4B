@@ -40,9 +40,6 @@
           <button (click)="toggleAutoRefresh()" [class.active]="autoRefresh" class="refresh-btn">
             {{ autoRefresh ? '⏸️' : '▶️' }} Auto-refresh
           </button>
-          <button (click)="toggleCompactView()" [class.active]="compactView" class="compact-btn">
-            📱 Compact
-          </button>
           <button (click)="refresh()" class="manual-refresh-btn">🔄 Actualiser</button>
         </div>
 
@@ -67,7 +64,7 @@
     </div>
 
     <!-- Contenu principal -->
-    <div class="dashboard-content" [class.compact]="compactView">
+    <div class="dashboard-content">
 
       <!-- ONGLET OVERVIEW -->
       <div *ngIf="activeTab === 'overview'" class="tab-content overview-tab">
@@ -118,15 +115,15 @@
         </div>
 
         <!-- Graphiques de base -->
-        <div class="charts-row">
+        <div class="charts-row" *ngIf="activeTab === 'overview'">
           <div class="chart-card half-width">
             <h3>👥 Répartition par Rôle</h3>
-            <canvas #pieChart width="400" height="300"></canvas>
+            <canvas #pieChart></canvas>
           </div>
 
           <div class="chart-card half-width">
             <h3>📈 Tendances d'Activité</h3>
-            <canvas #lineChart width="400" height="300"></canvas>
+            <canvas #lineChart></canvas>
           </div>
         </div>
 
@@ -134,7 +131,7 @@
         <div class="recent-activity-card">
           <h3>🕐 Activité Récente</h3>
           <div class="activity-list" *ngIf="dashboardData?.realtime?.recentActivities?.length; else noActivity">
-            <div *ngFor="let activity of dashboardData.realtime.recentActivities.slice(0, 10)"
+            <div *ngFor="let activity of dashboardData?.realtime?.recentActivities?.slice(0, 10)"
                  class="activity-item"
                  [class.recent]="isRecentActivity(activity.timestamp)">
               <div class="activity-icon">{{ getActivityIcon(activity.category) }}</div>
@@ -179,7 +176,7 @@
         <div class="analytics-section">
           <h3>🏢 Répartition par Département</h3>
           <div class="department-grid" *ngIf="dashboardData?.analytics?.uesByDepartment?.length; else noDepartments">
-            <div *ngFor="let dept of dashboardData.analytics.uesByDepartment" class="department-card">
+            <div *ngFor="let dept of dashboardData?.analytics?.uesByDepartment" class="department-card">
               <h4>{{ dept._id || 'Non assigné' }}</h4>
               <div class="dept-stats">
                 <span class="stat">{{ dept.count || 0 }} UEs</span>
@@ -202,7 +199,7 @@
         <div class="analytics-section">
           <h3>💬 Engagement Forums</h3>
           <div class="forum-analytics" *ngIf="dashboardData?.analytics?.forumActivity?.length; else noForums">
-            <div *ngFor="let forum of dashboardData.analytics.forumActivity.slice(0, 8)" class="forum-stat-card">
+            <div *ngFor="let forum of dashboardData?.analytics?.forumActivity?.slice(0, 8)" class="forum-stat-card">
               <div class="forum-info">
                 <h4>{{ forum.ue?.[0]?.code || 'UE' }}</h4>
                 <p>{{ forum.ue?.[0]?.intitule || 'Titre non disponible' }}</p>
@@ -224,8 +221,8 @@
         <!-- Graphique tendances détaillées -->
         <div class="analytics-section">
           <h3>📊 Analyse Temporelle</h3>
-          <div class="trend-chart-container">
-            <canvas #trendChart width="800" height="400"></canvas>
+          <div class="trend-chart-container" *ngIf="activeTab === 'analytics'">
+            <canvas #trendChart></canvas>
           </div>
         </div>
       </div>
@@ -246,8 +243,8 @@
         <!-- Cube d'activité utilisateur -->
         <div class="olap-section">
           <h4>🎯 Cube d'Activité (Temps × Rôle × Action)</h4>
-          <div class="heatmap-container">
-            <canvas #heatmapChart width="800" height="400"></canvas>
+          <div class="heatmap-container" *ngIf="activeTab === 'olap'">
+            <canvas #heatmapChart></canvas>
           </div>
 
           <!-- Drill-down controls -->
@@ -275,7 +272,7 @@
               </tr>
               </thead>
               <tbody>
-              <tr *ngFor="let row of dashboardData.olap.ueParticipationMatrix" class="matrix-row">
+              <tr *ngFor="let row of dashboardData?.olap?.ueParticipationMatrix" class="matrix-row">
                 <td>{{ row._id?.departmentName || 'N/A' }}</td>
                 <td>{{ row._id?.niveau || 'N/A' }}</td>
                 <td>{{ row._id?.semestre || 'N/A' }}</td>
@@ -293,7 +290,7 @@
         <div class="olap-section" *ngIf="dashboardData?.olap?.geographicalDistribution?.length">
           <h4>🗺️ Distribution Géographique</h4>
           <div class="geo-distribution">
-            <div *ngFor="let region of dashboardData.olap.geographicalDistribution" class="geo-card">
+            <div *ngFor="let region of dashboardData?.olap?.geographicalDistribution" class="geo-card">
               <h5>{{ region._id }}</h5>
               <div class="geo-stats">
                 <span class="total-users">{{ region.totalUsers || 0 }} utilisateurs</span>
@@ -321,7 +318,7 @@
             </div>
 
             <div class="time-series-data">
-              <div *ngFor="let point of dashboardData.olap.timeSeriesAnalysis.slice(0, 20)" class="time-point">
+              <div *ngFor="let point of dashboardData?.olap?.timeSeriesAnalysis?.slice(0, 20)" class="time-point">
                 <div class="time-label">
                   {{ formatTimePoint(point._id) }}
                 </div>
@@ -375,8 +372,8 @@
 
           <div class="realtime-card connections">
             <h3>🔗 Connexions/sec</h3>
-            <div class="connection-chart">
-              <canvas #connectionChart width="300" height="200"></canvas>
+            <div class="connection-chart" *ngIf="activeTab === 'realtime'">
+              <canvas #connectionChart></canvas>
             </div>
           </div>
         </div>
@@ -385,7 +382,7 @@
         <div class="realtime-section" *ngIf="dashboardData?.realtime?.currentSessions?.length">
           <h3>🔴 Sessions Actives</h3>
           <div class="sessions-list">
-            <div *ngFor="let session of dashboardData.realtime.currentSessions.slice(0, 15)" class="session-item">
+            <div *ngFor="let session of dashboardData?.realtime?.currentSessions?.slice(0, 15)" class="session-item">
               <div class="session-user">
                 <img [src]="getUserAvatar(session.user)" alt="Avatar" class="user-avatar">
                 <span class="user-name">{{ getUserDisplayName(session.user) }}</span>
@@ -406,7 +403,7 @@
         <div class="realtime-section" *ngIf="dashboardData?.realtime?.recentActivities?.length">
           <h3>⚡ Flux d'Activité en Temps Réel</h3>
           <div class="activity-stream">
-            <div *ngFor="let activity of dashboardData.realtime.recentActivities.slice(0, 20)"
+            <div *ngFor="let activity of dashboardData?.realtime?.recentActivities?.slice(0, 20)"
                  class="stream-item"
                  [class.error]="activity.action.includes('error')"
                  [class.success]="activity.action.includes('success')">
@@ -444,15 +441,14 @@
         </div>
 
         <!-- Graphiques de performance -->
-        <div class="performance-charts">
+        <div class="performance-charts" *ngIf="activeTab === 'performance'">
           <div class="chart-container">
             <h4>📈 Temps de Réponse par Action</h4>
-            <canvas #responseTimeChart width="400" height="300"></canvas>
+            <canvas #responseTimeChart></canvas>
           </div>
-
           <div class="chart-container">
             <h4>🚨 Taux d'Erreur par Heure</h4>
-            <canvas #errorRateChart width="400" height="300"></canvas>
+            <canvas #errorRateChart></canvas>
           </div>
         </div>
 
@@ -460,7 +456,7 @@
         <div class="bottleneck-analysis" *ngIf="dashboardData?.performance?.bottlenecks?.length">
           <h4>🚧 Analyse des Goulots d'Étranglement</h4>
           <div class="bottleneck-list">
-            <div *ngFor="let bottleneck of dashboardData.performance.bottlenecks" class="bottleneck-item">
+            <div *ngFor="let bottleneck of dashboardData?.performance?.bottlenecks" class="bottleneck-item">
               <div class="bottleneck-severity" [ngClass]="getSeverityClass(bottleneck.severity)">
                 {{ bottleneck.severity }}
               </div>
