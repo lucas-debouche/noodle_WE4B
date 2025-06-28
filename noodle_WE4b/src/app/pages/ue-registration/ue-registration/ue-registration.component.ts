@@ -53,19 +53,50 @@ export class UeRegistrationComponent implements OnInit {
 
   // ✨ NOUVELLE MÉTHODE : Charger UE pour édition
   private async loadUeForEdit(ueId: string) {
-    console.log('🔄 Chargement UE pour édition:', ueId);
+    console.log('🔄 ========== DÉBUT loadUeForEdit ==========');
+    console.log('🔄 ID reçu:', ueId, 'Type:', typeof ueId);
+
     this.loading = true;
     this.error = '';
 
     try {
+      console.log('🌐 Appel API getUeById...');
       const ue = await this.uesService.getUeById(ueId).toPromise();
 
-      if (ue) {
-        this.editingUe = ue;
-        this.isEditMode = true;
-        console.log('✅ UE chargée pour édition:', ue.code);
+      console.log('📥 UE reçue du service:', ue);
+
+      if (ue && ue._id) {
+        console.log('✅ UE valide reçue:', {
+          id: ue._id,
+          code: ue.code,
+          intitule: ue.intitule,
+          participants: ue.participants?.length || 0
+        });
+
+        // ✨ LOGGING DES CHANGEMENTS D'ÉTAT
+        console.log('🔄 État AVANT mise à jour:', {
+          isEditMode: this.isEditMode,
+          editingUe: this.editingUe?._id
+        });
+
+        // ✨ FORCER LE CHANGEMENT DE RÉFÉRENCE
+        this.editingUe = null; // ✅ Important : réinitialiser d'abord
+        this.isEditMode = false;
+
+        // Puis définir les nouvelles valeurs avec un délai
+        setTimeout(() => {
+          this.isEditMode = true;
+          this.editingUe = { ...ue }; // ✅ Créer une nouvelle référence
+
+          console.log('🔄 État APRÈS mise à jour:', {
+            isEditMode: this.isEditMode,
+            editingUe: this.editingUe?._id
+          });
+        }, 0);
+
       } else {
-        throw new Error('UE non trouvée');
+        console.error('❌ UE reçue invalide:', ue);
+        throw new Error('UE non trouvée ou invalide');
       }
     } catch (error) {
       console.error('❌ Erreur chargement UE:', error);
@@ -76,6 +107,7 @@ export class UeRegistrationComponent implements OnInit {
       this.router.navigate(['/admin/ue-registration'], { replaceUrl: true });
     } finally {
       this.loading = false;
+      console.log('🔄 ========== FIN loadUeForEdit ==========');
     }
   }
 
@@ -182,7 +214,8 @@ export class UeRegistrationComponent implements OnInit {
 
   // ✨ CORRECTION : Gestion du mode édition avec navigation
   onEditUe(ue: Ue) {
-    console.log('✏️ onEditUe appelé avec:', ue);
+    console.log('✏️ ========== onEditUe APPELÉ ==========');
+    console.log('✏️ UE reçue:', ue);
     console.log('📝 ID de l\'UE:', ue._id);
 
     // Vérifier que l'ID existe
@@ -192,9 +225,9 @@ export class UeRegistrationComponent implements OnInit {
       return;
     }
 
-    // ✨ NAVIGUER VERS L'URL D'ÉDITION AU LIEU DE MODIFIER L'ÉTAT DIRECTEMENT
     console.log('🔄 Navigation vers édition UE:', ue._id);
     this.router.navigate(['/admin/ue-registration', ue._id]);
+    console.log('✏️ ========== Fin onEditUe ==========');
   }
 
   onCancelEdit() {
