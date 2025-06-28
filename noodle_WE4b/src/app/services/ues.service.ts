@@ -152,6 +152,12 @@ export class UesService {
   getParticipantsByUe(ueId: string): Observable<any[]> {
     console.log('👥 UesService.getParticipantsByUe appelé pour UE:', ueId);
 
+    // ✨ VALIDATION DE L'ID CÔTÉ SERVICE
+    if (!ueId || ueId === 'undefined' || ueId === 'null' || ueId.toString().trim() === '') {
+      console.error('❌ ID d\'UE invalide dans getParticipantsByUe:', ueId);
+      return throwError(() => new Error('ID d\'UE invalide'));
+    }
+
     return this.http.get<any>(`${this.apiUrl}/${ueId}/participants`)
       .pipe(
         map(response => {

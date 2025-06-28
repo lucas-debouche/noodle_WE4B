@@ -102,13 +102,25 @@ export class UeFormComponent implements OnChanges {
   }
 
   private async loadAssignedUsers() {
-    if (!this.editingUe) return;
+    if (!this.editingUe || !this.editingUe._id) {
+      console.log('⚠️ Aucune UE à éditer ou ID manquant');
+      this.assignedUsers = [];
+      return;
+    }
 
     try {
       console.log('👥 Chargement des utilisateurs assignés pour UE:', this.editingUe._id);
 
-      console.log('🔍 Récupération des participants pour l\'UE:', this.editingUe._id);
-      const participants: any = await this.uesService.getParticipantsByUe(this.editingUe._id).toPromise();
+      // ✨ VALIDATION DE L'ID AVANT L'APPEL
+      const ueId = this.editingUe._id;
+      if (!ueId || ueId === 'undefined' || ueId.toString().trim() === '') {
+        console.error('❌ ID d\'UE invalide dans loadAssignedUsers:', ueId);
+        this.assignedUsers = [];
+        return;
+      }
+
+      console.log('🔍 Récupération des participants pour l\'UE:', ueId);
+      const participants: any = await this.uesService.getParticipantsByUe(ueId).toPromise();
 
       console.log('📥 Participants reçus:', participants);
 
@@ -127,7 +139,7 @@ export class UeFormComponent implements OnChanges {
       console.error('❌ Erreur lors du chargement des utilisateurs assignés:', error);
       this.assignedUsers = [];
 
-      //  Essayer de récupérer depuis les données de l'UE elle-même
+      // Essayer de récupérer depuis les données de l'UE elle-même
       if (this.editingUe.participants && Array.isArray(this.editingUe.participants)) {
         console.log('🔄 Utilisation des participants depuis les données UE');
         this.tryLoadUsersFromIds(this.editingUe.participants);

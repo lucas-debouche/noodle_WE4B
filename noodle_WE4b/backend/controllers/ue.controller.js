@@ -775,7 +775,29 @@ exports.searchUes = async (req, res) => {
 exports.getParticipantsByUe = async (req, res) => {
   try {
     const ueId = req.params.ueId;
+
+    // ✨ VALIDATION RENFORCÉE DE L'ID
     console.log(`🔍 Recherche participants pour UE: ${ueId}`);
+    console.log(`📝 Type de ueId: ${typeof ueId}`);
+    console.log(`📝 Valeur de ueId: ${JSON.stringify(ueId)}`);
+
+    // Vérifier que l'ID n'est pas undefined, null ou vide
+    if (!ueId || ueId === 'undefined' || ueId === 'null' || ueId.trim() === '') {
+      console.error(`❌ ID d'UE invalide pour getParticipantsByUe:`, ueId);
+      return res.status(400).json({
+        success: false,
+        message: 'ID d\'UE manquant ou invalide'
+      });
+    }
+
+    // Vérifier que c'est un ObjectId valide
+    if (!mongoose.Types.ObjectId.isValid(ueId)) {
+      console.error(`❌ ID d'UE n'est pas un ObjectId valide:`, ueId);
+      return res.status(400).json({
+        success: false,
+        message: 'Format d\'ID d\'UE invalide'
+      });
+    }
 
     // Récupérer l'UE
     let ue;
@@ -848,7 +870,7 @@ exports.getParticipantsByUe = async (req, res) => {
 
     await logAction({
       action: 'get_participants_by_ue',
-      category: 'user',
+      category: 'ue', // ✅ CORRECTION : category valide
       userId: req.user ? req.user.userId : null,
       targetId: ue._id.toString(),
       details: {
@@ -859,11 +881,22 @@ exports.getParticipantsByUe = async (req, res) => {
       }
     });
 
+    res.json({
+      success: true,
+      data: participants,
+      ue: {
+        id: ue._id.toString(),
+        code: ue.code,
+        intitule: ue.intitule,
+        participantCount: participants.length
+      }
+    });
+
   } catch (err) {
     console.error('❌ Error in getParticipantsByUe:', err);
     await logAction({
       action: 'get_participants_by_ue_error',
-      category: 'ue',
+      category: 'ue', // ✅ CORRECTION : category valide
       userId: req.user ? req.user.userId : null,
       targetId: req.params.ueId,
       details: { error: err.message }
@@ -882,26 +915,47 @@ exports.addParticipantToUe = async (req, res) => {
     const ueId = req.params.ueId;
     const { utilisateurId } = req.body;
 
-    await UeUserSyncService.addUserToUe(utilisateurId, ueId);
-    await UeUserSyncService.syncAllUsersForUe(ueId);
-    console.log('✅ Synchronisation effectuée après ajout participant');
+    // ✨ VALIDATION DE L'ID
+    if (!validateUeId(ueId, res, 'addParticipantToUe')) return;
+
+    console.log(`Ajout participant UE ${ueId}, utilisateur ${utilisateurId}`);
+
+    // Utiliser le service de synchronisation
+    const result = await UeUserSyncService.addUserToUe(utilisateurId, ueId);
 
     await logAction({
       action: 'add_participant_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
       targetId: ueId,
-      details: { success: true }
+      details: {
+        participantId: utilisateurId,
+        participantName: `${result.user.prenom} ${result.user.nom}`,
+        success: true
+      }
     });
 
     res.status(201).json({
       success: true,
-      message: 'Participant ajouté avec succès',
-      data: result
+      message: 'Participant ajouté avec succès (synchronisé)',
+      data: {
+        ue: result.ue.intitule,
+        participant: `${result.user.prenom} ${result.user.nom}`
+      }
     });
 
   } catch (err) {
     console.error('Error in addParticipantToUe:', err);
+    await logAction({
+      action: 'add_participant_ue_error',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.ueId,
+      details: {
+        participantId: req.body.utilisateurId,
+        error: err.message
+      }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -909,32 +963,48 @@ exports.addParticipantToUe = async (req, res) => {
     });
   }
 };
-
 // DELETE /api/ue/:ueId/participants/:utilisateurId → retirer un participant d'une UE
 exports.removeParticipantFromUe = async (req, res) => {
   try {
     const { ueId, utilisateurId } = req.params;
 
-    await UeUserSyncService.removeUserFromUe(utilisateurId, ueId);
-    await UeUserSyncService.syncAllUsersForUe(ueId);
-    console.log('✅ Synchronisation effectuée après retrait participant');
+    // ✨ VALIDATION DE L'ID
+    if (!validateUeId(ueId, res, 'removeParticipantFromUe')) return;
+
+    console.log(`Retrait participant UE ${ueId}, utilisateur ${utilisateurId}`);
+
+    // Utiliser le service de synchronisation
+    const result = await UeUserSyncService.removeUserFromUe(utilisateurId, ueId);
 
     await logAction({
       action: 'remove_participant_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
       targetId: ueId,
-      details: { success: true }
+      details: {
+        participantId: utilisateurId,
+        participantName: `${result.user.prenom} ${result.user.nom}`,
+        success: true
+      }
     });
 
     res.json({
       success: true,
-      message: 'Participant retiré avec succès',
-      data: result
+      message: 'Participant retiré avec succès (synchronisé)'
     });
 
   } catch (err) {
     console.error('Error in removeParticipantFromUe:', err);
+    await logAction({
+      action: 'remove_participant_ue_error',
+      category: 'ue',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.ueId,
+      details: {
+        participantId: req.params.utilisateurId,
+        error: err.message
+      }
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -1043,3 +1113,32 @@ exports.getParticipantsStats = async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
+
+
+function validateUeId(ueId, res, actionName = 'action') {
+  console.log(`🔍 Validation ID pour ${actionName}: ${ueId}`);
+  console.log(`📝 Type: ${typeof ueId}, Valeur: ${JSON.stringify(ueId)}`);
+
+  // Vérifier que l'ID n'est pas undefined, null ou vide
+  if (!ueId || ueId === 'undefined' || ueId === 'null' || ueId.toString().trim() === '') {
+    console.error(`❌ ID d'UE invalide pour ${actionName}:`, ueId);
+    res.status(400).json({
+      success: false,
+      message: 'ID d\'UE manquant ou invalide'
+    });
+    return false;
+  }
+
+  // Vérifier que c'est un ObjectId valide
+  if (!mongoose.Types.ObjectId.isValid(ueId)) {
+    console.error(`❌ ID d'UE n'est pas un ObjectId valide pour ${actionName}:`, ueId);
+    res.status(400).json({
+      success: false,
+      message: 'Format d\'ID d\'UE invalide'
+    });
+    return false;
+  }
+
+  return true;
+}
+
