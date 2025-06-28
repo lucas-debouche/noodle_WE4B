@@ -175,7 +175,6 @@ export class UeRegistrationComponent implements OnInit {
     }, 5000);
   }
 
-  // ✅ NOUVELLE MÉTHODE: Actualiser uniquement les UEs
   private async refreshUesList() {
     try {
       console.log('🔄 Actualisation de la liste des UEs...');

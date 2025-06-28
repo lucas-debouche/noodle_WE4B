@@ -56,9 +56,7 @@ function sanitizeForMongoDB(obj, seen = new Set()) {
   return result;
 }
 
-/**
- * Version corrigée de logAction qui gère les références circulaires
- */
+
 async function logAction(logData) {
   try {
     // Nettoyer les données avant sauvegarde
