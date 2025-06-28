@@ -3,6 +3,7 @@ const Ue = require('../models/ue.model');
 const mongoose = require('mongoose');
 const { logAction } = require('../utils/logActions');
 const bcrypt = require('bcrypt'); // Ajout de bcrypt
+const UeUserSyncService = require('../utils/syncUtils');
 
 // GET /api/utilisateur → récupérer tous les utilisateurs
 exports.getAllUtilisateurs = async (req, res) => {
@@ -278,147 +279,26 @@ exports.updateUtilisateur = async (req, res) => {
     const { nom, prenom, email, plainPassword } = req.body;
 
     console.log('🔄 Mise à jour utilisateur ID:', req.params.userId);
-    console.log('📋 Nouvelles UEs:', ues);
 
-    // Récupérer l'utilisateur actuel pour comparer les UEs
+    // Récupérer l'utilisateur actuel
     const currentUser = await Utilisateur.findById(req.params.userId);
     if (!currentUser) {
-      await logAction({
-        action: 'update_user_not_found',
-        category: 'user',
-        userId: req.params.userId,
-        details: { success: false }
-      });
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
-    const currentUes = currentUser.ues || [];
-    const newUes = ues || [];
-
-    console.log('📋 UEs actuelles:', currentUes);
-    console.log('📋 Nouvelles UEs:', newUes);
-
-    const uesProcessed = [];
-    const uesErrors = [];
-
-    // 1. Retirer l'utilisateur des UEs qu'il n'a plus
-    const uesToRemove = currentUes.filter(ueId => !newUes.includes(ueId));
-    console.log('➖ UEs à retirer:', uesToRemove);
-
-    for (const ueId of uesToRemove) {
-      try {
-        let ue = null;
-
-        if (mongoose.Types.ObjectId.isValid(ueId)) {
-          ue = await Ue.findById(ueId);
-        }
-        if (!ue) {
-          ue = await Ue.findOne({ id: ueId });
-        }
-        if (!ue) {
-          ue = await Ue.findOne({ code: ueId });
-        }
-
-        if (ue && ue.participants) {
-          const userObjectId = currentUser._id;
-          const initialLength = ue.participants.length;
-
-          // Filtrer en utilisant equals pour ObjectId
-          ue.participants = ue.participants.filter(id => {
-            if (id.equals) {
-              return !id.equals(userObjectId);
-            }
-            return id.toString() !== userObjectId.toString();
-          });
-
-          if (ue.participants.length < initialLength) {
-            await ue.save();
-            uesProcessed.push({
-              action: 'removed',
-              id: ue._id,
-              code: ue.code,
-              intitule: ue.intitule
-            });
-            console.log(`➖ Utilisateur retiré de l'UE: ${ue.code}`);
-          }
-        }
-      } catch (removeError) {
-        console.error(`❌ Erreur lors du retrait de l'UE ${ueId}:`, removeError.message);
-        uesErrors.push({
-          action: 'remove',
-          ueId: ueId,
-          error: removeError.message
-        });
-      }
+    // ✨ NOUVELLE LOGIQUE : Utiliser le service de synchronisation pour les UEs
+    let uesSyncResult = null;
+    if (ues !== undefined) {
+      uesSyncResult = await UeUserSyncService.updateUserUes(req.params.userId, ues);
     }
 
-    // 2. Ajouter l'utilisateur aux nouvelles UEs
-    const uesToAdd = newUes.filter(ueId => !currentUes.includes(ueId));
-    console.log('➕ UEs à ajouter:', uesToAdd);
-
-    for (const ueId of uesToAdd) {
-      try {
-        let ue = null;
-
-        if (mongoose.Types.ObjectId.isValid(ueId)) {
-          ue = await Ue.findById(ueId);
-        }
-        if (!ue) {
-          ue = await Ue.findOne({ id: ueId });
-        }
-        if (!ue) {
-          ue = await Ue.findOne({ code: ueId });
-        }
-
-        if (ue) {
-          if (!ue.participants) {
-            ue.participants = [];
-          }
-
-          const userObjectId = currentUser._id;
-          const isAlreadyParticipant = ue.participants.some(id => {
-            if (id.equals) {
-              return id.equals(userObjectId);
-            }
-            return id.toString() === userObjectId.toString();
-          });
-
-          if (!isAlreadyParticipant) {
-            ue.participants.push(userObjectId);
-            await ue.save();
-            uesProcessed.push({
-              action: 'added',
-              id: ue._id,
-              code: ue.code,
-              intitule: ue.intitule
-            });
-            console.log(`➕ Utilisateur ajouté à l'UE: ${ue.code}`);
-          }
-        } else {
-          console.log(`⚠️ UE non trouvée pour ID: ${ueId}`);
-          uesErrors.push({
-            action: 'add',
-            ueId: ueId,
-            error: 'UE non trouvée'
-          });
-        }
-      } catch (addError) {
-        console.error(`❌ Erreur lors de l'ajout à l'UE ${ueId}:`, addError.message);
-        uesErrors.push({
-          action: 'add',
-          ueId: ueId,
-          error: addError.message
-        });
-      }
-    }
-
-    // 3. Mettre à jour l'utilisateur
+    // Mettre à jour les autres champs de l'utilisateur
     const updateData = {
       nom,
       prenom,
       email,
       role: roles,
-      ues: newUes
+      ues: ues // Déjà mis à jour par le service de sync
     };
 
     if (photo) {
@@ -426,7 +306,6 @@ exports.updateUtilisateur = async (req, res) => {
     }
 
     if (plainPassword) {
-      // Hash du mot de passe si fourni
       updateData.mot_passe = await bcrypt.hash(plainPassword, 10);
     }
 
@@ -442,21 +321,21 @@ exports.updateUtilisateur = async (req, res) => {
       userId: req.params.userId,
       details: {
         updatedFields: Object.keys(updateData),
-        uesAdded: uesProcessed.filter(ue => ue.action === 'added').length,
-        uesRemoved: uesProcessed.filter(ue => ue.action === 'removed').length,
+        uesAdded: uesSyncResult ? uesSyncResult.uesToAdd.length : 0,
+        uesRemoved: uesSyncResult ? uesSyncResult.uesToRemove.length : 0,
+        synchronized: true,
         success: true
       }
     });
 
     res.json({
-      message: 'Utilisateur modifié avec succès',
+      message: 'Utilisateur modifié avec succès (synchronisé)',
       utilisateur: utilisateur,
-      uesProcessed: uesProcessed,
-      uesErrors: uesErrors.length > 0 ? uesErrors : undefined,
+      uesSyncResult: uesSyncResult,
       summary: {
-        added: uesProcessed.filter(ue => ue.action === 'added').length,
-        removed: uesProcessed.filter(ue => ue.action === 'removed').length,
-        errors: uesErrors.length
+        added: uesSyncResult ? uesSyncResult.uesToAdd.length : 0,
+        removed: uesSyncResult ? uesSyncResult.uesToRemove.length : 0,
+        synchronized: true
       }
     });
 
@@ -622,6 +501,57 @@ exports.getUesByUserId = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
+      error: err.message
+    });
+  }
+};
+
+exports.deleteUtilisateur = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    console.log('🗑️ Suppression utilisateur ID:', userId);
+
+    // Utiliser le service de synchronisation pour supprimer proprement
+    const result = await UeUserSyncService.deleteUserAndCleanUes(userId);
+
+    await logAction({
+      action: 'delete_user',
+      category: 'user',
+      userId: req.user ? req.user.userId : null,
+      targetId: userId,
+      details: {
+        deletedUser: result.deletedUser,
+        uesCount: result.uesCount,
+        uesCleanedCount: result.cleanedUes.length,
+        cleanedUes: result.cleanedUes,
+        synchronized: true,
+        success: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Utilisateur supprimé avec succès et UEs mises à jour',
+      details: {
+        deletedUser: result.deletedUser,
+        uesAffected: result.uesCount,
+        uesUpdated: result.cleanedUes.length,
+        cleanedUes: result.cleanedUes
+      }
+    });
+
+  } catch (err) {
+    console.error("Erreur lors de la suppression de l'utilisateur :", err);
+    await logAction({
+      action: 'delete_user_error',
+      category: 'user',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.userId,
+      details: { error: err.message }
+    });
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la suppression de l'utilisateur",
       error: err.message
     });
   }

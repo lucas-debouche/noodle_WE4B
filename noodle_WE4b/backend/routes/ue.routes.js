@@ -109,4 +109,33 @@ router.post('/:code/upload-photo', authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']), 
   }
 });
 
+router.get('/audit/ue-user-sync',
+  authMiddleware(['ROLE_ADMIN']),
+  async (req, res) => {
+    try {
+      const result = await UeUserSyncService.auditAndRepair();
+
+      await logAction({
+        action: 'audit_ue_user_sync',
+        category: 'admin',
+        userId: req.user ? req.user.userId : null,
+        details: result
+      });
+
+      res.json({
+        success: true,
+        message: `Audit terminé. ${result.inconsistencies} incohérences trouvées et corrigées.`,
+        result: result
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Erreur lors de l\'audit',
+        error: error.message
+      });
+    }
+  }
+);
+
 module.exports = router;

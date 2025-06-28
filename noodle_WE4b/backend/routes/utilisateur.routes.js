@@ -120,5 +120,5 @@ router.post('/', uploadCreation.single('photo'), utilisateurController.createUti
 
 // PUT /:userId → modifier un utilisateur
 router.put('/:userId', uploadCreation.single('photo'), utilisateurController.updateUtilisateur);
-
+router.delete('/:userId', authMiddleware(['ROLE_ADMIN']), utilisateurController.deleteUtilisateur);
 module.exports = router;

@@ -6,6 +6,8 @@ const { logAction } = require("../utils/logActions");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const UeUserSyncService = require('../utils/syncUtils');
+
 
 // Configuration Multer pour les images d'UE
 const tempStorage = multer.diskStorage({
@@ -491,61 +493,35 @@ exports.deleteUe = async (req, res) => {
   console.log(`🗑️ deleteUe → ueId = ${ueId}`);
 
   try {
-    // Vérifier que l'UE existe
-    let ue;
+    // Utiliser le service de synchronisation pour supprimer proprement
+    const result = await UeUserSyncService.deleteUeAndCleanUsers(ueId);
 
-    if (mongoose.Types.ObjectId.isValid(ueId)) {
-      ue = await Ue.findById(ueId);
-    }
-
-    if (!ue) {
-      ue = await Ue.findOne({ id: ueId });
-    }
-
-    if (!ue) {
-      ue = await Ue.findOne({ code: ueId });
-    }
-
-    if (!ue) {
-      console.log(`❌ UE non trouvée pour ID: ${ueId}`);
-      return res.status(404).json({
-        success: false,
-        message: 'UE non trouvée'
-      });
-    }
-
-    console.log(`✅ UE trouvée: ${ue.code} - ${ue.intitule}`);
-
-    // Supprimer l'image associée
-    if (ue.image) {
-      const imagePath = path.join(__dirname, '../uploads/ue', ue.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-        console.log('✅ Image supprimée:', ue.image);
-      }
-    }
-
-    // Supprimer l'UE
-    await Ue.findByIdAndDelete(ue._id);
-    console.log('✅ UE supprimée de la base de données');
-
-    // Logger l'action
+    // Logger l'action avec les détails du nettoyage
     await logAction({
       action: 'delete_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
-      targetId: ue._id.toString(),
+      targetId: ueId,
       details: {
-        code: ue.code,
-        intitule: ue.intitule,
-        participantCount: ue.participants ? ue.participants.length : 0,
+        code: result.deletedUe.code,
+        intitule: result.deletedUe.intitule,
+        participantCount: result.participantCount,
+        usersCleanedCount: result.cleanedUsers.length,
+        cleanedUsers: result.cleanedUsers,
+        synchronized: true,
         success: true
       }
     });
 
     res.json({
       success: true,
-      message: 'UE supprimée avec succès'
+      message: 'UE supprimée avec succès et utilisateurs mis à jour',
+      details: {
+        deletedUe: result.deletedUe,
+        participantsAffected: result.participantCount,
+        usersUpdated: result.cleanedUsers.length,
+        cleanedUsers: result.cleanedUsers
+      }
     });
 
   } catch (err) {
@@ -563,7 +539,6 @@ exports.deleteUe = async (req, res) => {
     });
   }
 };
-
 // GET /api/ue/search → rechercher des UEs
 exports.searchUes = async (req, res) => {
   try {
@@ -724,164 +699,96 @@ exports.addParticipantToUe = async (req, res) => {
 
     console.log(`Ajout participant UE ${ueId}, utilisateur ${utilisateurId}`);
 
-    // Vérifier que l'UE existe
-    let ue;
-    if (mongoose.Types.ObjectId.isValid(ueId)) {
-      ue = await Ue.findById(ueId);
-    }
-    if (!ue) {
-      ue = await Ue.findOne({ id: ueId });
-    }
-    if (!ue) {
-      ue = await Ue.findOne({ code: ueId });
-    }
+    // Utiliser le service de synchronisation
+    const result = await UeUserSyncService.addUserToUe(utilisateurId, ueId);
 
-    if (!ue) {
-      return res.status(404).json({ message: 'UE non trouvée' });
-    }
-
-    // Vérifier que l'utilisateur existe
-    let utilisateur;
-    if (mongoose.Types.ObjectId.isValid(utilisateurId)) {
-      utilisateur = await Utilisateur.findById(utilisateurId);
-    }
-    if (!utilisateur) {
-      utilisateur = await Utilisateur.findOne({ id: utilisateurId });
-    }
-    if (!utilisateur) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
-    }
-
-    // Vérifier si l'utilisateur est déjà participant
-    const userIdStr = utilisateur._id.toString();
-    if (ue.participants && ue.participants.includes(userIdStr)) {
-      return res.status(400).json({ message: 'Utilisateur déjà inscrit à cette UE' });
-    }
-
-    // Ajouter le participant
-    if (!ue.participants) {
-      ue.participants = [];
-    }
-    ue.participants.push(userIdStr);
-    await ue.save();
-
-    // Logger l'action
     await logAction({
       action: 'add_participant_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
       targetId: ueId,
       details: {
-        participantId: utilisateur._id.toString(),
-        participantName: `${utilisateur.prenom} ${utilisateur.nom}`,
+        participantId: utilisateurId,
+        participantName: `${result.user.prenom} ${result.user.nom}`,
         success: true
       }
     });
 
     res.status(201).json({
       success: true,
-      message: 'Participant ajouté avec succès',
+      message: 'Participant ajouté avec succès (synchronisé)',
       data: {
-        ue: ue.intitule,
-        participant: `${utilisateur.prenom} ${utilisateur.nom}`
+        ue: result.ue.intitule,
+        participant: `${result.user.prenom} ${result.user.nom}`
       }
     });
 
   } catch (err) {
     console.error('Error in addParticipantToUe:', err);
     await logAction({
-      action:'remove_participant_ue_error',
+      action: 'add_participant_ue_error',
       category: 'ue',
-      userId: req.user? req.user.userId : null,
+      userId: req.user ? req.user.userId : null,
       targetId: req.params.ueId,
       details: {
         participantId: req.body.utilisateurId,
         error: err.message
       }
     });
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: err.message
+    });
   }
 };
 
 // DELETE /api/ue/:ueId/participants/:utilisateurId → retirer un participant d'une UE
 exports.removeParticipantFromUe = async (req, res) => {
-  console.log('removeParticipantFromUe → req.params =', req.params);
   try {
     const { ueId, utilisateurId } = req.params;
 
     console.log(`Retrait participant UE ${ueId}, utilisateur ${utilisateurId}`);
 
-    // Vérifier que l'UE existe
-    let ue;
-    if (mongoose.Types.ObjectId.isValid(ueId)) {
-      ue = await Ue.findById(ueId);
-    }
-    if (!ue) {
-      ue = await Ue.findOne({ id: ueId });
-    }
-    if (!ue) {
-      ue = await Ue.findOne({ code: ueId });
-    }
+    // Utiliser le service de synchronisation
+    const result = await UeUserSyncService.removeUserFromUe(utilisateurId, ueId);
 
-    if (!ue) {
-      return res.status(404).json({ message: 'UE non trouvée' });
-    }
-
-    // Vérifier que l'utilisateur existe
-    let utilisateur;
-    if (mongoose.Types.ObjectId.isValid(utilisateurId)) {
-      utilisateur = await Utilisateur.findById(utilisateurId);
-    }
-    if (!utilisateur) {
-      utilisateur = await Utilisateur.findOne({ id: utilisateurId });
-    }
-    if (!utilisateur) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
-    }
-
-    // Retirer le participant de la liste
-    const userIdStr = utilisateur._id.toString();
-    if (!ue.participants || !ue.participants.includes(userIdStr)) {
-      return res.status(404).json({ message: 'Utilisateur non inscrit à cette UE' });
-    }
-
-    ue.participants = ue.participants.filter(id => id !== userIdStr);
-    await ue.save();
-
-    // Logger l'action
     await logAction({
       action: 'remove_participant_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
       targetId: ueId,
       details: {
-        participantId: utilisateur._id.toString(),
-        participantName: `${utilisateur.prenom} ${utilisateur.nom}`,
+        participantId: utilisateurId,
+        participantName: `${result.user.prenom} ${result.user.nom}`,
         success: true
       }
     });
 
     res.json({
       success: true,
-      message: 'Participant retiré avec succès'
+      message: 'Participant retiré avec succès (synchronisé)'
     });
 
   } catch (err) {
     console.error('Error in removeParticipantFromUe:', err);
     await logAction({
-      action:'remove_participant_ue_error',
+      action: 'remove_participant_ue_error',
       category: 'ue',
-      userId: req.user? req.user.userId : null,
+      userId: req.user ? req.user.userId : null,
       targetId: req.params.ueId,
       details: {
         participantId: req.params.utilisateurId,
         error: err.message
       }
     });
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: err.message
+    });
   }
 };
-
 // GET /api/ue/:ueId/participants/stats → statistiques des participants d'une UE
 exports.getParticipantsStats = async (req, res) => {
   try {
