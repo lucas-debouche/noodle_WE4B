@@ -6,7 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
-// Middlewares et routes
+// Middlewares et routes existants
 const authMiddleware = require('./security/middleware_auth');
 
 const authRoutes = require('./routes/auth.routes');
@@ -19,13 +19,15 @@ const roleRoutes = require('./routes/roles.routes');
 const departementRoutes = require('./routes/departement.routes');
 const ueRoutes = require('./routes/ue.routes');
 const adminPanelRoutes = require('./routes/admin_panel.routes');
+
+// AJOUT DES ROUTES DASHBOARD
 const dashboardRoutes = require('./routes/admin-dashboard.routes');
 
 const app = express();
 const PORT = 3000;
 
 // ==========================================
-// CONFIGURATION DE BASE
+// CONFIGURATION DE BASE (inchangée)
 // ==========================================
 
 // Créer les dossiers d'upload s'ils n'existent pas
@@ -56,7 +58,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ==========================================
-// CONNEXION À MONGODB
+// CONNEXION À MONGODB (inchangée)
 // ==========================================
 mongoose.connect('mongodb://localhost:27017/noodle')
   .then(() => console.log('✅ Connecté à MongoDB'))
@@ -74,15 +76,19 @@ app.use('/api/forums', forumsRoutes);
 app.use('/api/role', roleRoutes);
 app.use('/api/ue', ueRoutes);
 app.use('/api/admin', adminPanelRoutes);
-app.use('/api/departements', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), departementRoutes);
+
+// AJOUT DU DASHBOARD
 app.use('/api/admin/dashboard', dashboardRoutes);
+
+app.use('/api/departements', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), departementRoutes);
+
 // ==========================================
-// FICHIERS STATIQUES
+// FICHIERS STATIQUES (inchangés)
 // ==========================================
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ==========================================
-// GESTION DES ERREURS
+// GESTION DES ERREURS (inchangée)
 // ==========================================
 app.use((error, req, res, next) => {
   console.error('❌ Erreur serveur:', error);
@@ -140,10 +146,11 @@ app.listen(PORT, () => {
   console.log('  /api/ue - Unités d\'enseignement');
   console.log('  /api/departements - Départements (protégé)');
   console.log('  /api/admin - Panel admin');
+  console.log('  /api/admin/dashboard - Dashboard OLAP (nouveau)'); // ✨ NOUVEAU
 });
 
 // ==========================================
-// FERMETURE PROPRE
+// FERMETURE PROPRE (inchangée)
 // ==========================================
 process.on('SIGINT', () => {
   console.log('\n👋 Arrêt du serveur...');
@@ -152,3 +159,6 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
+
+
+

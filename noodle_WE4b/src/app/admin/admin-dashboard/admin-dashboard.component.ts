@@ -1,10 +1,13 @@
-// admin-dashboard.component.ts
+// admin-dashboard.component.ts - VERSION CORRIGÉE
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AdminDashboardService } from '../../services/admin-dashboard.service';
 import { NavbarService } from '../../services/navbar.service';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import { Subscription, interval } from 'rxjs';
+
+// Déclaration Chart.js
+declare var Chart: any;
 
 export interface DashboardData {
   overview: {
@@ -34,6 +37,12 @@ export interface DashboardData {
     currentSessions: any[];
     recentActivities: any[];
     systemHealth: any;
+  };
+  performance?: {  // Ajout du ? pour rendre optionnel
+    avgResponseTime: number;
+    successRate: number;
+    maxThroughput: number;
+    bottlenecks: any[];
   };
 }
 
@@ -75,6 +84,17 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     errorRate: 0,
     throughput: 0
   };
+
+  // Variables pour l'export
+  showExportModal = false;
+  exportConfig = {
+    includeCharts: true,
+    includeRawData: false,
+    includeOlap: true
+  };
+
+  // Variable pour la date actuelle
+  currentDate = new Date();
 
   constructor(
     private dashboardService: AdminDashboardService,
@@ -211,19 +231,22 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Méthodes d'interaction utilisateur
-  onTimeRangeChange(range: string): void {
-    this.selectedTimeRange = range;
+  // Méthodes d'interaction utilisateur avec types corrigés
+  onTimeRangeChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.selectedTimeRange = target.value;
     this.loadDashboardData();
   }
 
-  onMetricChange(metric: string): void {
-    this.selectedMetric = metric;
+  onMetricChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.selectedMetric = target.value;
     this.updateAnalytics();
   }
 
-  onOlapDimensionChange(dimension: string): void {
-    this.selectedOlapDimension = dimension;
+  onOlapDimensionChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.selectedOlapDimension = target.value;
     this.updateOlapAnalysis();
   }
 
@@ -284,7 +307,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   private updateOlapAnalysis(): void {
     const olapSub = this.dashboardService.getOlapAnalysis({
-      dimension: this.selectedOlapDimension,
+      dimensions: [this.selectedOlapDimension], // Correction: utiliser dimensions au lieu de dimension
       timeRange: this.selectedTimeRange
     }).subscribe({
       next: (olap) => {
@@ -341,8 +364,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   refresh(): void {
+    this.currentDate = new Date(); // Mettre à jour la date
     this.loadDashboardData();
   }
+
+  // Méthodes de formatage
   getTabLabel(tab: string): string {
     const labels: { [key: string]: string } = {
       'overview': '📊 Vue d\'ensemble',
@@ -470,27 +496,27 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return statusMap[status] || 'Statut inconnu';
   }
 
-// ===============================
-// MÉTHODES DE GESTION DES DONNÉES
-// ===============================
+  // Méthodes d'export
+  confirmExport(): void {
+    this.showExportModal = false;
+    console.log('Export avec config:', this.exportConfig);
+  }
 
+  cancelExport(): void {
+    this.showExportModal = false;
+  }
+
+  // Méthodes de gestion des graphiques (version simplifiée)
   private processChartData(): void {
     if (!this.dashboardData) return;
-
-    // Traitement des données pour Chart.js
     this.initializeCharts();
   }
 
   private initializeCharts(): void {
-    // Configuration et initialisation des graphiques
     setTimeout(() => {
       this.createLineChart();
       this.createPieChart();
       this.createHeatmapChart();
-      this.createTrendChart();
-      this.createConnectionChart();
-      this.createResponseTimeChart();
-      this.createErrorRateChart();
     }, 100);
   }
 
@@ -501,7 +527,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Destroy existing chart if exists
     if ((canvas as any).chart) {
       (canvas as any).chart.destroy();
     }
@@ -532,30 +557,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            position: 'top' as const
-          },
-          title: {
-            display: true,
-            text: 'Évolution de l\'activité'
-          }
+          legend: { position: 'top' as const },
+          title: { display: true, text: 'Évolution de l\'activité' }
         },
         scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
-            }
-          },
-          x: {
-            grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
-            }
-          }
-        },
-        interaction: {
-          intersect: false,
-          mode: 'index' as const
+          y: { beginAtZero: true }
         }
       }
     });
@@ -580,13 +586,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         labels: data.map((item: any) => this.formatRoleName(item._id)),
         datasets: [{
           data: data.map((item: any) => item.count || 0),
-          backgroundColor: [
-            '#f47d42',
-            '#3b82f6',
-            '#10b981',
-            '#f59e0b',
-            '#ef4444'
-          ],
+          backgroundColor: ['#f47d42', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
           borderWidth: 2,
           borderColor: '#ffffff'
         }]
@@ -595,13 +595,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            position: 'right' as const
-          },
-          title: {
-            display: true,
-            text: 'Répartition des utilisateurs'
-          }
+          legend: { position: 'right' as const },
+          title: { display: true, text: 'Répartition des utilisateurs' }
         }
       }
     });
@@ -618,7 +613,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       (canvas as any).chart.destroy();
     }
 
-    // Traitement des données pour créer une heatmap
     const activityData = this.dashboardData.olap.userActivityCube;
     const processedData = this.processHeatmapData(activityData);
 
@@ -640,40 +634,20 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Heatmap d\'activité (Heure × Rôle)'
-          },
-          tooltip: {
-            callbacks: {
-              title: () => '',
-              label: (context: any) => {
-                const data = context.raw;
-                return `Heure ${data.x}, ${this.formatRoleName(data.role)}: ${data.v} actions`;
-              }
-            }
-          }
+          legend: { display: false },
+          title: { display: true, text: 'Heatmap d\'activité (Heure × Rôle)' }
         },
         scales: {
           x: {
             type: 'linear' as const,
             position: 'bottom' as const,
-            title: {
-              display: true,
-              text: 'Heure'
-            },
+            title: { display: true, text: 'Heure' },
             min: 0,
             max: 23
           },
           y: {
             type: 'linear' as const,
-            title: {
-              display: true,
-              text: 'Rôle'
-            }
+            title: { display: true, text: 'Rôle' }
           }
         }
       }
@@ -700,103 +674,5 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       month: 'short',
       day: 'numeric'
     });
-  }
-
-// ===============================
-// MÉTHODES D'EXPORT
-// ===============================
-
-  showExportModal = false;
-  exportConfig = {
-    includeCharts: true,
-    includeRawData: false,
-    includeOlap: true
-  };
-
-  confirmExport(): void {
-    this.showExportModal = false;
-    // Logique d'export avec la configuration
-    console.log('Export avec config:', this.exportConfig);
-  }
-
-  cancelExport(): void {
-    this.showExportModal = false;
-  }
-
-// ===============================
-// MÉTHODES UTILITAIRES
-// ===============================
-
-  downloadChart(chartId: string): void {
-    const canvas = document.querySelector(`#${chartId}`) as HTMLCanvasElement;
-    if (!canvas) return;
-
-    const link = document.createElement('a');
-    link.download = `${chartId}-${new Date().toISOString().split('T')[0]}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-  }
-
-  copyToClipboard(text: string): void {
-    navigator.clipboard.writeText(text).then(() => {
-      // Afficher une notification de succès
-      console.log('Copié dans le presse-papiers');
-    });
-  }
-
-// ===============================
-// MÉTHODES DE NAVIGATION
-// ===============================
-
-  drillDownTimeLevel(level: string): void {
-    // Logique de drill-down temporel
-    console.log('Drill down vers:', level);
-    // Actualiser les données avec le nouveau niveau
-  }
-
-  drillDownOlap(dimension: string, value: any): void {
-    // Logique de drill-down OLAP
-    console.log('Drill down OLAP:', dimension, value);
-    // Actualiser l'analyse avec les nouveaux filtres
-  }
-
-// ===============================
-// MÉTHODES DE CACHE ET OPTIMISATION
-// ===============================
-
-  private cacheKey = '';
-  private cacheTimestamp = 0;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-  private shouldRefreshCache(): boolean {
-    return Date.now() - this.cacheTimestamp > this.CACHE_DURATION;
-  }
-
-  private updateCache(data: any): void {
-    this.cacheTimestamp = Date.now();
-    // Logique de mise en cache
-  }
-
-// ===============================
-// MÉTHODES DE VALIDATION
-// ===============================
-
-  private validateDashboardData(data: any): boolean {
-    if (!data) return false;
-    if (!data.overview) return false;
-    if (!data.analytics) return false;
-
-    return true;
-  }
-
-  private sanitizeFilters(filters: any): any {
-    // Nettoyer et valider les filtres
-    return {
-      timeRange: filters.timeRange || '7days',
-      startDate: filters.startDate || null,
-      endDate: filters.endDate || null,
-      departments: Array.isArray(filters.departments) ? filters.departments : [],
-      roles: Array.isArray(filters.roles) ? filters.roles : []
-    };
   }
 }

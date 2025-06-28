@@ -1,4 +1,4 @@
-<!-- admin-dashboard.component.html -->
+<!-- admin-dashboard.component.html - VERSION CORRIGÉE -->
 <div class="dashboard-container">
   <!-- Loader -->
   <div class="loader" *ngIf="isLoading">
@@ -15,7 +15,7 @@
 
     <div class="header-controls">
       <!-- Sélecteur de période -->
-      <select [(ngModel)]="selectedTimeRange" (change)="onTimeRangeChange($event.target.value)" class="time-range-select">
+      <select [(ngModel)]="selectedTimeRange" (change)="onTimeRangeChange($event)" class="time-range-select">
         <option value="1day">Dernières 24h</option>
         <option value="7days">7 derniers jours</option>
         <option value="30days">30 derniers jours</option>
@@ -138,7 +138,7 @@
     <div *ngIf="activeTab === 'analytics'" class="tab-content analytics-tab">
 
       <div class="analytics-filters">
-        <select [(ngModel)]="selectedMetric" (change)="onMetricChange($event.target.value)">
+        <select [(ngModel)]="selectedMetric" (change)="onMetricChange($event)">
           <option value="users">Utilisateurs</option>
           <option value="ues">UEs</option>
           <option value="forums">Forums</option>
@@ -196,7 +196,7 @@
 
       <div class="olap-controls">
         <h3>🧊 Analyses OLAP Multidimensionnelles</h3>
-        <select [(ngModel)]="selectedOlapDimension" (change)="onOlapDimensionChange($event.target.value)">
+        <select [(ngModel)]="selectedOlapDimension" (change)="onOlapDimensionChange($event)">
           <option value="time_role_activity">Temps × Rôle × Activité</option>
           <option value="department_level_semester">Département × Niveau × Semestre</option>
           <option value="geographical_role">Géographie × Rôle</option>
@@ -440,7 +440,7 @@
   <!-- Footer avec statut -->
   <div class="dashboard-footer">
     <div class="footer-left">
-      <span class="last-update">Dernière MAJ: {{ formatTime(new Date()) }}</span>
+      <span class="last-update">Dernière MAJ: {{ formatTime(currentDate) }}</span>
       <span class="data-status" [ngClass]="getHealthStatus()">
         {{ getHealthStatusText() }}
       </span>

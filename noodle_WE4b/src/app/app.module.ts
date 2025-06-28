@@ -47,6 +47,8 @@ import { ParticipantCardComponent } from './pages/partipants-ue/participant-card
 import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participants-empty-state/participants-empty-state.component';
 
 import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
+import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
+import { AdminDashboardService } from './services/admin-dashboard.service';
 
 // Composants création utilisateur
 import { UserRegistrationComponent } from './pages/user-registration/user-registration.component';
@@ -114,6 +116,7 @@ import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard
     ImageUploadComponent,
     UeRegistrationComponent,
     AdminDashboardComponent,
+    AdminDashboardComponent,
   ],
   imports: [
     BrowserModule,
@@ -128,6 +131,7 @@ import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard
       useClass: AuthInterceptor,
       multi: true,
     },
+    AdminDashboardService,
   ],
   bootstrap: [AppComponent],
 })
