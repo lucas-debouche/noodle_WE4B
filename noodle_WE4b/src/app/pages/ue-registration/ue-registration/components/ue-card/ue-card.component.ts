@@ -21,14 +21,6 @@ export class UeCardComponent {
     this.delete.emit(this.ue);
   }
 
-  getImageUrl(imagePath: string): string {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    return `http://localhost:3000/uploads/ue/${imagePath}`;
-  }
-
   getParticipantCount(): number {
     return this.ue.participants ? this.ue.participants.length : 0;
   }

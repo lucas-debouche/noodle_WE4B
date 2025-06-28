@@ -3,7 +3,7 @@
     <div class="ue-image">
       <img
         *ngIf="ue.image"
-        [src]="getImageUrl(ue.image)"
+        [src]="'http://localhost:3000' + ue.image"
         [alt]="ue.intitule"
         class="ue-image-img"
       />
