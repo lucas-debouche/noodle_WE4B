@@ -664,14 +664,15 @@ exports.getParticipantsByUe = async (req, res) => {
 
     await logAction({
       action: 'get_participants_by_ue',
-      category: 'ue',
+      category: 'user',
       userId: req.user ? req.user.userId : null,
-      targetId: ueId,
-      details: { success: true }
-    });
-    res.json({
-      success: true,
-      data: participants
+      targetId: ue._id.toString(),
+      details: {
+        ueCode: ue.code,
+        ueIntitule: ue.intitule,
+        participantCount: ue.participants ? ue.participants.length : 0,
+        success: true
+      }
     });
 
   } catch (err) {

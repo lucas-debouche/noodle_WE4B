@@ -217,8 +217,14 @@ exports.createUtilisateur = async (req, res) => {
     await logAction({
       action: 'create_user',
       category: 'user',
-      userId: req.params.userId,
-      details: { targetId: savedUser,uesProcessed: uesProcessed, success: true }
+      userId: req.user ? req.user.userId : null,
+      targetId: savedUser._id.toString(), // Juste l'ID, pas l'objet complet
+      details: {
+        userEmail: savedUser.email,
+        userName: `${savedUser.prenom} ${savedUser.nom}`,
+        uesCount: uesProcessed.length,
+        success: true
+      }
     });
 
     res.status(201).json({
