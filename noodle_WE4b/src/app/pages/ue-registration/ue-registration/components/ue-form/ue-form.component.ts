@@ -35,20 +35,29 @@ export class UeFormComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['editingUe'] && this.editingUe && this.isEditMode) {
-      this.ueForm.patchValue({
-        code: this.editingUe.code,
-        intitule: this.editingUe.intitule,
-        description: this.editingUe.description,
-        ects: this.editingUe.ects,
-        departementId: this.editingUe.departementId
+    // ✨ GESTION AMÉLIORÉE DU CHANGEMENT D'UE À ÉDITER
+    if (changes['editingUe']) {
+      const currentUe = changes['editingUe'].currentValue;
+      const previousUe = changes['editingUe'].previousValue;
+
+      console.log('🔄 ngOnChanges - editingUe:', {
+        current: currentUe?._id,
+        previous: previousUe?._id,
+        isEditMode: this.isEditMode
       });
 
-      this.assignedUsers = this.users.filter(user =>
-        this.editingUe?.participants?.includes(user._id) || false
-      );
+      if (currentUe && this.isEditMode) {
+        this.populateFormForEdit();
+      } else if (!currentUe && !this.isEditMode) {
+        // Réinitialiser le formulaire si on sort du mode édition
+        this.resetForm();
+      }
+    }
 
-      this.imagePreview = this.editingUe.image ? this.getImageUrl(this.editingUe.image) : null;
+    // ✨ GESTION DES CHANGEMENTS D'UTILISATEURS
+    if (changes['users'] && this.editingUe && this.isEditMode) {
+      console.log('👥 Rechargement des utilisateurs assignés après changement de liste');
+      this.loadAssignedUsers();
     }
   }
 
@@ -64,19 +73,28 @@ export class UeFormComponent implements OnChanges {
   }
 
   private populateFormForEdit() {
-    if (!this.editingUe) return;
+    if (!this.editingUe) {
+      console.log('⚠️ Aucune UE à éditer');
+      return;
+    }
 
+    console.log('📝 Population du formulaire avec:', this.editingUe);
+
+    // Peupler le formulaire
     this.ueForm.patchValue({
-      code: this.editingUe.code,
-      intitule: this.editingUe.intitule,
+      code: this.editingUe.code || '',
+      intitule: this.editingUe.intitule || '',
       description: this.editingUe.description || '',
-      ects: this.editingUe.ects,
+      ects: this.editingUe.ects || '',
       departementId: this.editingUe.departementId || ''
     });
 
     // Charger l'image si elle existe
     if (this.editingUe.image) {
       this.imagePreview = this.getImageUrl(this.editingUe.image);
+      console.log('🖼️ Image preview définie:', this.imagePreview);
+    } else {
+      this.imagePreview = null;
     }
 
     // Charger les utilisateurs assignés

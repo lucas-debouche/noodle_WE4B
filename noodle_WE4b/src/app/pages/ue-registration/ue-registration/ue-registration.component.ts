@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { UesService } from '../../../services/ues.service';
 import { UserService } from '../../../services/user.service';
 import { DepartementService } from '../../../services/departement.service';
 import { Ue } from '../../../models/ue.model';
 import { User } from '../../../models/user.model';
 import { Departement } from '../../../models/departement.model';
-import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-ue-registration',
@@ -27,6 +27,7 @@ export class UeRegistrationComponent implements OnInit {
   editingUe: Ue | null = null;
 
   constructor(
+    private router: Router, // ✨ AJOUT DU ROUTER
     private route: ActivatedRoute,
     private uesService: UesService,
     private utilisateurService: UserService,
@@ -35,33 +36,52 @@ export class UeRegistrationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadInitialData();
+
+    // ✨ GESTION AMÉLIORÉE DES PARAMÈTRES DE ROUTE
     this.route.params.subscribe(params => {
       const ueId = params['id'];
       console.log('🔍 ID récupéré via params subscription:', ueId);
 
-      if (ueId) {
-        this.isEditMode = true;
-        this.loading = true;
-        this.uesService.getUeById(ueId).subscribe({
-          next: (ue) => {
-            this.editingUe = ue;
-            this.loading = false;
-          },
-          error: (err) => {
-            this.error = "Impossible de charger l'UE.";
-            this.loading = false;
-          }
-        });
+      if (ueId && ueId !== 'undefined' && ueId.trim() !== '') {
+        this.loadUeForEdit(ueId);
+      } else {
+        // Réinitialiser le mode création si pas d'ID valide
+        this.exitEditMode();
       }
     });
   }
 
+  // ✨ NOUVELLE MÉTHODE : Charger UE pour édition
+  private async loadUeForEdit(ueId: string) {
+    console.log('🔄 Chargement UE pour édition:', ueId);
+    this.loading = true;
+    this.error = '';
 
+    try {
+      const ue = await this.uesService.getUeById(ueId).toPromise();
+
+      if (ue) {
+        this.editingUe = ue;
+        this.isEditMode = true;
+        console.log('✅ UE chargée pour édition:', ue.code);
+      } else {
+        throw new Error('UE non trouvée');
+      }
+    } catch (error) {
+      console.error('❌ Erreur chargement UE:', error);
+      this.error = "Impossible de charger l'UE pour modification.";
+      this.exitEditMode();
+
+      // Rediriger vers la liste sans paramètre
+      this.router.navigate(['/admin/ue-registration'], { replaceUrl: true });
+    } finally {
+      this.loading = false;
+    }
+  }
 
   async loadInitialData() {
     this.loading = true;
     try {
-      // Charger en parallèle les UEs, utilisateurs et départements
       const [ues, users, departements] = await Promise.all([
         this.uesService.getAllUes().toPromise(),
         this.utilisateurService.getUtilisateurs().toPromise(),
@@ -78,7 +98,6 @@ export class UeRegistrationComponent implements OnInit {
       console.error('Erreur lors du chargement des données:', error);
       this.error = 'Erreur lors du chargement des données';
 
-      // Fallback en cas d'erreur avec l'API départements
       if (!this.departements || this.departements.length === 0) {
         console.log('📦 Utilisation des départements par défaut');
         this.departements = this.getDefaultDepartements();
@@ -118,30 +137,41 @@ export class UeRegistrationComponent implements OnInit {
     console.log('🎉 UE créée, actualisation des données...');
     this.success = 'UE créée avec succès !';
     this.clearMessages();
-
-    // Recharger toutes les UEs pour avoir la liste à jour
     await this.refreshUesList();
   }
 
-
   async onUeUpdated(updatedUe: any) {
-    // Met à jour localement la liste après une édition réussie
+    console.log('🔄 onUeUpdated appelé avec:', updatedUe);
+
+    if (!updatedUe._id) {
+      console.error('❌ UE mise à jour sans ID:', updatedUe);
+      this.error = 'Erreur: UE mise à jour sans ID';
+      return;
+    }
+
+    // Mettre à jour la liste locale
     this.ues = this.ues.map((ue) => (ue._id === updatedUe._id ? updatedUe : ue));
-    this.editingUe = null;
+
     this.success = 'UE mise à jour avec succès';
-    this.isEditMode = false;
     this.clearMessages();
-    console.log('🔄 Liste des UEs actualisée après mise à jour');
-    // Actualiser uniquement la liste des UEs
+
+    // ✨ SORTIR DU MODE ÉDITION ET REDIRIGER
+    this.exitEditMode();
+    this.router.navigate(['/admin/ue-registration'], { replaceUrl: true });
+
+    // Actualiser la liste
     await this.refreshUesList();
   }
 
   async onUeDeleted(deletedUe: Ue) {
     this.ues = this.ues.filter(ue => ue._id !== deletedUe._id);
     this.success = 'UE supprimée avec succès !';
+
     if (this.editingUe?._id === deletedUe._id) {
       this.exitEditMode();
+      this.router.navigate(['/admin/ue-registration'], { replaceUrl: true });
     }
+
     this.clearMessages();
   }
 
@@ -150,22 +180,35 @@ export class UeRegistrationComponent implements OnInit {
     this.clearMessages();
   }
 
-  // Gestion du mode édition
+  // ✨ CORRECTION : Gestion du mode édition avec navigation
   onEditUe(ue: Ue) {
-    this.isEditMode = true;
-    this.editingUe = ue;
-    console.log('✏️ editingUe mis à jour :', this.editingUe);
+    console.log('✏️ onEditUe appelé avec:', ue);
+    console.log('📝 ID de l\'UE:', ue._id);
 
-    this.clearMessages();
+    // Vérifier que l'ID existe
+    if (!ue._id) {
+      console.error('❌ Aucun ID trouvé dans l\'UE:', ue);
+      this.error = 'Erreur: ID d\'UE manquant';
+      return;
+    }
+
+    // ✨ NAVIGUER VERS L'URL D'ÉDITION AU LIEU DE MODIFIER L'ÉTAT DIRECTEMENT
+    console.log('🔄 Navigation vers édition UE:', ue._id);
+    this.router.navigate(['/admin/ue-registration', ue._id]);
   }
 
   onCancelEdit() {
+    console.log('❌ Annulation édition');
     this.exitEditMode();
+
+    // ✨ REDIRIGER VERS LA LISTE SANS PARAMÈTRE
+    this.router.navigate(['/admin/ue-registration'], { replaceUrl: true });
   }
 
   private exitEditMode() {
     this.isEditMode = false;
     this.editingUe = null;
+    console.log('🚪 Mode édition quitté');
   }
 
   private clearMessages() {
@@ -175,7 +218,6 @@ export class UeRegistrationComponent implements OnInit {
     }, 5000);
   }
 
-  // ✅ NOUVELLE MÉTHODE: Actualiser uniquement les UEs
   private async refreshUesList() {
     try {
       console.log('🔄 Actualisation de la liste des UEs...');
@@ -187,10 +229,8 @@ export class UeRegistrationComponent implements OnInit {
     }
   }
 
-  // Méthodes utilitaires
   async onRefreshData() {
     console.log('🔄 Actualisation complète des données...');
     await this.loadInitialData();
   }
-
 }
