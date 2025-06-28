@@ -47,7 +47,6 @@ import { ParticipantCardComponent } from './pages/partipants-ue/participant-card
 import { ParticipantsEmptyStateComponent } from './pages/partipants-ue/participants-empty-state/participants-empty-state.component';
 
 import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
-import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 import { AdminDashboardService } from './services/admin-dashboard.service';
 
 // Composants création utilisateur
@@ -115,7 +114,6 @@ import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard
     UeCardComponent,
     ImageUploadComponent,
     UeRegistrationComponent,
-    AdminDashboardComponent,
     AdminDashboardComponent,
   ],
   imports: [
