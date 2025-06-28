@@ -152,12 +152,16 @@ app.listen(PORT, () => {
 // ==========================================
 // FERMETURE PROPRE (inchangée)
 // ==========================================
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('\n👋 Arrêt du serveur...');
-  mongoose.connection.close(() => {
+  try {
+    await mongoose.connection.close(); // ✅ Sans callback
     console.log('📊 Connexion MongoDB fermée');
     process.exit(0);
-  });
+  } catch (error) {
+    console.error('❌ Erreur fermeture MongoDB:', error);
+    process.exit(1);
+  }
 });
 
 

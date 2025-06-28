@@ -870,6 +870,127 @@ class AdminDashboardController {
         .map(([key, value]) => `${new Date().toISOString()},${key},${value}`)
         .join('\n');
   }
+
+  static async getDetailedOlapAnalysis(req, res) {
+    try {
+      // Implémentation détaillée OLAP
+      const analysis = await AdminDashboardController.getOlapAnalysis(req.body);
+      res.json({ success: true, data: analysis });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getUserActivityAnalysis(req, res) {
+    try {
+      // Analyse d'activité utilisateur
+      res.json({ success: true, message: 'Analyse activité utilisateur - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getUeParticipationAnalysis(req, res) {
+    try {
+      // Analyse participation UE
+      res.json({ success: true, message: 'Analyse participation UE - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getForumEngagementAnalysis(req, res) {
+    try {
+      // Analyse engagement forums
+      res.json({ success: true, message: 'Analyse engagement forums - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getRetentionAnalysis(req, res) {
+    try {
+      // Analyse de rétention
+      res.json({ success: true, message: 'Analyse rétention - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getTimeSeriesAnalysis(req, res) {
+    try {
+      // Analyse série temporelle
+      res.json({ success: true, message: 'Analyse série temporelle - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getSeasonalityAnalysis(req, res) {
+    try {
+      // Analyse saisonnalité
+      res.json({ success: true, message: 'Analyse saisonnalité - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getTrendAnalysis(req, res) {
+    try {
+      // Analyse tendances
+      res.json({ success: true, message: 'Analyse tendances - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getAnomalyDetection(req, res) {
+    try {
+      // Détection d'anomalies
+      res.json({ success: true, message: 'Détection anomalies - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getGeographicalDistribution(req, res) {
+    try {
+      // Distribution géographique
+      res.json({ success: true, message: 'Distribution géographique - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async getRegionalActivity(req, res) {
+    try {
+      // Activité régionale
+      res.json({ success: true, message: 'Activité régionale - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async generateReport(req, res) {
+    try {
+      const { reportType } = req.params;
+      res.json({
+        success: true,
+        message: `Génération rapport ${reportType} - À implémenter`
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static async scheduleReport(req, res) {
+    try {
+      // Programmation rapport
+      res.json({ success: true, message: 'Programmation rapport - À implémenter' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
 }
 
 module.exports = AdminDashboardController;
