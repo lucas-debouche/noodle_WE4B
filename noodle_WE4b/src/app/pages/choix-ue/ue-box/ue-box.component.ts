@@ -22,10 +22,10 @@ export class UeBoxComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.getPostsAndCountFaits();
     this.utilisateurService.getUtilisateurActuel().subscribe({
       next: (user: User) => {
         this.currentUser = user;
+        this.getPostsAndCountFaits();
       },
       error: (err) => {
         console.error('Erreur lors de la récupération de l\'utilisateur actuel :', err);
@@ -37,7 +37,6 @@ export class UeBoxComponent implements OnInit {
     this.postsService.getPostsByUe(this.ue._id).subscribe(posts => {
       this.nbPosts = posts.length;
       this.nbFaits = this.countFaits(posts);
-      console.log(this.nbPosts, this.nbFaits);
     });
   }
 

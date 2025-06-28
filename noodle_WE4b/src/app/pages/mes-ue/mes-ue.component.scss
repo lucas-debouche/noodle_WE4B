@@ -59,12 +59,13 @@
   font-size: 1.05rem;
   cursor: pointer;
   transition: background 0.15s;
+  margin-right: 18px;
   &:hover {
     background: #fb8c00;
   }
 }
 
-.rediretion-participants {
+.prof-btn {
   display: flex;
   margin-top: 18px;
   margin-bottom: 18px;
@@ -74,12 +75,13 @@
   background: #4caf50;
   color: #fff;
   border: none;
-  border-radius: 5px;
+  border-radius: 22px;
   padding: 7px 22px;
   font-weight: 700;
   font-size: 1.05rem;
   cursor: pointer;
   transition: background 0.15s;
+  text-decoration: none;
   &:hover {
     background: #388e3c;
   }

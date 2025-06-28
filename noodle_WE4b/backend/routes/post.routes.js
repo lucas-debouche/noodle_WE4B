@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
     await logAction({
       action: 'get_all_posts',
       category: 'post',
-      userId: req.user ? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       details: { success: true, postsCount: posts.length }
     });
     res.json(posts);
@@ -82,7 +82,7 @@ router.get('/', async (req, res) => {
     await logAction({
       action: 'error_get_posts',
       category: 'post',
-      userId: req.user? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       details: { success: false, error: err.message }
     });
     res.status(500).json({ error: err.message });
@@ -91,6 +91,7 @@ router.get('/', async (req, res) => {
 
 // Obtenir les posts associés à une ue
 router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
+  console.log("req.user:", req.user);
   try {
     const posts = await Post.find({ ue_id: req.params.ueId })
       .populate('utilisateur_id', 'nom prenom email')
@@ -100,7 +101,7 @@ router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'])
     await logAction({
       action: 'get_posts_by_ue',
       category: 'post',
-      userId: req.user? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       details: { success: true, postsCount: posts.length }
     });
     res.json(posts);
@@ -108,7 +109,7 @@ router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'])
     await logAction({
       action: 'error_get_posts_by_ue',
       category: 'post',
-      userId: req.user? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       details: { success: false, error: err.message }
     });
     res.status(500).json({ error: err.message });
@@ -127,7 +128,7 @@ router.get('/:id', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), asy
       await logAction({
         action: 'error_get_post_by_id',
         category: 'post',
-        userId: req.user ? req.user._id : null,
+        userId: req.user ? req.user.userId : null,
         targetId: req.params.id,
         details: { error: 'Post not found' }
       });
@@ -136,7 +137,7 @@ router.get('/:id', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), asy
     await logAction({
       action: 'get_post_by_id',
       category: 'post',
-      userId: req.user? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: req.params.id,
       details: { success: true }
     });
@@ -145,7 +146,7 @@ router.get('/:id', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), asy
     await logAction({
       action: 'error_get_post_by_id',
       category: 'post',
-      userId: req.user ? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: req.params.id,
       details: { error: err.message }
     });
@@ -197,16 +198,16 @@ router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploa
     await logAction({
       action: 'create_post',
       category: 'post',
-      userId: req.user? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: post._id,
-      details: { success: true }
+      details: { post: populatedPost, success: true }
     });
     res.status(201).json(populatedPost);
   } catch (err) {
     await logAction({
       action: 'error_create_post',
       category: 'post',
-      userId: req.user? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: post._id,
       details: { error: err.message }
     });
@@ -234,7 +235,7 @@ router.patch('/:id/fait', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'
     await logAction({
       action: 'update_post_fait',
       category: 'post',
-      userId: req.user ? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: post._id,
       details: { utilisateurId, fait, success: true }
     });
@@ -243,7 +244,7 @@ router.patch('/:id/fait', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'
     await logAction({
       action: 'error_update_post_fait',
       category: 'post',
-      userId: req.user? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: req.params.id,
       details: { error: err.message }
     });
@@ -274,7 +275,7 @@ router.post('/:id/rendu', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'
     await logAction({
       action: 'submit_rendu',
       category: 'post',
-      userId: req.user ? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: post._id,
       details: { utilisateurId: userId, renduFile: file.originalname, success: true }
     });
@@ -283,7 +284,7 @@ router.post('/:id/rendu', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN'
     await logAction({
       action: 'error_submit_rendu',
       category: 'post',
-      userId: req.user ? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: req.params.id,
       details: { error: err.message }
     });
@@ -309,7 +310,7 @@ router.patch('/:postId/rendu/:userId/note', authMiddleware(['ROLE_USER', 'ROLE_P
     await logAction({
       action: 'update_rendu_note',
       category: 'post',
-      userId: req.user ? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: post._id,
       details: { utilisateurId: req.params.userId, note, success: true }
     });
@@ -318,7 +319,7 @@ router.patch('/:postId/rendu/:userId/note', authMiddleware(['ROLE_USER', 'ROLE_P
     await logAction({
       action: 'error_update_rendu_note',
       category: 'post',
-      userId: req.user ? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: req.params.postId,
       details: { error: err.message }
     });
@@ -339,7 +340,7 @@ router.patch('/:postId/rendu/:userId/commentaire', authMiddleware(['ROLE_USER', 
     await logAction({
       action: 'update_rendu_commentaire',
       category: 'post',
-      userId: req.user ? req.user._id : null,
+      userId: req.user ? req.user.userId : null,
       targetId: post._id,
       details: { utilisateurId: req.params.userId, commentaire, success: true }
     });
@@ -348,7 +349,7 @@ router.patch('/:postId/rendu/:userId/commentaire', authMiddleware(['ROLE_USER', 
   await logAction({
     action: 'error_update_rendu_commentaire',
     category: 'post',
-    userId: req.user ? req.user._id : null,
+    userId: req.user ? req.user.userId : null,
     targetId: req.params.postId,
     details: { error: err.message }
   });

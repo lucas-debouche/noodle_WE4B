@@ -15,7 +15,7 @@ import { User } from '../../../models/user.model';
 })
 export class CreatePostUeComponent implements OnInit {
   @Input() ueId!: string;
-  @Input() currentUser!: User
+  @Input() currentUser!: User;
   @Output() postCreated = new EventEmitter<Post>();
   @Output() close = new EventEmitter<void>();
 
@@ -25,9 +25,8 @@ export class CreatePostUeComponent implements OnInit {
   uploading = false;
   errorMsg = '';
   file: File | null = null;
-  fileTouched = false;
   minDateRendu = '';
-  type: string = 'message';
+  isSubmitted = false;
 
   constructor(
     private fb: FormBuilder,
@@ -37,126 +36,184 @@ export class CreatePostUeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.isSubmitted = false;
+    this.initForm();
+    this.loadTypes();
+    this.loadPriorites();
+    this.setupFormListeners();
+    this.setMinDateRendu();
+  }
+
+  private initForm(): void {
+    this.postForm = this.fb.group({
+      titre: ['', [Validators.required, Validators.maxLength(100)]],
+      type: ['', Validators.required],
+      contenu: [''],
+      priorite: ['', Validators.required],
+      date_rendu: [''],
+      categorie: ['TP', Validators.required],
+      fichier: [null]
+    });
+  }
+
+  private loadTypes(): void {
     this.typeService.getTypes().subscribe(types => {
       this.types = types;
-      // Définit la valeur par défaut du type si disponible
       if (this.types.length > 0) {
         this.postForm.get('type')?.setValue(this.types[0]._id);
-        this.type = this.types[0]._id;
       }
     });
+  }
 
+  private loadPriorites(): void {
     this.prioriteService.getPriorites().subscribe(priorites => {
       this.priorites = priorites;
-      // Définit la valeur par défaut de la priorité si disponible
       if (this.priorites.length > 0) {
         this.postForm.get('priorite')?.setValue(this.priorites[0]._id);
       }
     });
+  }
 
-    this.postForm = this.fb.group({
-      titre: ['', [Validators.required, Validators.maxLength(100)]],
-      type: ['', Validators.required],
-      contenu: ['', Validators.required],
-      priorite: ['', Validators.required],
-      date_rendu: [''],
-      categorie: ['TP', Validators.required]
+  private setupFormListeners(): void {
+    this.postForm.get('type')?.valueChanges.subscribe(val => {
+      this.updateValidators(val);
     });
+  }
 
-    if (this.selectedTypeNom === 'devoir') {
-      this.postForm.get('date_rendu')?.setValidators([Validators.required]);
+  private updateValidators(typeId: string): void {
+    const typeObj = this.types.find(t => t._id === typeId);
+    const typeName = typeObj ? typeObj.nom : '';
+
+    const contenuControl = this.postForm.get('contenu');
+    const dateRenduControl = this.postForm.get('date_rendu');
+    const fichierControl = this.postForm.get('fichier');
+
+    contenuControl?.clearValidators();
+    dateRenduControl?.clearValidators();
+    fichierControl?.clearValidators();
+
+    if (['message', 'fichier', 'devoir'].includes(typeName)) {
+      contenuControl?.setValidators([Validators.required]);
+    }
+    if (typeName === 'devoir') {
+      dateRenduControl?.setValidators([Validators.required]);
+    }
+    if (typeName === 'fichier') {
+      fichierControl?.setValidators([Validators.required]);
     }
 
-    this.postForm.get('type')?.valueChanges.subscribe(val => {
-      this.type = val;
-      console.log(val);
-      if (val === 'devoir') {
-        this.postForm.get('date_rendu')?.setValidators([Validators.required]);
-      } else {
-        this.postForm.get('date_rendu')?.clearValidators();
-      }
-      this.postForm.get('date_rendu')?.updateValueAndValidity();
-    });
+    contenuControl?.updateValueAndValidity();
+    dateRenduControl?.updateValueAndValidity();
+    fichierControl?.updateValueAndValidity();
+  }
 
-    // Date minimale pour le rendu (maintenant)
+  private setMinDateRendu(): void {
     this.minDateRendu = new Date().toISOString().slice(0, 16);
   }
 
-  onFileChange(event: any) {
+  onFileChange(event: any): void {
     const file = event.target.files[0];
-    this.file = file ? file : null;
+    if (file) {
+      this.file = file;
+      this.postForm.patchValue({ fichier: file });
+    }
   }
 
-  fileRequiredError() {
-    return (this.type === 'fichier' || this.type === 'devoir') && !this.file && this.fileTouched;
-  }
-
-  closeModal() {
+  closeModal(): void {
     this.close.emit();
   }
 
-  submit() {
-    if (this.postForm.invalid || (this.type === 'fichier' || this.type === 'devoir') && !this.file) {
+  submit(): void {
+    this.isSubmitted = true;
+    this.markAllFieldsAsTouched();
+
+    if (this.postForm.invalid || (this.selectedTypeNom === 'fichier' && !this.file)) {
       this.errorMsg = 'Veuillez remplir tous les champs obligatoires.';
       return;
     }
+
     this.uploading = true;
     this.errorMsg = '';
 
-    // Récupérer l'ID du type (depuis la liste des types)
-    const typeObj = this.types.find(t => t.nom === this.type || t._id === this.type);
-    const type_id = typeObj?._id || this.type;
+    const payload = this.preparePayload();
 
+    if (this.selectedTypeNom === 'fichier') {
+      this.submitWithFile(payload);
+    } else {
+      this.submitWithoutFile(payload);
+    }
+  }
+
+  private preparePayload(): any {
+    const formValue = this.postForm.value;
     const payload: any = {
       utilisateur_id: this.currentUser._id,
-      type_id: type_id,
-      priorite_id: this.postForm.value.priorite,
+      type_id: formValue.type,
+      priorite_id: formValue.priorite,
       ue_id: this.ueId,
-      titre: this.postForm.value.titre,
-      contenu: this.postForm.value.contenu,
-      categorie: this.postForm.value.categorie,
+      titre: formValue.titre,
+      contenu: formValue.contenu,
+      categorie: formValue.categorie,
       date_publication: new Date().toISOString(),
     };
 
-    if (this.selectedTypeNom === 'devoir') {
-      const dateRendu = this.postForm.value.date_rendu;
-      // Conversion en ISO string si non vide
-      payload.date_rendu = dateRendu ? new Date(dateRendu).toISOString() : null;
+    if (this.selectedTypeNom === 'devoir' && formValue.date_rendu) {
+      payload.date_rendu = new Date(formValue.date_rendu).toISOString();
     }
-    if (this.selectedTypeNom === 'fichier') {
-      const formData = new FormData();
-      Object.keys(payload).forEach(key => formData.append(key, payload[key]));
-      if (this.file) {
-        formData.append('fichier', this.file, this.file.name);
+
+    return payload;
+  }
+
+  private submitWithFile(payload: any): void {
+    const formData = new FormData();
+    Object.keys(payload).forEach(key => formData.append(key, payload[key]));
+    if (this.file) {
+      formData.append('fichier', this.file, this.file.name);
+    }
+    this.sendPostRequest(formData, true);
+  }
+
+  private submitWithoutFile(payload: any): void {
+    this.sendPostRequest(payload, false);
+  }
+
+  private sendPostRequest(data: any, isFormData: boolean): void {
+    this.postsService.createPost(data, isFormData).subscribe({
+      next: post => {
+        this.uploading = false;
+        this.postCreated.emit(post);
+      },
+      error: err => {
+        this.uploading = false;
+        this.errorMsg = err.error?.error || 'Erreur lors de la création du post.';
       }
-      this.postsService.createPost(formData, true).subscribe({
-        next: post => {
-          this.uploading = false;
-          this.postCreated.emit(post);
-        },
-        error: err => {
-          this.uploading = false;
-          this.errorMsg = err.error?.error || 'Erreur lors de la création du post.';
-        }
-      });
-    } else {
-      // Envoi JSON
-      this.postsService.createPost(payload, false).subscribe({
-        next: post => {
-          this.uploading = false;
-          this.postCreated.emit(post);
-        },
-        error: err => {
-          this.uploading = false;
-          this.errorMsg = err.error?.error || 'Erreur lors de la création du post.';
-        }
-      });
-    }
+    });
   }
 
   get selectedTypeNom(): string {
     const typeId = this.postForm.get('type')?.value;
     const typeObj = this.types.find(t => t._id === typeId);
     return typeObj ? typeObj.nom : '';
+  }
+
+  markAllFieldsAsTouched(): void {
+    Object.keys(this.postForm.controls).forEach(field => {
+      const control = this.postForm.get(field);
+      control?.markAsTouched({ onlySelf: true });
+    });
+  }
+
+  getFieldError(fieldName: string): string {
+    const control = this.postForm.get(fieldName);
+    if (control?.invalid && (control.dirty || control.touched || this.isSubmitted)) {
+      if (control.errors?.['required']) return 'Ce champ est requis.';
+      if (control.errors?.['maxlength']) return `La longueur maximale est de ${control.errors['maxlength'].requiredLength} caractères.`;
+    }
+    return '';
+  }
+
+  isFieldInvalid(fieldName: string): boolean {
+    const control = this.postForm.get(fieldName);
+    return !!(control && control.invalid && (control.dirty || control.touched || this.isSubmitted));
   }
 }

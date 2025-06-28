@@ -3,85 +3,83 @@
   <button class="close-btn" (click)="closeModal()" aria-label="Fermer">
     <span aria-hidden="true">&times;</span>
   </button>
-  <h2>
-    Créer un post
-  </h2>
+  <h2>Créer un post</h2>
   <form [formGroup]="postForm" (ngSubmit)="submit()" enctype="multipart/form-data" autocomplete="off">
     <div class="form-group">
       <label for="titre">Titre</label>
-      <input id="titre" formControlName="titre" required maxlength="100" placeholder="Titre du post"
-        (blur)="postForm.get('titre')?.markAsTouched()" />
-      <div class="input-error" *ngIf="postForm.get('titre')?.invalid && (postForm.get('titre')?.touched || postForm.get('titre')?.dirty)">
-        Le titre est requis.
+      <input id="titre" formControlName="titre" maxlength="100" placeholder="Titre du post" />
+      <div class="input-error" *ngIf="isFieldInvalid('titre')">
+        {{ getFieldError('titre') }}
       </div>
     </div>
+
     <div class="form-group">
       <label for="type">Type de post</label>
-      <select id="type" formControlName="type" (blur)="postForm.get('type')?.markAsTouched()">
+      <select id="type" formControlName="type">
         <option *ngFor="let t of types" [value]="t._id">{{ t.nom }}</option>
       </select>
-      <div class="input-error" *ngIf="postForm.get('type')?.touched && postForm.get('type')?.invalid">
-        Le type est requis.
+      <div class="input-error" *ngIf="isFieldInvalid('type')">
+        {{ getFieldError('type') }}
       </div>
     </div>
+
     <div class="form-group" *ngIf="selectedTypeNom === 'message' || selectedTypeNom === 'fichier' || selectedTypeNom === 'devoir'">
       <label for="contenu">Contenu</label>
-      <textarea id="contenu" formControlName="contenu" placeholder="Votre message..."
-        (blur)="postForm.get('contenu')?.markAsTouched()"></textarea>
-      <div class="input-error" *ngIf="postForm.get('contenu')?.invalid && (postForm.get('contenu')?.touched || postForm.get('contenu')?.dirty)">
-        Le contenu est requis.
+      <textarea id="contenu" formControlName="contenu" placeholder="Votre message..."></textarea>
+      <div class="input-error" *ngIf="isFieldInvalid('contenu')">
+        {{ getFieldError('contenu') }}
       </div>
     </div>
+
     <div class="form-group" *ngIf="selectedTypeNom === 'fichier'">
       <label for="fichier">Fichier</label>
-      <input id="fichier" name="fichier" type="file" (change)="onFileChange($event)" (blur)="fileTouched = true" />
-      <div class="input-error"
-           *ngIf="(selectedTypeNom === 'fichier') && fileRequiredError()">
-        Le fichier est requis.
+      <input id="fichier" name="fichier" type="file" (change)="onFileChange($event)" />
+      <div class="input-error" *ngIf="isFieldInvalid('fichier')">
+        {{ getFieldError('fichier') }}
       </div>
     </div>
+
     <div class="form-group">
       <label for="priorite">Priorité</label>
-      <select id="priorite" formControlName="priorite" required (blur)="postForm.get('priorite')?.markAsTouched()">
+      <select id="priorite" formControlName="priorite">
         <option *ngFor="let p of priorites" [value]="p._id">{{ p.nom }}</option>
       </select>
-      <div class="input-error" *ngIf="postForm.get('priorite')?.invalid && (postForm.get('priorite')?.touched || postForm.get('priorite')?.dirty)">
-        La priorité est requise.
+      <div class="input-error" *ngIf="isFieldInvalid('priorite')">
+        {{ getFieldError('priorite') }}
       </div>
     </div>
+
     <div class="form-group" *ngIf="selectedTypeNom === 'devoir'">
       <label for="date_rendu">Date de rendu</label>
-      <input
-        id="date_rendu"
-        type="datetime-local"
-        formControlName="date_rendu"
-        [min]="minDateRendu"
-        (blur)="postForm.get('date_rendu')?.markAsTouched()"
-      />
-      <div class="input-error" *ngIf="postForm.get('date_rendu')?.invalid && (postForm.get('date_rendu')?.touched || postForm.get('date_rendu')?.dirty)">
-        La date de rendu est requise.
+      <input id="date_rendu" type="datetime-local" formControlName="date_rendu" [min]="minDateRendu" />
+      <div class="input-error" *ngIf="isFieldInvalid('date_rendu')">
+        {{ getFieldError('date_rendu') }}
       </div>
     </div>
+
     <div class="form-group">
       <label for="categorie">Catégorie</label>
-      <select id="categorie" formControlName="categorie" required (blur)="postForm.get('categorie')?.markAsTouched()">
+      <select id="categorie" formControlName="categorie">
         <option value="TP">TP</option>
         <option value="TD">TD</option>
         <option value="CM">CM</option>
-        <option value="info">info</option>
+        <option value="informations">Informations</option>
       </select>
-      <div class="input-error" *ngIf="postForm.get('categorie')?.invalid && (postForm.get('categorie')?.touched || postForm.get('categorie')?.dirty)">
-        La catégorie est requise.
+      <div class="input-error" *ngIf="isFieldInvalid('categorie')">
+        {{ getFieldError('categorie') }}
       </div>
     </div>
+
     <hr class="modal-separator" />
+
     <div class="modal-actions">
       <button type="button" (click)="closeModal()">Annuler</button>
-      <button type="submit" [disabled]="postForm.invalid || uploading">
+      <button type="submit" [disabled]="uploading">
         <span *ngIf="uploading" class="spinner"></span>
         Créer
       </button>
     </div>
+
     <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
   </form>
 </div>

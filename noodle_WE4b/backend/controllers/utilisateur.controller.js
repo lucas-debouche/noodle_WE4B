@@ -555,3 +555,74 @@ exports.getParticipantsByUe = async (req, res) => {
     });
   }
 };
+
+// Méthode pour obtenir les UEs d'un utilisateur
+exports.getUesByUserId = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    console.log(`🔍 Recherche UEs pour utilisateur ID: ${userId}`);
+
+    // Récupérer l'utilisateur avec populate des UEs
+    let utilisateur;
+    let ues;
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      utilisateur = await Utilisateur.findById(userId).populate('ues');
+      ues = await Ue.find({ _id: { $in: utilisateur.ues } });
+      console.log(`�� UEs: ${ues.length}`);
+    } else {
+      return res.status(400).json({ message: 'ID utilisateur invalide' });
+    }
+
+    if (!utilisateur) {
+      return res.status(404).json({
+        success: false,
+        message: 'Utilisateur non trouvé'
+      });
+    }
+
+    console.log(`✅ Utilisateur trouvé: ${utilisateur} ${utilisateur.nom} ${utilisateur.prenom}`);
+    console.log(`📚 UEs associées: ${utilisateur.ues ? utilisateur.ues.length : 0}`);
+    console.log(`�� UE: ${ues}`);
+
+    // Formater les UEs
+    const formattedUes = ues.map(ue => ({
+      _id: ue._id.toString(),
+      code: ue.code,
+      intitule: ue.intitule,
+      description: ue.description,
+      participantsCount: ue.participants ? ue.participants.length : 0
+    }));
+
+    await logAction({
+      action: 'get_ues_by_user',
+      category: 'user',
+      userId: userId,
+      details: { data: formattedUes, success: true }
+    });
+
+    res.json({
+      success: true,
+      data: formattedUes,
+      user: {
+        id: utilisateur._id.toString(),
+        nom: utilisateur.nom,
+        prenom: utilisateur.prenom,
+        email: utilisateur.email
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ Error in getUesByUserId:', err);
+    await logAction({
+      action: 'get_ues_by_user_error',
+      category: 'user',
+      userId: req.params.userId,
+      details: { error: err.message }
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: err.message
+    });
+  }
+};

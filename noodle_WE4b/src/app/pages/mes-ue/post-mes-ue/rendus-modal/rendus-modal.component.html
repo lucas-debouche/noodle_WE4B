@@ -19,7 +19,7 @@
         <tbody>
         <tr *ngFor="let rendu of rendus; let i = index">
           <td>
-            <a [href]="'/uploads/' + rendu.fichier_chemin" target="_blank">{{ rendu.fichier_nom }}</a>
+            <a [href]="'http://localhost:3000/' + rendu.fichier_chemin" [attr.download]="rendu.fichier_nom" target="_blank" rel="noopener">{{ rendu.fichier_nom }}</a>
           </td>
           <td>{{ rendu.utilisateur_id?.prenom }} {{ rendu.utilisateur_id?.nom }}</td>
           <td>{{ rendu.date_rendu | date:'dd/MM/yyyy HH:mm' }}</td>

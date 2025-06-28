@@ -11,11 +11,12 @@ import { NavbarService} from "../../services/navbar.service";
   styleUrls: ['./choix-ue.component.scss']
 })
 export class ChoixUeComponent implements OnInit {
-  allUes: Ue[] = [];
+  UesOfUser: Ue[] = [];
   displayedUes: Ue[] = [];
   offset_ue = 0;
   limit_ue = 3;
   isExpandedUe = false;
+  currentUser!: User;
 
 
   constructor(
@@ -26,11 +27,12 @@ export class ChoixUeComponent implements OnInit {
 
   ngOnInit(): void {
     this.navbarService.setTitle('Tableau de bord');
-    this.loadUes();
     this.utilisateurService.getUtilisateurActuel().subscribe({
       next: (user: User) => {
+        this.currentUser = user;
         this.navbarService.setTitle('Tableau de bord');
         this.navbarService.setCurrentUser(user); // Met à jour l'utilisateur dans le NavbarService
+        this.loadUesOfUser();
       },
       error: (err: any) => {
         console.error('Erreur lors de la récupération de l\'utilisateur actuel :', err);
@@ -38,30 +40,32 @@ export class ChoixUeComponent implements OnInit {
     });
   }
 
-loadUes(): void {
-  this.http.get<Ue[]>(`http://localhost:3000/api/ue`)
-    .subscribe({
-      next: (data: Ue[]) => {
-        this.allUes = data;
+  loadUesOfUser(): void {
+    this.utilisateurService.getUesByUserId(this.currentUser._id).subscribe({
+      next: (ues: Ue[]) => {
+        this.UesOfUser = ues;
+        console.log('Ues of user:', this.UesOfUser);
         this.displayUes();
       },
-      error: (err) => console.error('Erreur lors du chargement des UEs :', err)
+      error: (err: any) => {
+        console.error('Erreur lors de la récupération des UEs de l\'utilisateur :', err);
+      }
     });
-}
+  }
 
 displayUes(): void {
   if (!this.isExpandedUe) {
     // Afficher un lot de UEs
-    const currentBatch = this.allUes.slice(this.offset_ue, this.offset_ue + this.limit_ue);
+    const currentBatch = this.UesOfUser.slice(this.offset_ue, this.offset_ue + this.limit_ue);
     this.displayedUes = [...this.displayedUes, ...currentBatch];
     this.offset_ue += this.limit_ue;
 
-    if (this.offset_ue >= this.allUes.length) {
+    if (this.offset_ue >= this.UesOfUser.length) {
       this.isExpandedUe = true;
     }
   } else {
     // Mode "Voir moins"
-    this.displayedUes = this.allUes.slice(0, this.limit_ue);
+    this.displayedUes = this.UesOfUser.slice(0, this.limit_ue);
     this.offset_ue = this.limit_ue;
     this.isExpandedUe = false;
   }

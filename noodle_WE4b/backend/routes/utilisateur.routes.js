@@ -109,55 +109,8 @@ router.get('/ue/:ueId/participants',
   utilisateurController.getParticipantsByUe
 );
 
-// GET /ue/:ueId → obtenir les utilisateurs associés à une UE (route pour compatibilité)
-router.get('/ue/:ueId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), async (req, res) => {
-  try {
-    const ueId = req.params.ueId;
-
-    // Récupérer l'UE avec ses participants
-    let ue;
-    if (mongoose.Types.ObjectId.isValid(ueId)) {
-      ue = await Ue.findById(ueId);
-    }
-    if (!ue) {
-      ue = await Ue.findOne({ id: ueId });
-    }
-    if (!ue) {
-      ue = await Ue.findOne({ code: ueId });
-    }
-
-    if (!ue) {
-      return res.status(404).json({ error: 'UE non trouvée.' });
-    }
-
-    if (!ue.participants || ue.participants.length === 0) {
-      return res.json([]);
-    }
-
-    // Récupérer les utilisateurs participants
-    const utilisateurs = await Utilisateur.find({
-      _id: { $in: ue.participants }
-    });
-
-    await logAction({
-      action: 'get_users_by_ue',
-      category: 'utilisateur',
-      userId: req.user ? req.user._id : null,
-      targetId: ue._id,
-      details: { success: true, count: utilisateurs.length }
-    });
-    res.json(utilisateurs);
-  } catch (err) {
-    console.error('Erreur lors de la récupération des utilisateurs par UE:', err);
-    await logAction({
-      action: 'error_get_users_by_ue',
-      category: 'utilisateur',
-      userId: req.user ? req.user._id : null,
-      details: { error: err.message }
-    });
-    res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs par UE.' });
-  }
-});
+// GET /:userId/ue → obtenir les UEs d'un utilisateur
+router.get('/:userId/ue', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getUesByUserId);
 
 // GET /:userId → obtenir un utilisateur par son ID
 router.get('/:userId', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), utilisateurController.getUtilisateurById);

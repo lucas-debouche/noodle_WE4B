@@ -28,6 +28,7 @@ export class PostsService {
   }
 
   createPost(data: any, isFormData = false): Observable<Post> {
+    console.log("data", data, "isFormData", isFormData);
     if (isFormData) {
       return this.http.post<Post>(`${this.apiUrl}`, data);
     } else {

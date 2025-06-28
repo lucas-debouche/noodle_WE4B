@@ -33,18 +33,19 @@ export class SectionsUeComponent implements OnInit, OnChanges {
     this.utilisateurService.getUtilisateurActuel().subscribe({
       next: (user: User) => {
         this.currentUser = user;
-        // Récupère le nombre total d'utilisateurs assignés à l'UE
-        if (this.ueId) {
-          this.utilisateurService.getUtilisateursByUe(this.ueId).subscribe((users: User[]) => {
-            this.totalUsers = users.length;
-            this.utilisateursUeIds = users.map(u => (u as any)._id || (u as any).id);
-            if (this.sectionTitle) {
-              this.loadPosts();
-            }
-          });
-        }
       }
     });
+    // Récupère le nombre total d'utilisateurs assignés à l'UE
+    if (this.ueId) {
+      this.utilisateurService.getParticipantsByUe(this.ueId).subscribe((users: User[]) => {
+        console.log('Utilisateurs de l\'UE:', users);
+        this.totalUsers = users.length;
+        this.utilisateursUeIds = users.map(u => (u as any)._id || (u as any).id);
+        if (this.sectionTitle) {
+          this.loadPosts();
+        }
+      });
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {

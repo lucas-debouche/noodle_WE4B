@@ -56,7 +56,6 @@ export class PostMesUeComponent implements OnInit {
         console.error('Erreur lors de la récupération de l\'utilisateur :', err);
       }
     });
-    console.log(this.post.rendus);
   }
 
   updateFaitCount() {
@@ -102,7 +101,6 @@ export class PostMesUeComponent implements OnInit {
   }
 
   getPrioriteNom(post: Post): string | undefined {
-    //console.log(post);
     if (typeof post.priorite_id === 'object' && post.priorite_id !== null && 'nom' in post.priorite_id) {
       return (post.priorite_id as any).nom;
     }
@@ -177,6 +175,27 @@ export class PostMesUeComponent implements OnInit {
       error: (err) => {
         console.error('Erreur lors de l\'attribution de la note', err);
         alert('Une erreur est survenue lors de l\'attribution de la note.');
+      }
+    });
+  }
+
+  enregistrerCommentaire(event: { rendu: any, commentaire: string }) {
+    this.postsService.enregistrerCommentaire(this.post._id, event.rendu.utilisateur_id._id, event.commentaire).subscribe({
+      next: (res: any) => {
+        console.log('Commentaire enregistré avec succès', res);
+        // Met à jour le rendu localement
+        if (this.post.rendus && Array.isArray(this.post.rendus)) {
+          const index = this.post.rendus.findIndex(r => r.utilisateur_id._id === event.rendu.utilisateur_id._id);
+          if (index !== -1) {
+            this.post.rendus[index].commentaire = event.commentaire;
+          }
+        } else {
+          console.warn('Le tableau des rendus n\'existe pas ou n\'est pas un tableau');
+        }
+      },
+      error: (err) => {
+        console.error('Erreur lors de l\'enregistrement du commentaire', err);
+        alert('Une erreur est survenue lors de l\'enregistrement du commentaire.');
       }
     });
   }

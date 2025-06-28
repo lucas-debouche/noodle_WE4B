@@ -37,6 +37,7 @@ export class MesUeComponent implements OnInit {
     this.utilisateurService.getUtilisateurActuel().subscribe({
       next: (user: User) => {
         this.currentUser = user;
+        console.log('User:', this.currentUser);
         const ueId = this.route.snapshot.paramMap.get('id');
         if (typeof ueId === 'string') {
           this.uesService.getUeById(ueId).subscribe((ue: Ue) => {
@@ -103,7 +104,7 @@ export class MesUeComponent implements OnInit {
   // Rafraîchit la section concernée après création
   onPostCreated(newPost: Post) {
     // Utilise la catégorie pour déterminer la section
-    let section = 'info';
+    let section = 'informations';
     if (newPost.categorie && this.sections.includes(newPost.categorie)) {
       section = newPost.categorie;
     }

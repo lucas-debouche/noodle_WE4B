@@ -77,19 +77,14 @@ export class UserService {
     );
   }
 
-  getEtudiantsByUe(ueId: string): Observable<ParticipantWithUeInfo[]> {
-    const url = `${this.apiUrl}/ues/${ueId}/etudiants`;
+  getUesByUserId(userId: string): Observable<any[]> {
+    const url = `${this.apiUrl}/${userId}/ue`;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     return this.http.get<any>(url, { headers }).pipe(
-      map(response => {
-        const etudiants = response.data || response.etudiants || response;
-        return this.formatParticipants(etudiants).filter(p =>
-          this.isEtudiant(p.role)
-        );
-      }),
+      map(response => response.data || response.ues || []),
       catchError(error => throwError(() => new Error(
         error.error?.message ||
-        'Erreur lors du chargement des étudiants de l\'UE'
+        'Erreur lors du chargement des UEs de l\'utilisateur'
       )))
     );
   }

@@ -27,7 +27,7 @@ export interface Post {
   ue_id: string;
   titre: string;
   contenu: string;
-  categorie: 'info' | 'CM' | 'TD' | 'TP';
+  categorie: 'informations' | 'CM' | 'TD' | 'TP';
   fichier_nom?: string | null;
   fichier_type?: string | null;
   fichier_taille?: number | null;

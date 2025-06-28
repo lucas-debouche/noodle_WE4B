@@ -19,7 +19,7 @@ const postSchema = new mongoose.Schema({
   ue_id: { type: mongoose.Schema.Types.ObjectId, ref: 'UE', required: true },
   titre: { type: String, required: true },
   contenu: { type: String, required: true },
-  categorie: { type: String, enum: ['info', 'CM', 'TD', 'TP'], required: true },
+  categorie: { type: String, enum: ['informations', 'CM', 'TD', 'TP'], required: true },
   fichier_nom: { type: String, default: null },
   fichier_type: { type: String, default: null },
   fichier_taille: { type: Number, default: null },
