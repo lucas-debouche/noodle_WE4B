@@ -843,8 +843,6 @@ class AdminDashboardController {
         { json: () => {} }
       );
 
-      // Ici vous pouvez implémenter la logique d'export selon le format
-      // CSV, Excel, PDF...
 
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', `attachment; filename=dashboard.${format}`);

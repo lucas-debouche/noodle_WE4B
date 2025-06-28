@@ -146,7 +146,7 @@ app.listen(PORT, () => {
   console.log('  /api/ue - Unités d\'enseignement');
   console.log('  /api/departements - Départements (protégé)');
   console.log('  /api/admin - Panel admin');
-  console.log('  /api/admin/dashboard - Dashboard OLAP (nouveau)'); // ✨ NOUVEAU
+  console.log('  /api/admin/dashboard - Dashboard OLAP (nouveau)');
 });
 
 // ==========================================
@@ -155,7 +155,7 @@ app.listen(PORT, () => {
 process.on('SIGINT', async () => {
   console.log('\n👋 Arrêt du serveur...');
   try {
-    await mongoose.connection.close(); // ✅ Sans callback
+    await mongoose.connection.close();
     console.log('📊 Connexion MongoDB fermée');
     process.exit(0);
   } catch (error) {

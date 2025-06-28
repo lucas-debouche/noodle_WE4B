@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const Ue = require('../models/ue.model'); // nécessaire pour upload-photo
 const { logAction } = require('../utils/logActions');
-const UeUserSyncService = require('../utils/syncUtils'); // ✅ Ajout de l'import manquant
+const UeUserSyncService = require('../utils/syncUtils');
 
 // ===============================
 // ROUTES PUBLIQUES OU SPÉCIFIQUES
