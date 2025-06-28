@@ -86,6 +86,7 @@ async function logAction(logData) {
   } catch (error) {
     // Ne pas faire échouer l'opération principale si le log échoue
     console.error('❌ Erreur lors du logging (non bloquante):', error.message);
+    console.error("Log problématique : ", logData.action, logData.category, logData.userId, logData.targetId, logData.details);
   }
 }
 

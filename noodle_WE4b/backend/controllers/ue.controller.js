@@ -72,21 +72,11 @@ exports.getAllUes = async (req, res) => {
       participantCount: ue.participants ? ue.participants.length : 0
     }));
 
-    await logAction({
-      action: 'get_all_ues',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      details: { success: true }
-    });
+
     res.json(uesWithMetadata);
   } catch (err) {
     console.error('Error in getAllUes:', err);
-    await logAction({
-      action: 'get_all_ues_error',
-      category: 'ue',
-      userId: req.user? req.user.userId : null,
-      details: { error: err.message }
-    });
+
     res.status(500).json({ error: err.message });
   }
 };
@@ -140,23 +130,10 @@ exports.getUeById = async (req, res) => {
       updatedAt: ue.updatedAt
     };
 
-    await logAction({
-      action: 'get_ue_by_id',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      targetId: ueId,
-      details: { success: true }
-    });
+
     res.json(formattedUe);
   } catch (err) {
     console.error('Error in getUeById:', err);
-    await logAction({
-      action: 'get_ue_by_id_error',
-      category: 'ue',
-      userId: req.user? req.user.userId : null,
-      targetId: req.params.ueId,
-      details: { error: err.message }
-    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -166,71 +143,130 @@ exports.createUe = [
   upload.single('image'),
   async (req, res) => {
     try {
-      const { code, intitule, description, ects, departement } = req.body;
-      let assigned_users = req.body.assigned_users;
+      const { code, intitule, description, ects, departement, assigned_users } = req.body;
 
-      // Convertir assigned_users en tableau
-      if (assigned_users && !Array.isArray(assigned_users)) {
-        assigned_users = [assigned_users];
-      }
-
-      console.log('📝 Création UE:', {
-        code,
-        intitule,
-        hasImage: !!req.file,
-        assignedUsers: assigned_users
-      });
-
-      // Vérifier si l'UE existe déjà
       const existingUe = await Ue.findOne({ code: code.toUpperCase() });
       if (existingUe) {
-        return res.status(400).json({
-          success: false,
-          message: 'Ce code UE existe déjà'
-        });
+        return res.status(400).json({ success: false, message: 'Ce code UE existe déjà' });
       }
 
-      // Gérer l'image si elle existe
-      let imageFilename = null;
-      if (req.file) {
-        try {
-          const ueCode = code.trim().toUpperCase();
-          const baseDir = path.join(__dirname, '../uploads/ue', ueCode);
-          const photoDir = path.join(baseDir, 'photo');
-          const postsDir = path.join(baseDir, 'posts');
-
-          fs.mkdirSync(photoDir, { recursive: true });
-          fs.mkdirSync(postsDir, { recursive: true });
-
-          const newPath = path.join(photoDir, req.file.filename);
-          fs.renameSync(req.file.path, newPath);
-          imageFilename = `ue/${ueCode}/photo/${req.file.filename}`;
-        } catch (imageError) {
-          console.error('❌ Erreur traitement image:', imageError);
+      let departementId = null;
+      if (departement && departement !== 'null' && departement !== '' && departement !== 'undefined') {
+        if (mongoose.Types.ObjectId.isValid(departement)) {
+          const departementExists = await Departement.findById(departement);
+          if (departementExists) departementId = departementExists._id;
+        } else {
+          const departementExists = await Departement.findOne({
+            $or: [
+              { nom: new RegExp(departement, 'i') },
+              { code: departement.toUpperCase() }
+            ]
+          });
+          if (departementExists) departementId = departementExists._id;
         }
       }
 
-      // Créer l'UE
+      // Créer les dossiers dédiés à cette UE
+      const nomUeSafe = intitule.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9-_]/g, "_").toLowerCase();
+      const ueDir = path.join(__dirname, '../uploads/ue', nomUeSafe);
+      const photoDir = path.join(ueDir, 'photo');
+      const postsDir = path.join(ueDir, 'posts');
+
+      if (!fs.existsSync(photoDir)) fs.mkdirSync(photoDir, { recursive: true });
+      if (!fs.existsSync(postsDir)) fs.mkdirSync(postsDir, { recursive: true });
+
+      let imageFilename = null;
+      if (req.file) {
+        imageFilename = path.join(nomUeSafe, 'photo', req.file.filename);
+        const destPath = path.join(__dirname, '../uploads/ue', imageFilename);
+        fs.renameSync(
+          path.join(__dirname, '../uploads/ue', req.file.filename),
+          destPath
+        );
+      }
+
+      // ✨ CRÉER L'UE D'ABORD SANS PARTICIPANTS
       const newUe = new Ue({
         code: code.toUpperCase(),
         intitule,
         description: description ? description.trim() : '',
         ects: parseInt(ects),
-        departementId: departement,
-        participants: assigned_users || [],
-        image: imageFilename
+        image: req.file ? `/uploads/ue/${nomUeSafe}/photo/${req.file.filename}` : null,
+        departementId,
+        participants: [] // Vide au début
       });
 
       const savedUe = await newUe.save();
+      console.log('✅ UE créée:', savedUe._id);
 
-      // Synchronisation immédiate après création
-      await UeUserSyncService.syncAllUsersForUe(savedUe._id);
-      console.log('✅ Synchronisation effectuée après création');
+      // ✨ UTILISER LE SERVICE DE SYNCHRONISATION POUR AJOUTER LES PARTICIPANTS
+      const participantsResults = [];
+      const participantsErrors = [];
+
+      if (assigned_users && Array.isArray(assigned_users) && assigned_users.length > 0) {
+        console.log('👥 Attribution des utilisateurs via le service de synchronisation');
+
+        for (const userId of assigned_users) {
+          try {
+            // Trouver l'utilisateur d'abord
+            let user = null;
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+              user = await Utilisateur.findById(userId);
+            }
+            if (!user) user = await Utilisateur.findOne({ id: userId });
+            if (!user && typeof userId === 'string') {
+              user = await Utilisateur.findOne({ email: userId });
+            }
+
+            if (user) {
+              // Utiliser le service de synchronisation
+              const result = await UeUserSyncService.addUserToUe(user._id, savedUe._id);
+              participantsResults.push({
+                userId: user._id,
+                email: user.email,
+                name: `${user.prenom} ${user.nom}`,
+                synchronized: true
+              });
+              console.log(`✅ Utilisateur synchronisé: ${user.email}`);
+            } else {
+              participantsErrors.push({
+                userId: userId,
+                error: 'Utilisateur non trouvé'
+              });
+              console.log('⚠️ Utilisateur non trouvé pour ID:', userId);
+            }
+          } catch (error) {
+            participantsErrors.push({
+              userId: userId,
+              error: error.message
+            });
+            console.error(`❌ Erreur synchronisation utilisateur ${userId}:`, error.message);
+          }
+        }
+      }
+
+      // Récupérer l'UE mise à jour avec les informations du département
+      const ueWithDepartement = await Ue.aggregate([
+        { $match: { _id: savedUe._id } },
+        {
+          $lookup: {
+            from: 'departement',
+            localField: 'departementId',
+            foreignField: '_id',
+            as: 'departement'
+          }
+        },
+        {
+          $addFields: {
+            departementNom: { $arrayElemAt: ['$departement.nom', 0] }
+          }
+        }
+      ]);
 
       const formattedUe = {
-        ...savedUe.toObject(),
-        id: savedUe._id.toString(),
-        participants: assigned_users || []
+        ...ueWithDepartement[0],
+        id: ueWithDepartement[0]._id.toString(),
+        participantCount: participantsResults.length
       };
 
       await logAction({
@@ -241,127 +277,282 @@ exports.createUe = [
         details: {
           code: savedUe.code,
           intitule: savedUe.intitule,
-          assignedUsers: assigned_users,
+          participantCount: participantsResults.length,
+          participantsSynchronized: participantsResults.length,
+          participantsErrors: participantsErrors.length,
+          synchronized: true,
           success: true
         }
       });
 
       res.status(201).json({
         success: true,
-        message: 'UE créée avec succès!',
-        ue: formattedUe
+        message: 'UE créée avec succès et participants synchronisés !',
+        ue: formattedUe,
+        synchronization: {
+          participantsAdded: participantsResults.length,
+          participantsErrors: participantsErrors.length,
+          details: participantsResults,
+          errors: participantsErrors.length > 0 ? participantsErrors : undefined
+        }
       });
 
     } catch (err) {
       console.error('❌ Error in createUe:', err);
 
-      // Nettoyer le fichier uploadé en cas d'erreur
-      if (req.file?.path && fs.existsSync(req.file.path)) {
-        try {
-          fs.unlinkSync(req.file.path);
-        } catch (unlinkError) {
-          console.error('Erreur suppression fichier:', unlinkError);
-        }
+      if (req.file) {
+        const tempFile = path.join(__dirname, '../uploads/ue', req.file.filename);
+        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
       }
 
-      await logAction({
-        action: 'create_ue_error',
-        category: 'ue',
-        userId: req.user ? req.user.userId : null,
-        details: { error: err.message }
-      });
 
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la création de l\'UE: ' + err.message
-      });
+      res.status(500).json({ success: false, message: 'Erreur lors de la création de l\'UE: ' + err.message });
     }
   }
 ];
 
-
 // PUT /api/ue/:ueId → modifier une UE existante
 exports.updateUe = [
   upload.single('image'),
+
   async (req, res) => {
-    try {
-      const ueId = req.params.ueId;
-      let { code, intitule, description, ects, departement, assigned_users } = req.body;
+    const ueId = req.params.ueId;
 
-      // Convertir assigned_users en tableau s'il ne l'est pas déjà
-      if (assigned_users && !Array.isArray(assigned_users)) {
-        assigned_users = [assigned_users];
-      }
+    // ✅ VALIDATION DE L'ID EN PREMIER
+    console.log(`🔍 updateUe appelé avec ueId:`, ueId);
+    console.log(`📝 Type de ueId:`, typeof ueId);
+    console.log(`📝 Valeur ueId:`, JSON.stringify(ueId));
 
-      console.log('📝 Mise à jour UE:', {
-        ueId,
-        assigned_users
+    // Vérifier que l'ID n'est pas undefined, null ou vide
+    console.log("Id UE avant vérification:", ueId);
+    if (!ueId || ueId === 'undefined' || ueId === 'null' || ueId.trim() === '') {
+      console.error(`❌ ID d'UE invalide:`, ueId);
+      return res.status(400).json({
+        success: false,
+        message: 'ID d\'UE manquant ou invalide'
       });
+    }
 
+    // Vérifier que c'est un ObjectId valide
+    if (!mongoose.Types.ObjectId.isValid(ueId)) {
+      console.error(`❌ ID d'UE n'est pas un ObjectId valide:`, ueId);
+      return res.status(400).json({
+        success: false,
+        message: 'Format d\'ID d\'UE invalide'
+      });
+    }
+
+    try {
+      const { code, intitule, description, ects, departement, assigned_users } = req.body;
+      console.log(`📝 Body reçu:`, { code, intitule, description, ects, departement, assigned_users: assigned_users?.length });
+
+      // Vérifier que l'UE existe
       const existingUe = await Ue.findById(ueId);
       if (!existingUe) {
+        console.error(`❌ UE non trouvée pour ID:`, ueId);
         return res.status(404).json({
           success: false,
           message: 'UE non trouvée'
         });
       }
 
-      // Sauvegarder les anciens participants
-      const oldParticipants = existingUe.participants.map(p => p.toString());
+      console.log(`✅ UE trouvée: ${existingUe.code} - ${existingUe.intitule}`);
 
-      // Préparer les nouveaux participants
-      const newParticipants = (assigned_users || [])
-        .filter(id => mongoose.Types.ObjectId.isValid(id))
-        .map(id => id.toString());
-
-      // Identifier les changements
-      const participantsToAdd = newParticipants.filter(p => !oldParticipants.includes(p));
-      const participantsToRemove = oldParticipants.filter(p => !newParticipants.includes(p));
-
-      console.log('👥 Modifications participants:', {
-        oldParticipants,
-        newParticipants,
-        toAdd: participantsToAdd,
-        toRemove: participantsToRemove
-      });
-
-      // Mettre à jour les utilisateurs
-      for (const userId of participantsToAdd) {
-        const user = await Utilisateur.findById(userId);
-        if (user && !user.ues.includes(ueId)) {
-          user.ues.push(ueId);
-          await user.save();
+      // Vérifier si le code UE existe déjà (sauf pour l'UE courante)
+      if (code && code.toUpperCase() !== existingUe.code) {
+        const duplicateUe = await Ue.findOne({
+          code: code.toUpperCase(),
+          _id: { $ne: ueId }
+        });
+        if (duplicateUe) {
+          return res.status(400).json({
+            success: false,
+            message: 'Ce code UE existe déjà'
+          });
         }
       }
 
-      for (const userId of participantsToRemove) {
-        const user = await Utilisateur.findById(userId);
-        if (user) {
-          user.ues = user.ues.filter(id => id.toString() !== ueId);
-          await user.save();
+      // Gestion du département
+      let departementId = existingUe.departementId;
+      if (departement !== undefined) {
+        if (departement === null || departement === '' || departement === 'null') {
+          departementId = null;
+        } else if (mongoose.Types.ObjectId.isValid(departement)) {
+          const departementExists = await Departement.findById(departement);
+          if (!departementExists) {
+            return res.status(400).json({
+              success: false,
+              message: 'Département introuvable'
+            });
+          }
+          departementId = new mongoose.Types.ObjectId(departement);
+        } else {
+          const departementExists = await Departement.findOne({
+            $or: [
+              { nom: departement },
+              { code: departement }
+            ]
+          });
+
+          if (departementExists) {
+            departementId = departementExists._id;
+          }
         }
       }
 
-      // Mettre �� jour l'UE
-      const updateData = {
-        code: code || existingUe.code,
-        intitule: intitule || existingUe.intitule,
-        description: description !== undefined ? description : existingUe.description,
-        ects: ects ? parseInt(ects) : existingUe.ects,
-        departementId: departement || existingUe.departementId,
-        participants: newParticipants,
-        updatedAt: new Date()
-      };
+      // Préparer les données de mise à jour de base
+      const updateData = {};
+      if (code) updateData.code = code.toUpperCase();
+      if (intitule) updateData.intitule = intitule;
+      if (description !== undefined) updateData.description = description;
+      if (ects) updateData.ects = parseInt(ects);
+      if (departement !== undefined) updateData.departementId = departementId;
+      updateData.updatedAt = new Date();
 
-      const updatedUe = await Ue.findByIdAndUpdate(
-        ueId,
-        updateData,
-        { new: true }
-      );
+      // Traitement de l'image
+      if (req.file) {
+        // Créer le dossier s'il n'existe pas
+        const nomUeSafe = (intitule || existingUe.intitule).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9-_]/g, "_").toLowerCase();
+        const photoDir = path.join(__dirname, '../uploads/ue', nomUeSafe, 'photo');
 
-      // Synchronisation immédiate après mise à jour
-      await UeUserSyncService.syncAllUsersForUe(updatedUe._id);
-      console.log('✅ Synchronisation effectuée après mise à jour');
+        if (!fs.existsSync(photoDir)) {
+          fs.mkdirSync(photoDir, { recursive: true });
+        }
+
+        // Déplacer le fichier vers le bon dossier
+        const newImagePath = path.join(photoDir, req.file.filename);
+        const tempPath = req.file.path;
+
+        fs.renameSync(tempPath, newImagePath);
+
+        // Supprimer l'ancienne image si elle existe
+        if (existingUe.image) {
+          const oldImagePath = path.join(__dirname, '../uploads', existingUe.image);
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+          }
+        }
+
+        updateData.image = `/uploads/ue/${nomUeSafe}/photo/${req.file.filename}`;
+      }
+
+      console.log(`📝 Données de base à mettre à jour:`, updateData);
+
+      // ✨ GESTION DES PARTICIPANTS AVEC SYNCHRONISATION
+      let synchronizationResult = null;
+
+      if (assigned_users !== undefined) {
+        console.log(`👥 Gestion des participants assignés:`, assigned_users);
+
+        try {
+          // Convertir assigned_users en tableau d'IDs valides
+          const newUserIds = [];
+          const invalidUsers = [];
+
+          if (Array.isArray(assigned_users)) {
+            for (const userId of assigned_users) {
+              if (userId && userId.trim() !== '') {
+                let user = null;
+
+                // Recherche de l'utilisateur
+                if (mongoose.Types.ObjectId.isValid(userId)) {
+                  user = await Utilisateur.findById(userId);
+                }
+                if (!user) {
+                  user = await Utilisateur.findOne({ id: userId });
+                }
+                if (!user && typeof userId === 'string') {
+                  user = await Utilisateur.findOne({ email: userId });
+                }
+
+                if (user) {
+                  newUserIds.push(user._id.toString());
+                  console.log(`✅ Utilisateur trouvé: ${user.prenom} ${user.nom} (${user.email})`);
+                } else {
+                  invalidUsers.push(userId);
+                  console.log(`⚠️ Utilisateur non trouvé: ${userId}`);
+                }
+              }
+            }
+          }
+
+          console.log(`📊 Résumé participants:`);
+          console.log(`  - Anciens: ${existingUe.participants.length}`);
+          console.log(`  - Nouveaux valides: ${newUserIds.length}`);
+          console.log(`  - Invalides: ${invalidUsers.length}`);
+
+          // Obtenir les participants actuels
+          const currentUserIds = existingUe.participants.map(id => id.toString());
+
+          // Calculer les différences
+          const usersToRemove = currentUserIds.filter(userId => !newUserIds.includes(userId));
+          const usersToAdd = newUserIds.filter(userId => !currentUserIds.includes(userId));
+
+          console.log(`🔄 Changements à effectuer:`);
+          console.log(`  - À retirer: ${usersToRemove.length}`, usersToRemove);
+          console.log(`  - À ajouter: ${usersToAdd.length}`, usersToAdd);
+
+          const removeResults = [];
+          const addResults = [];
+
+          // Retirer les utilisateurs qui ne sont plus assignés
+          for (const userId of usersToRemove) {
+            try {
+              console.log(`➖ Retrait de l'utilisateur ${userId}...`);
+              await UeUserSyncService.removeUserFromUe(userId, ueId);
+              removeResults.push({ userId, success: true });
+              console.log(`✅ Utilisateur ${userId} retiré avec succès`);
+            } catch (error) {
+              console.error(`❌ Erreur retrait ${userId}:`, error.message);
+              removeResults.push({ userId, success: false, error: error.message });
+            }
+          }
+
+          // Ajouter les nouveaux utilisateurs
+          for (const userId of usersToAdd) {
+            try {
+              console.log(`➕ Ajout de l'utilisateur ${userId}...`);
+              await UeUserSyncService.addUserToUe(userId, ueId);
+              addResults.push({ userId, success: true });
+              console.log(`✅ Utilisateur ${userId} ajouté avec succès`);
+            } catch (error) {
+              console.error(`❌ Erreur ajout ${userId}:`, error.message);
+              addResults.push({ userId, success: false, error: error.message });
+            }
+          }
+
+          synchronizationResult = {
+            usersRemoved: removeResults.filter(r => r.success).length,
+            usersAdded: addResults.filter(r => r.success).length,
+            removeErrors: removeResults.filter(r => !r.success),
+            addErrors: addResults.filter(r => !r.success),
+            invalidUsers: invalidUsers,
+            synchronized: true
+          };
+
+          console.log(`🎉 Synchronisation terminée:`, synchronizationResult);
+
+        } catch (syncError) {
+          console.error('❌ Erreur lors de la synchronisation:', syncError);
+          synchronizationResult = {
+            error: syncError.message,
+            synchronized: false
+          };
+        }
+      }
+
+      // Mettre à jour l'UE avec les données de base
+      console.log(`🔄 Mise à jour de l'UE avec:`, updateData);
+      const updatedUe = await Ue.findByIdAndUpdate(ueId, updateData, { new: true });
+
+      if (!updatedUe) {
+        return res.status(404).json({
+          success: false,
+          message: 'Erreur lors de la mise à jour de l\'UE'
+        });
+      }
+
+      console.log(`✅ UE mise à jour: ${updatedUe.code} - ${updatedUe.intitule}`);
 
       // Récupérer l'UE mise à jour avec les informations du département
       const ueWithDepartement = await Ue.aggregate([
@@ -387,42 +578,54 @@ exports.updateUe = [
         participantCount: ueWithDepartement[0].participants ? ueWithDepartement[0].participants.length : 0
       };
 
+      // Logger l'action
       await logAction({
         action: 'update_ue',
         category: 'ue',
         userId: req.user ? req.user.userId : null,
         targetId: ueId,
         details: {
-          success: true,
-          participantsAdded: participantsToAdd.length,
-          participantsRemoved: participantsToRemove.length
+          oldCode: existingUe.code,
+          newCode: updatedUe.code,
+          oldIntitule: existingUe.intitule,
+          newIntitule: updatedUe.intitule,
+          participantCount: formattedUe.participantCount,
+          synchronized: synchronizationResult ? synchronizationResult.synchronized : 'not_applicable',
+          participantsChanged: synchronizationResult ?
+            (synchronizationResult.usersAdded || 0) + (synchronizationResult.usersRemoved || 0) : 0,
+          success: true
         }
       });
 
-      res.json({
+      const response = {
         success: true,
-        message: 'UE mise �� jour avec succès',
+        message: 'UE mise à jour avec succès',
         ue: formattedUe
+      };
+
+      if (synchronizationResult) {
+        response.synchronization = synchronizationResult;
+      }
+
+      console.log(`🎉 Réponse finale:`, {
+        success: response.success,
+        message: response.message,
+        participants: formattedUe.participantCount,
+        sync: synchronizationResult ? 'applied' : 'not_needed'
       });
 
-    } catch (err) {
-      console.error('Error in updateUe:', err);
+      res.json(response);
 
+    } catch (err) {
+      console.error('❌ Error in updateUe:', err);
+
+      // Nettoyer le fichier uploadé en cas d'erreur
       if (req.file) {
-        const filePath = path.join(__dirname, '../uploads/ue', req.file.filename);
+        const filePath = req.file.path;
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
       }
-
-      await logAction({
-        action: 'update_ue_error',
-        category: 'ue',
-        userId: req.user ? req.user.userId : null,
-        targetId: req.params.ueId,
-        details: { error: err.message }
-      });
-
       res.status(500).json({
         success: false,
         message: 'Erreur lors de la mise à jour de l\'UE: ' + err.message
@@ -430,7 +633,6 @@ exports.updateUe = [
     }
   }
 ];
-
 // DELETE /api/ue/:ueId → supprimer une UE
 exports.deleteUe = async (req, res) => {
   const ueId = req.params.ueId;
@@ -470,13 +672,6 @@ exports.deleteUe = async (req, res) => {
 
   } catch (err) {
     console.error('❌ Error in deleteUe:', err);
-    await logAction({
-      action: 'delete_ue_error',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      targetId: ueId,
-      details: { error: err.message }
-    });
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de l\'UE: ' + err.message
@@ -512,21 +707,9 @@ exports.searchUes = async (req, res) => {
       participantCount: ue.participants ? ue.participants.length : 0
     }));
 
-    await logAction({
-      action: 'search_ues',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      details: { query: searchTerm, success: true }
-    });
     res.json(formattedUes);
   } catch (err) {
     console.error('Error in searchUes:', err);
-    await logAction({
-      action:'search_ues_error',
-      category: 'ue',
-      userId: req.user? req.user.userId : null,
-      details: { error: err.message }
-    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -535,7 +718,29 @@ exports.searchUes = async (req, res) => {
 exports.getParticipantsByUe = async (req, res) => {
   try {
     const ueId = req.params.ueId;
+
+    // ✨ VALIDATION RENFORCÉE DE L'ID
     console.log(`🔍 Recherche participants pour UE: ${ueId}`);
+    console.log(`📝 Type de ueId: ${typeof ueId}`);
+    console.log(`📝 Valeur de ueId: ${JSON.stringify(ueId)}`);
+
+    // Vérifier que l'ID n'est pas undefined, null ou vide
+    if (!ueId || ueId === 'undefined' || ueId === 'null' || ueId.trim() === '') {
+      console.error(`❌ ID d'UE invalide pour getParticipantsByUe:`, ueId);
+      return res.status(400).json({
+        success: false,
+        message: 'ID d\'UE manquant ou invalide'
+      });
+    }
+
+    // Vérifier que c'est un ObjectId valide
+    if (!mongoose.Types.ObjectId.isValid(ueId)) {
+      console.error(`❌ ID d'UE n'est pas un ObjectId valide:`, ueId);
+      return res.status(400).json({
+        success: false,
+        message: 'Format d\'ID d\'UE invalide'
+      });
+    }
 
     // Récupérer l'UE
     let ue;
@@ -606,28 +811,20 @@ exports.getParticipantsByUe = async (req, res) => {
 
     console.log(`🎉 Total participants récupérés: ${participants.length}`);
 
-    await logAction({
-      action: 'get_participants_by_ue',
-      category: 'user',
-      userId: req.user ? req.user.userId : null,
-      targetId: ue._id.toString(),
-      details: {
-        ueCode: ue.code,
-        ueIntitule: ue.intitule,
-        participantCount: ue.participants ? ue.participants.length : 0,
-        success: true
+
+    res.json({
+      success: true,
+      data: participants,
+      ue: {
+        id: ue._id.toString(),
+        code: ue.code,
+        intitule: ue.intitule,
+        participantCount: participants.length
       }
     });
 
   } catch (err) {
     console.error('❌ Error in getParticipantsByUe:', err);
-    await logAction({
-      action: 'get_participants_by_ue_error',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      targetId: req.params.ueId,
-      details: { error: err.message }
-    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -642,22 +839,33 @@ exports.addParticipantToUe = async (req, res) => {
     const ueId = req.params.ueId;
     const { utilisateurId } = req.body;
 
-    await UeUserSyncService.addUserToUe(utilisateurId, ueId);
-    await UeUserSyncService.syncAllUsersForUe(ueId);
-    console.log('✅ Synchronisation effectuée après ajout participant');
+    // ✨ VALIDATION DE L'ID
+    if (!validateUeId(ueId, res, 'addParticipantToUe')) return;
+
+    console.log(`Ajout participant UE ${ueId}, utilisateur ${utilisateurId}`);
+
+    // Utiliser le service de synchronisation
+    const result = await UeUserSyncService.addUserToUe(utilisateurId, ueId);
 
     await logAction({
       action: 'add_participant_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
       targetId: ueId,
-      details: { success: true }
+      details: {
+        participantId: utilisateurId,
+        participantName: `${result.user.prenom} ${result.user.nom}`,
+        success: true
+      }
     });
 
     res.status(201).json({
       success: true,
-      message: 'Participant ajouté avec succès',
-      data: result
+      message: 'Participant ajouté avec succès (synchronisé)',
+      data: {
+        ue: result.ue.intitule,
+        participant: `${result.user.prenom} ${result.user.nom}`
+      }
     });
 
   } catch (err) {
@@ -669,32 +877,39 @@ exports.addParticipantToUe = async (req, res) => {
     });
   }
 };
-
 // DELETE /api/ue/:ueId/participants/:utilisateurId → retirer un participant d'une UE
 exports.removeParticipantFromUe = async (req, res) => {
   try {
     const { ueId, utilisateurId } = req.params;
 
-    await UeUserSyncService.removeUserFromUe(utilisateurId, ueId);
-    await UeUserSyncService.syncAllUsersForUe(ueId);
-    console.log('✅ Synchronisation effectuée après retrait participant');
+    // ✨ VALIDATION DE L'ID
+    if (!validateUeId(ueId, res, 'removeParticipantFromUe')) return;
+
+    console.log(`Retrait participant UE ${ueId}, utilisateur ${utilisateurId}`);
+
+    // Utiliser le service de synchronisation
+    const result = await UeUserSyncService.removeUserFromUe(utilisateurId, ueId);
 
     await logAction({
       action: 'remove_participant_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
       targetId: ueId,
-      details: { success: true }
+      details: {
+        participantId: utilisateurId,
+        participantName: `${result.user.prenom} ${result.user.nom}`,
+        success: true
+      }
     });
 
     res.json({
       success: true,
-      message: 'Participant retiré avec succès',
-      data: result
+      message: 'Participant retiré avec succès (synchronisé)'
     });
 
   } catch (err) {
     console.error('Error in removeParticipantFromUe:', err);
+
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -775,13 +990,7 @@ exports.getParticipantsStats = async (req, res) => {
       { _id: 'actif', count: totalParticipants }
     ];
 
-    await logAction({
-      action: 'get_participants_stats',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      targetId: ueId,
-      details: { success: true }
-    });
+
     res.json({
       success: true,
       data: {
@@ -793,13 +1002,35 @@ exports.getParticipantsStats = async (req, res) => {
 
   } catch (err) {
     console.error('Error in getParticipantsStats:', err);
-    await logAction({
-      action: 'get_participants_stats_error',
-      category: 'ue',
-      userId: req.user? req.user.userId : null,
-      targetId: req.params.ueId,
-      details: { error: err.message }
-    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
+
+
+function validateUeId(ueId, res, actionName = 'action') {
+  console.log(`🔍 Validation ID pour ${actionName}: ${ueId}`);
+  console.log(`📝 Type: ${typeof ueId}, Valeur: ${JSON.stringify(ueId)}`);
+
+  // Vérifier que l'ID n'est pas undefined, null ou vide
+  if (!ueId || ueId === 'undefined' || ueId === 'null' || ueId.toString().trim() === '') {
+    console.error(`❌ ID d'UE invalide pour ${actionName}:`, ueId);
+    res.status(400).json({
+      success: false,
+      message: 'ID d\'UE manquant ou invalide'
+    });
+    return false;
+  }
+
+  // Vérifier que c'est un ObjectId valide
+  if (!mongoose.Types.ObjectId.isValid(ueId)) {
+    console.error(`❌ ID d'UE n'est pas un ObjectId valide pour ${actionName}:`, ueId);
+    res.status(400).json({
+      success: false,
+      message: 'Format d\'ID d\'UE invalide'
+    });
+    return false;
+  }
+
+  return true;
+}
+
