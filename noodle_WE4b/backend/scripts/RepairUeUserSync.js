@@ -1,264 +1,155 @@
-// scripts/monitorUeUserSync.js
-// Script de surveillance pour détecter les incohérences
+// scripts/repairUeUserSync.js
+// Script à exécuter une fois pour réparer les données existantes
 
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Utilisateur = require('../models/utilisateur.model');
 const Ue = require('../models/ue.model');
 
-class UeUserMonitor {
+async function repairUeUserData() {
+  try {
+    console.log('🔧 Début de la réparation des données UE-Utilisateur...');
 
-  /**
-   * Effectue une vérification complète sans réparation
-   */
-  static async checkConsistency() {
-    try {
-      console.log('🔍 Vérification de la cohérence UE-Utilisateur...');
+    // Connexion à MongoDB
+    await mongoose.connect('mongodb://localhost:27017/noodle');
+    console.log('✅ Connecté à MongoDB');
 
-      const issues = {
-        orphanParticipants: [],
-        orphanUes: [],
-        missingFromUe: [],
-        missingFromUser: [],
-        summary: {
-          totalIssues: 0,
-          criticalIssues: 0
-        }
-      };
+    const stats = {
+      uesChecked: 0,
+      usersChecked: 0,
+      inconsistenciesFound: 0,
+      orphansRemoved: 0,
+      relationshipsAdded: 0
+    };
 
-      // 1. Vérifier les participants orphelins dans les UEs
-      const ues = await Ue.find({});
-      for (const ue of ues) {
-        for (const participantId of ue.participants) {
-          const user = await Utilisateur.findById(participantId);
-          if (!user) {
-            issues.orphanParticipants.push({
-              ueId: ue._id,
-              ueCode: ue.code,
-              orphanUserId: participantId
-            });
-          } else {
-            // Vérifier si l'utilisateur a cette UE
-            const ueIdString = ue._id.toString();
-            if (!user.ues.includes(ueIdString)) {
-              issues.missingFromUser.push({
-                ueId: ue._id,
-                ueCode: ue.code,
-                userId: user._id,
-                userEmail: user.email
-              });
-            }
-          }
-        }
-      }
-
-      // 2. Vérifier les UEs orphelines chez les utilisateurs
-      const users = await Utilisateur.find({});
-      for (const user of users) {
-        for (const ueIdString of user.ues) {
-          const ue = await Ue.findById(ueIdString);
-          if (!ue) {
-            issues.orphanUes.push({
-              userId: user._id,
-              userEmail: user.email,
-              orphanUeId: ueIdString
-            });
-          } else {
-            // Vérifier si l'UE a cet utilisateur
-            if (!ue.participants.includes(user._id)) {
-              issues.missingFromUe.push({
-                userId: user._id,
-                userEmail: user.email,
-                ueId: ue._id,
-                ueCode: ue.code
-              });
-            }
-          }
-        }
-      }
-
-      // 3. Calculer les statistiques
-      issues.summary.totalIssues =
-        issues.orphanParticipants.length +
-        issues.orphanUes.length +
-        issues.missingFromUe.length +
-        issues.missingFromUser.length;
-
-      issues.summary.criticalIssues =
-        issues.orphanParticipants.length +
-        issues.orphanUes.length;
-
-      return issues;
-
-    } catch (error) {
-      console.error('❌ Erreur lors de la vérification:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Génère un rapport détaillé
-   */
-  static async generateReport() {
-    try {
-      await mongoose.connect('mongodb://localhost:27017/noodle');
-
-      const issues = await this.checkConsistency();
-      const stats = await this.getGeneralStats();
-
-      console.log('\n📊 RAPPORT DE COHÉRENCE UE-UTILISATEUR');
-      console.log('=====================================');
-
-      console.log('\n📈 STATISTIQUES GÉNÉRALES:');
-      console.log(`   Nombre total d'UEs: ${stats.totalUes}`);
-      console.log(`   Nombre total d'utilisateurs: ${stats.totalUsers}`);
-      console.log(`   Relations UE-Utilisateur: ${stats.totalRelations}`);
-
-      console.log('\n🔍 ISSUES DÉTECTÉES:');
-      console.log(`   Total des problèmes: ${issues.summary.totalIssues}`);
-      console.log(`   Problèmes critiques: ${issues.summary.criticalIssues}`);
-
-      if (issues.orphanParticipants.length > 0) {
-        console.log(`\n❌ PARTICIPANTS ORPHELINS (${issues.orphanParticipants.length}):`);
-        issues.orphanParticipants.forEach(issue => {
-          console.log(`   • UE ${issue.ueCode} a un participant inexistant: ${issue.orphanUserId}`);
-        });
-      }
-
-      if (issues.orphanUes.length > 0) {
-        console.log(`\n❌ UES ORPHELINES (${issues.orphanUes.length}):`);
-        issues.orphanUes.forEach(issue => {
-          console.log(`   • Utilisateur ${issue.userEmail} a une UE inexistante: ${issue.orphanUeId}`);
-        });
-      }
-
-      if (issues.missingFromUser.length > 0) {
-        console.log(`\n⚠️ MANQUANT CÔTÉ UTILISATEUR (${issues.missingFromUser.length}):`);
-        issues.missingFromUser.forEach(issue => {
-          console.log(`   • UE ${issue.ueCode} a ${issue.userEmail} mais l'utilisateur n'a pas l'UE`);
-        });
-      }
-
-      if (issues.missingFromUe.length > 0) {
-        console.log(`\n⚠️ MANQUANT CÔTÉ UE (${issues.missingFromUe.length}):`);
-        issues.missingFromUe.forEach(issue => {
-          console.log(`   • Utilisateur ${issue.userEmail} a l'UE ${issue.ueCode} mais l'UE n'a pas l'utilisateur`);
-        });
-      }
-
-      if (issues.summary.totalIssues === 0) {
-        console.log('\n✅ EXCELLENT! Aucune incohérence détectée.');
-      } else {
-        console.log('\n🔧 RECOMMANDATION: Exécutez le script de réparation pour corriger ces problèmes.');
-        console.log('   Command: node scripts/repairUeUserSync.js');
-      }
-
-      return {
-        issues,
-        stats,
-        isConsistent: issues.summary.totalIssues === 0
-      };
-
-    } catch (error) {
-      console.error('❌ Erreur lors de la génération du rapport:', error);
-      throw error;
-    } finally {
-      await mongoose.connection.close();
-    }
-  }
-
-  /**
-   * Récupère les statistiques générales
-   */
-  static async getGeneralStats() {
+    // 1. Nettoyer les participants orphelins dans les UEs
+    console.log('\n1. 🧹 Nettoyage des participants orphelins...');
     const ues = await Ue.find({});
+
+    for (const ue of ues) {
+      stats.uesChecked++;
+      const validParticipants = [];
+
+      for (const participantId of ue.participants) {
+        const user = await Utilisateur.findById(participantId);
+        if (user) {
+          validParticipants.push(participantId);
+
+          // Vérifier si l'utilisateur a cette UE dans sa liste
+          const ueIdString = ue._id.toString();
+          if (!user.ues.includes(ueIdString)) {
+            console.log(`  ➕ Ajout UE ${ue.code} à l'utilisateur ${user.email}`);
+            user.ues.push(ueIdString);
+            await user.save();
+            stats.relationshipsAdded++;
+          }
+        } else {
+          console.log(`  🗑️ Participant orphelin supprimé de l'UE ${ue.code}: ${participantId}`);
+          stats.orphansRemoved++;
+        }
+      }
+
+      // Mettre à jour l'UE si nécessaire
+      if (validParticipants.length !== ue.participants.length) {
+        ue.participants = validParticipants;
+        await ue.save();
+      }
+    }
+
+    // 2. Nettoyer les UEs orphelines chez les utilisateurs
+    console.log('\n2. 🧹 Nettoyage des UEs orphelines...');
     const users = await Utilisateur.find({});
 
-    let totalRelations = 0;
-    ues.forEach(ue => {
-      totalRelations += ue.participants.length;
-    });
+    for (const user of users) {
+      stats.usersChecked++;
+      const validUes = [];
 
-    return {
-      totalUes: ues.length,
-      totalUsers: users.length,
-      totalRelations: totalRelations
-    };
-  }
+      for (const ueIdString of user.ues) {
+        const ue = await Ue.findById(ueIdString);
+        if (ue) {
+          validUes.push(ueIdString);
 
-  /**
-   * Mode surveillance continue (pour cron job)
-   */
-  static async watchMode() {
-    try {
-      await mongoose.connect('mongodb://localhost:27017/noodle');
-
-      const issues = await this.checkConsistency();
-      const timestamp = new Date().toISOString();
-
-      if (issues.summary.totalIssues > 0) {
-        console.log(`[${timestamp}] ⚠️ ${issues.summary.totalIssues} incohérences détectées!`);
-
-        // Ici vous pourriez envoyer une alerte (email, Slack, etc.)
-        // await sendAlert(issues);
-
-        return {
-          status: 'INCONSISTENT',
-          issues: issues.summary.totalIssues,
-          critical: issues.summary.criticalIssues
-        };
-      } else {
-        console.log(`[${timestamp}] ✅ Données cohérentes`);
-        return {
-          status: 'CONSISTENT',
-          issues: 0,
-          critical: 0
-        };
+          // Vérifier si l'UE a cet utilisateur dans ses participants
+          if (!ue.participants.includes(user._id)) {
+            console.log(`  ➕ Ajout utilisateur ${user.email} à l'UE ${ue.code}`);
+            ue.participants.push(user._id);
+            await ue.save();
+            stats.relationshipsAdded++;
+          }
+        } else {
+          console.log(`  🗑️ UE orpheline supprimée de l'utilisateur ${user.email}: ${ueIdString}`);
+          stats.orphansRemoved++;
+        }
       }
 
-    } catch (error) {
-      console.error(`❌ Erreur en mode surveillance:`, error);
-      return {
-        status: 'ERROR',
-        error: error.message
-      };
-    } finally {
-      await mongoose.connection.close();
+      // Mettre à jour l'utilisateur si nécessaire
+      if (validUes.length !== user.ues.length) {
+        user.ues = validUes;
+        await user.save();
+      }
     }
+
+    // 3. Vérification spéciale : UEs supprimées mais toujours référencées
+    console.log('\n3. 🔍 Vérification des UEs supprimées mais toujours référencées...');
+    const allUsers = await Utilisateur.find({});
+
+    for (const user of allUsers) {
+      const cleanedUes = [];
+
+      for (const ueIdString of user.ues) {
+        const ueExists = await Ue.findById(ueIdString);
+        if (ueExists) {
+          cleanedUes.push(ueIdString);
+        } else {
+          console.log(`  🗑️ UE supprimée retirée de l'utilisateur ${user.email}: ${ueIdString}`);
+          stats.orphansRemoved++;
+        }
+      }
+
+      // Mettre à jour si nécessaire
+      if (cleanedUes.length !== user.ues.length) {
+        user.ues = cleanedUes;
+        await user.save();
+        console.log(`  ✅ Utilisateur ${user.email} mis à jour (${user.ues.length - cleanedUes.length} UEs supprimées)`);
+      }
+    }
+
+    // 4. Rapport final
+    console.log('\n📊 RAPPORT DE RÉPARATION:');
+    console.log(`   UEs vérifiées: ${stats.uesChecked}`);
+    console.log(`   Utilisateurs vérifiés: ${stats.usersChecked}`);
+    console.log(`   Incohérences trouvées: ${stats.inconsistenciesFound}`);
+    console.log(`   Orphelins supprimés: ${stats.orphansRemoved}`);
+    console.log(`   Relations ajoutées: ${stats.relationshipsAdded}`);
+
+    if (stats.orphansRemoved === 0 && stats.relationshipsAdded === 0) {
+      console.log('✅ Aucune incohérence trouvée. Les données sont cohérentes!');
+    } else {
+      console.log('✅ Réparation terminée avec succès!');
+    }
+
+    return stats;
+
+  } catch (error) {
+    console.error('❌ Erreur lors de la réparation:', error);
+    throw error;
+  } finally {
+    await mongoose.connection.close();
+    console.log('📊 Connexion MongoDB fermée');
   }
 }
 
-// Exécution selon les arguments
+// Exécution du script si appelé directement
 if (require.main === module) {
-  const mode = process.argv[2] || 'report';
-
-  switch (mode) {
-    case 'report':
-      UeUserMonitor.generateReport()
-        .then(result => {
-          process.exit(result.isConsistent ? 0 : 1);
-        })
-        .catch(error => {
-          console.error('💥 Erreur fatale:', error);
-          process.exit(2);
-        });
-      break;
-
-    case 'watch':
-      UeUserMonitor.watchMode()
-        .then(result => {
-          process.exit(result.status === 'CONSISTENT' ? 0 : 1);
-        })
-        .catch(error => {
-          console.error('💥 Erreur fatale:', error);
-          process.exit(2);
-        });
-      break;
-
-    default:
-      console.log('Usage: node monitorUeUserSync.js [report|watch]');
+  repairUeUserData()
+    .then(stats => {
+      console.log('\n🎉 Script terminé avec succès!');
+      process.exit(0);
+    })
+    .catch(error => {
+      console.error('\n💥 Erreur fatale:', error);
       process.exit(1);
-  }
+    });
 }
 
-module.exports = UeUserMonitor;
+module.exports = repairUeUserData;
