@@ -166,96 +166,71 @@ exports.createUe = [
   upload.single('image'),
   async (req, res) => {
     try {
-      const { code, intitule, description, ects, departement, assigned_users } = req.body;
+      const { code, intitule, description, ects, departement } = req.body;
+      let assigned_users = req.body.assigned_users;
 
+      // Convertir assigned_users en tableau
+      if (assigned_users && !Array.isArray(assigned_users)) {
+        assigned_users = [assigned_users];
+      }
+
+      console.log('📝 Création UE:', {
+        code,
+        intitule,
+        hasImage: !!req.file,
+        assignedUsers: assigned_users
+      });
+
+      // Vérifier si l'UE existe déjà
       const existingUe = await Ue.findOne({ code: code.toUpperCase() });
       if (existingUe) {
-        return res.status(400).json({ success: false, message: 'Ce code UE existe déjà' });
+        return res.status(400).json({
+          success: false,
+          message: 'Ce code UE existe déjà'
+        });
       }
 
-      let departementId = null;
-      if (departement && departement !== 'null' && departement !== '' && departement !== 'undefined') {
-        if (mongoose.Types.ObjectId.isValid(departement)) {
-          const departementExists = await Departement.findById(departement);
-          if (departementExists) departementId = departementExists._id;
-        } else {
-          const departementExists = await Departement.findOne({
-            $or: [
-              { nom: new RegExp(departement, 'i') },
-              { code: departement.toUpperCase() }
-            ]
-          });
-          if (departementExists) departementId = departementExists._id;
-        }
-      }
-
-      // Créer les dossiers dédiés à cette UE
-      const nomUeSafe = intitule.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9-_]/g, "_").toLowerCase();
-      const ueDir = path.join(__dirname, '../uploads/ue', nomUeSafe);
-      const photoDir = path.join(ueDir, 'photo');
-      const postsDir = path.join(ueDir, 'posts');
-
-      if (!fs.existsSync(photoDir)) fs.mkdirSync(photoDir, { recursive: true });
-      if (!fs.existsSync(postsDir)) fs.mkdirSync(postsDir, { recursive: true });
-
+      // Gérer l'image si elle existe
       let imageFilename = null;
       if (req.file) {
-        imageFilename = path.join(nomUeSafe, 'photo', req.file.filename);
-        const destPath = path.join(__dirname, '../uploads/ue', imageFilename);
-        fs.renameSync(
-          path.join(__dirname, '../uploads/ue', req.file.filename),
-          destPath
-        );
-      }
+        try {
+          const ueCode = code.trim().toUpperCase();
+          const baseDir = path.join(__dirname, '../uploads/ue', ueCode);
+          const photoDir = path.join(baseDir, 'photo');
+          const postsDir = path.join(baseDir, 'posts');
 
-      let participants = [];
-      if (assigned_users && Array.isArray(assigned_users)) {
-        for (const userId of assigned_users) {
-          let user = null;
-          if (mongoose.Types.ObjectId.isValid(userId)) {
-            user = await Utilisateur.findById(userId);
-          }
-          if (!user) user = await Utilisateur.findOne({ id: userId });
-          if (!user && typeof userId === 'string') {
-            user = await Utilisateur.findOne({ email: userId });
-          }
-          if (user) participants.push(user._id.toString());
+          fs.mkdirSync(photoDir, { recursive: true });
+          fs.mkdirSync(postsDir, { recursive: true });
+
+          const newPath = path.join(photoDir, req.file.filename);
+          fs.renameSync(req.file.path, newPath);
+          imageFilename = `ue/${ueCode}/photo/${req.file.filename}`;
+        } catch (imageError) {
+          console.error('❌ Erreur traitement image:', imageError);
         }
       }
 
+      // Créer l'UE
       const newUe = new Ue({
         code: code.toUpperCase(),
         intitule,
         description: description ? description.trim() : '',
         ects: parseInt(ects),
-        image: `/uploads/ue/${nomUeSafe}/photo/${req.file.filename}`,
-        departementId,
-        participants
+        departementId: departement,
+        participants: assigned_users || [],
+        image: imageFilename
       });
 
       const savedUe = await newUe.save();
 
-      const ueWithDepartement = await Ue.aggregate([
-        { $match: { _id: savedUe._id } },
-        {
-          $lookup: {
-            from: 'departement',
-            localField: 'departementId',
-            foreignField: '_id',
-            as: 'departement'
-          }
-        },
-        {
-          $addFields: {
-            departementNom: { $arrayElemAt: ['$departement.nom', 0] }
-          }
-        }
-      ]);
+      // Synchronisation immédiate après création
+      await UeUserSyncService.syncAllUsersForUe(savedUe._id);
+      console.log('✅ Synchronisation effectuée après création');
 
       const formattedUe = {
-        ...ueWithDepartement[0],
-        id: ueWithDepartement[0]._id.toString(),
-        participantCount: ueWithDepartement[0].participants ? ueWithDepartement[0].participants.length : 0
+        ...savedUe.toObject(),
+        id: savedUe._id.toString(),
+        participants: assigned_users || []
       };
 
       await logAction({
@@ -266,19 +241,27 @@ exports.createUe = [
         details: {
           code: savedUe.code,
           intitule: savedUe.intitule,
-          participantCount: savedUe.participants.length,
+          assignedUsers: assigned_users,
           success: true
         }
       });
 
-      res.status(201).json({ success: true, message: 'UE créée avec succès!', ue: formattedUe });
+      res.status(201).json({
+        success: true,
+        message: 'UE créée avec succès!',
+        ue: formattedUe
+      });
 
     } catch (err) {
       console.error('❌ Error in createUe:', err);
 
-      if (req.file) {
-        const tempFile = path.join(__dirname, '../uploads/ue', req.file.filename);
-        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+      // Nettoyer le fichier uploadé en cas d'erreur
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error('Erreur suppression fichier:', unlinkError);
+        }
       }
 
       await logAction({
@@ -288,7 +271,10 @@ exports.createUe = [
         details: { error: err.message }
       });
 
-      res.status(500).json({ success: false, message: 'Erreur lors de la création de l\'UE: ' + err.message });
+      res.status(500).json({
+        success: false,
+        message: 'Erreur lors de la création de l\'UE: ' + err.message
+      });
     }
   }
 ];
@@ -297,16 +283,21 @@ exports.createUe = [
 // PUT /api/ue/:ueId → modifier une UE existante
 exports.updateUe = [
   upload.single('image'),
-
   async (req, res) => {
-
-    const ueId = req.params.ueId;
-    console.log(`updateUe → ueId = ${ueId}`, req.body);
-
     try {
-      const { code, intitule, description, ects, departement, assigned_users } = req.body;
+      const ueId = req.params.ueId;
+      let { code, intitule, description, ects, departement, assigned_users } = req.body;
 
-      // Vérifier que l'UE existe
+      // Convertir assigned_users en tableau s'il ne l'est pas déjà
+      if (assigned_users && !Array.isArray(assigned_users)) {
+        assigned_users = [assigned_users];
+      }
+
+      console.log('📝 Mise à jour UE:', {
+        ueId,
+        assigned_users
+      });
+
       const existingUe = await Ue.findById(ueId);
       if (!existingUe) {
         return res.status(404).json({
@@ -315,121 +306,62 @@ exports.updateUe = [
         });
       }
 
-      // Vérifier si le code UE existe déjà (sauf pour l'UE courante)
-      if (code && code.toUpperCase() !== existingUe.code) {
-        const duplicateUe = await Ue.findOne({
-          code: code.toUpperCase(),
-          _id: { $ne: ueId }
-        });
-        if (duplicateUe) {
-          return res.status(400).json({
-            success: false,
-            message: 'Ce code UE existe déjà'
-          });
-        }
-      }
+      // Sauvegarder les anciens participants
+      const oldParticipants = existingUe.participants.map(p => p.toString());
 
-      // Gestion du département
-      let departementId = existingUe.departementId;
-      if (departement !== undefined) {
-        if (departement === null || departement === '' || departement === 'null') {
-          departementId = null;
-        } else if (mongoose.Types.ObjectId.isValid(departement)) {
-          const departementExists = await Departement.findById(departement);
-          if (!departementExists) {
-            return res.status(400).json({
-              success: false,
-              message: 'Département introuvable'
-            });
-          }
-          departementId = new mongoose.Types.ObjectId(departement);
-        } else {
-          const departementExists = await Departement.findOne({
-            $or: [
-              { nom: departement },
-              { code: departement }
-            ]
-          });
+      // Préparer les nouveaux participants
+      const newParticipants = (assigned_users || [])
+        .filter(id => mongoose.Types.ObjectId.isValid(id))
+        .map(id => id.toString());
 
-          if (departementExists) {
-            departementId = departementExists._id;
-          }
-        }
-      }
+      // Identifier les changements
+      const participantsToAdd = newParticipants.filter(p => !oldParticipants.includes(p));
+      const participantsToRemove = oldParticipants.filter(p => !newParticipants.includes(p));
 
-      // Préparer les données de mise à jour
-      const updateData = {};
-      if (code) updateData.code = code.toUpperCase();
-      if (intitule) updateData.intitule = intitule;
-      if (description !== undefined) updateData.description = description;
-      if (ects) updateData.ects = parseInt(ects);
-      if (departement !== undefined) updateData.departementId = departementId;
-      updateData.updatedAt = new Date();
-
-      // Traitement de l'image
-      if (req.file) {
-        // Supprimer l'ancienne image si elle existe
-        if (existingUe.image) {
-          const oldImagePath = path.join(__dirname, '../uploads/ue', existingUe.image);
-          if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath);
-          }
-        }
-        updateData.image = req.file.filename;
-      }
-
-      // Traitement des utilisateurs assignés
-      if (assigned_users !== undefined) {
-        console.log('👥 Mise à jour des utilisateurs assignés');
-
-        let participants = [];
-        if (Array.isArray(assigned_users) && assigned_users.length > 0) {
-          for (const userId of assigned_users) {
-            try {
-              let user = null;
-
-              if (mongoose.Types.ObjectId.isValid(userId)) {
-                user = await Utilisateur.findById(userId);
-              }
-              if (!user) {
-                user = await Utilisateur.findOne({ id: userId });
-              }
-              if (!user && typeof userId === 'string') {
-                user = await Utilisateur.findOne({ email: userId });
-              }
-
-              if (user) {
-                participants.push(user._id.toString());
-                console.log('✅ Utilisateur ajouté:', user.email);
-              } else {
-                console.log('⚠️ Utilisateur non trouvé pour ID:', userId);
-              }
-            } catch (error) {
-              console.error(`❌ Erreur traitement utilisateur ${userId}:`, error.message);
-            }
-          }
-        }
-        updateData.participants = participants;
-      }
-
-      // Mettre à jour l'UE
-      const updatedUe = await Ue.findByIdAndUpdate(ueId, updateData, { new: true });
-
-      // Logger l'action
-      await logAction({
-        action: 'update_ue',
-        category: 'ue',
-        userId: req.user ? req.user.userId : null,
-        targetId: ueId,
-        details: {
-          oldCode: existingUe.code,
-          newCode: updateData.code || existingUe.code,
-          oldIntitule: existingUe.intitule,
-          newIntitule: updateData.intitule || existingUe.intitule,
-          participantCount: updatedUe.participants ? updatedUe.participants.length : 0,
-          success: true
-        }
+      console.log('👥 Modifications participants:', {
+        oldParticipants,
+        newParticipants,
+        toAdd: participantsToAdd,
+        toRemove: participantsToRemove
       });
+
+      // Mettre à jour les utilisateurs
+      for (const userId of participantsToAdd) {
+        const user = await Utilisateur.findById(userId);
+        if (user && !user.ues.includes(ueId)) {
+          user.ues.push(ueId);
+          await user.save();
+        }
+      }
+
+      for (const userId of participantsToRemove) {
+        const user = await Utilisateur.findById(userId);
+        if (user) {
+          user.ues = user.ues.filter(id => id.toString() !== ueId);
+          await user.save();
+        }
+      }
+
+      // Mettre �� jour l'UE
+      const updateData = {
+        code: code || existingUe.code,
+        intitule: intitule || existingUe.intitule,
+        description: description !== undefined ? description : existingUe.description,
+        ects: ects ? parseInt(ects) : existingUe.ects,
+        departementId: departement || existingUe.departementId,
+        participants: newParticipants,
+        updatedAt: new Date()
+      };
+
+      const updatedUe = await Ue.findByIdAndUpdate(
+        ueId,
+        updateData,
+        { new: true }
+      );
+
+      // Synchronisation immédiate après mise à jour
+      await UeUserSyncService.syncAllUsersForUe(updatedUe._id);
+      console.log('✅ Synchronisation effectuée après mise à jour');
 
       // Récupérer l'UE mise à jour avec les informations du département
       const ueWithDepartement = await Ue.aggregate([
@@ -455,16 +387,27 @@ exports.updateUe = [
         participantCount: ueWithDepartement[0].participants ? ueWithDepartement[0].participants.length : 0
       };
 
+      await logAction({
+        action: 'update_ue',
+        category: 'ue',
+        userId: req.user ? req.user.userId : null,
+        targetId: ueId,
+        details: {
+          success: true,
+          participantsAdded: participantsToAdd.length,
+          participantsRemoved: participantsToRemove.length
+        }
+      });
+
       res.json({
         success: true,
-        message: 'UE mise à jour avec succès',
+        message: 'UE mise �� jour avec succès',
         ue: formattedUe
       });
 
     } catch (err) {
       console.error('Error in updateUe:', err);
 
-      // Nettoyer le fichier uploadé en cas d'erreur
       if (req.file) {
         const filePath = path.join(__dirname, '../uploads/ue', req.file.filename);
         if (fs.existsSync(filePath)) {
@@ -475,10 +418,11 @@ exports.updateUe = [
       await logAction({
         action: 'update_ue_error',
         category: 'ue',
-        userId: req.user? req.user.userId : null,
+        userId: req.user ? req.user.userId : null,
         targetId: req.params.ueId,
         details: { error: err.message }
       });
+
       res.status(500).json({
         success: false,
         message: 'Erreur lors de la mise à jour de l\'UE: ' + err.message
@@ -698,44 +642,26 @@ exports.addParticipantToUe = async (req, res) => {
     const ueId = req.params.ueId;
     const { utilisateurId } = req.body;
 
-    console.log(`Ajout participant UE ${ueId}, utilisateur ${utilisateurId}`);
-
-    // Utiliser le service de synchronisation
-    const result = await UeUserSyncService.addUserToUe(utilisateurId, ueId);
+    await UeUserSyncService.addUserToUe(utilisateurId, ueId);
+    await UeUserSyncService.syncAllUsersForUe(ueId);
+    console.log('✅ Synchronisation effectuée après ajout participant');
 
     await logAction({
       action: 'add_participant_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
       targetId: ueId,
-      details: {
-        participantId: utilisateurId,
-        participantName: `${result.user.prenom} ${result.user.nom}`,
-        success: true
-      }
+      details: { success: true }
     });
 
     res.status(201).json({
       success: true,
-      message: 'Participant ajouté avec succès (synchronisé)',
-      data: {
-        ue: result.ue.intitule,
-        participant: `${result.user.prenom} ${result.user.nom}`
-      }
+      message: 'Participant ajouté avec succès',
+      data: result
     });
 
   } catch (err) {
     console.error('Error in addParticipantToUe:', err);
-    await logAction({
-      action: 'add_participant_ue_error',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      targetId: req.params.ueId,
-      details: {
-        participantId: req.body.utilisateurId,
-        error: err.message
-      }
-    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -749,40 +675,26 @@ exports.removeParticipantFromUe = async (req, res) => {
   try {
     const { ueId, utilisateurId } = req.params;
 
-    console.log(`Retrait participant UE ${ueId}, utilisateur ${utilisateurId}`);
-
-    // Utiliser le service de synchronisation
-    const result = await UeUserSyncService.removeUserFromUe(utilisateurId, ueId);
+    await UeUserSyncService.removeUserFromUe(utilisateurId, ueId);
+    await UeUserSyncService.syncAllUsersForUe(ueId);
+    console.log('✅ Synchronisation effectuée après retrait participant');
 
     await logAction({
       action: 'remove_participant_ue',
       category: 'ue',
       userId: req.user ? req.user.userId : null,
       targetId: ueId,
-      details: {
-        participantId: utilisateurId,
-        participantName: `${result.user.prenom} ${result.user.nom}`,
-        success: true
-      }
+      details: { success: true }
     });
 
     res.json({
       success: true,
-      message: 'Participant retiré avec succès (synchronisé)'
+      message: 'Participant retiré avec succès',
+      data: result
     });
 
   } catch (err) {
     console.error('Error in removeParticipantFromUe:', err);
-    await logAction({
-      action: 'remove_participant_ue_error',
-      category: 'ue',
-      userId: req.user ? req.user.userId : null,
-      targetId: req.params.ueId,
-      details: {
-        participantId: req.params.utilisateurId,
-        error: err.message
-      }
-    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',

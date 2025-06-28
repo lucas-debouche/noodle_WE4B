@@ -102,6 +102,64 @@ exports.getUtilisateurById = async (req, res) => {
   }
 };
 
+// Modifier un utilisateur
+exports.updateUtilisateur = async (req, res) => {
+  try {
+    console.log('📝 Début mise à jour utilisateur:', req.params.userId);
+
+    let roles = req.body.roles || req.body['roles[]'];
+    roles = Array.isArray(roles) ? roles : (roles ? [roles] : []);
+
+    let ues = req.body.ues || req.body['ues[]'];
+    ues = Array.isArray(ues) ? ues : (ues ? [ues] : []);
+
+    const { nom, prenom, email, plainPassword } = req.body;
+    const photo = req.file ? req.file.filename : undefined;
+
+    // Synchroniser les UEs si nécessaire
+    if (ues !== undefined) {
+      await UeUserSyncService.updateUserUes(req.params.userId, ues);
+    }
+
+    // Si des UEs sont modifiées, synchroniser chaque UE
+    if (ues && Array.isArray(ues)) {
+      const syncPromises = ues.map(ueId => UeUserSyncService.syncAllUsersForUe(ueId));
+      await Promise.all(syncPromises);
+      console.log('✅ Synchronisation effectuée pour toutes les UEs modifiées');
+    }
+
+    // Mettre à jour les autres champs
+    const updateData = {
+      ...(nom && { nom }),
+      ...(prenom && { prenom }),
+      ...(email && { email }),
+      ...(roles.length > 0 && { role: roles }),
+      ...(photo && { photo }),
+      ...(plainPassword && { mot_passe: await bcrypt.hash(plainPassword, 10) })
+    };
+
+    const updatedUser = await Utilisateur.findByIdAndUpdate(
+      req.params.userId,
+      updateData,
+      { new: true }
+    ).populate('ues');
+
+    res.json({
+      success: true,
+      message: 'Utilisateur modifié avec succès',
+      utilisateur: updatedUser
+    });
+
+  } catch (err) {
+    console.error("❌ Erreur mise à jour utilisateur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la modification de l'utilisateur",
+      error: err.message
+    });
+  }
+};
+
 // Créer un utilisateur
 exports.createUtilisateur = async (req, res) => {
   try {
@@ -214,6 +272,13 @@ exports.createUtilisateur = async (req, res) => {
       }
     }
 
+    // Si des UEs sont assignées, synchroniser chaque UE
+    if (ues && Array.isArray(ues)) {
+      const syncPromises = ues.map(ueId => UeUserSyncService.syncAllUsersForUe(ueId));
+      await Promise.all(syncPromises);
+      console.log('✅ Synchronisation effectuée pour toutes les UEs assignées');
+    }
+
     await logAction({
       action: 'create_user',
       category: 'user',
@@ -263,98 +328,6 @@ exports.createUtilisateur = async (req, res) => {
     });
     res.status(500).json({
       message: "Erreur lors de la création de l'utilisateur",
-      error: err.message
-    });
-  }
-};
-
-// Modifier un utilisateur
-exports.updateUtilisateur = async (req, res) => {
-  try {
-    let roles = req.body.roles || req.body['roles[]'];
-    if (!Array.isArray(roles)) {
-      roles = roles ? [roles] : [];
-    }
-
-    let ues = req.body.ues || req.body['ues[]'];
-    if (!Array.isArray(ues)) {
-      ues = ues ? [ues] : [];
-    }
-
-    const photo = req.file ? req.file.filename : undefined;
-    const { nom, prenom, email, plainPassword } = req.body;
-
-    console.log('🔄 Mise à jour utilisateur ID:', req.params.userId);
-
-    // Récupérer l'utilisateur actuel
-    const currentUser = await Utilisateur.findById(req.params.userId);
-    if (!currentUser) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
-    }
-
-    // ✨ NOUVELLE LOGIQUE : Utiliser le service de synchronisation pour les UEs
-    let uesSyncResult = null;
-    if (ues !== undefined) {
-      uesSyncResult = await UeUserSyncService.updateUserUes(req.params.userId, ues);
-    }
-
-    // Mettre à jour les autres champs de l'utilisateur
-    const updateData = {
-      nom,
-      prenom,
-      email,
-      role: roles,
-      ues: ues // Déjà mis à jour par le service de sync
-    };
-
-    if (photo) {
-      updateData.photo = photo;
-    }
-
-    if (plainPassword) {
-      updateData.mot_passe = await bcrypt.hash(plainPassword, 10);
-    }
-
-    const utilisateur = await Utilisateur.findByIdAndUpdate(
-      req.params.userId,
-      updateData,
-      { new: true }
-    );
-
-    await logAction({
-      action: 'update_user',
-      category: 'user',
-      userId: req.params.userId,
-      details: {
-        updatedFields: Object.keys(updateData),
-        uesAdded: uesSyncResult ? uesSyncResult.uesToAdd.length : 0,
-        uesRemoved: uesSyncResult ? uesSyncResult.uesToRemove.length : 0,
-        synchronized: true,
-        success: true
-      }
-    });
-
-    res.json({
-      message: 'Utilisateur modifié avec succès (synchronisé)',
-      utilisateur: utilisateur,
-      uesSyncResult: uesSyncResult,
-      summary: {
-        added: uesSyncResult ? uesSyncResult.uesToAdd.length : 0,
-        removed: uesSyncResult ? uesSyncResult.uesToRemove.length : 0,
-        synchronized: true
-      }
-    });
-
-  } catch (err) {
-    console.error("Erreur lors de la maj de l'utilisateur :", err);
-    await logAction({
-      action: 'update_user_error',
-      category: 'user',
-      userId: req.params.userId,
-      details: { error: err.message }
-    });
-    res.status(500).json({
-      message: "Erreur lors de la modification de l'utilisateur",
       error: err.message
     });
   }
@@ -497,7 +470,7 @@ exports.getUesByUserId = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('❌ Error in getUesByUserId:', err);
+    console.error('�� Error in getUesByUserId:', err);
     await logAction({
       action: 'get_ues_by_user_error',
       category: 'user',
