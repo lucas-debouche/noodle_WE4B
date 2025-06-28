@@ -61,46 +61,100 @@ export class UeRegistrationComponent implements OnInit {
 
     try {
       console.log('🌐 Appel API getUeById...');
-      const ue = await this.uesService.getUeById(ueId).toPromise();
+      const response = await this.uesService.getUeById(ueId).toPromise();
 
-      console.log('📥 UE reçue du service:', ue);
+      console.log('📥 Réponse complète du service:', response);
+      console.log('📥 Type de la réponse:', typeof response);
+      console.log('📥 Clés de la réponse:', response ? Object.keys(response) : 'null');
 
-      if (ue && ue._id) {
-        console.log('✅ UE valide reçue:', {
-          id: ue._id,
+      // ✨ GESTION ROBUSTE DE LA RÉPONSE
+      let ue: any = null;
+
+      if (response) {
+        // Cas 1: Réponse directe avec l'UE
+        if (response._id || response.id) {
+          ue = response;
+          console.log('✅ UE trouvée directement dans la réponse');
+        }
+        // Cas 2: Réponse encapsulée avec success/data
+        else if (response.success && response.data) {
+          ue = response.data;
+          console.log('✅ UE trouvée dans response.data');
+        }
+        // Cas 3: Réponse encapsulée avec ue
+        else if (response.ue) {
+          ue = response.ue;
+          console.log('✅ UE trouvée dans response.ue');
+        }
+        else {
+          console.log('⚠️ Structure de réponse inattendue:', response);
+        }
+      }
+
+      // ✨ VALIDATION DE L'UE RÉCUPÉRÉE
+      if (ue && (ue._id || ue.id)) {
+        const ueId = ue._id || ue.id;
+
+        console.log('✅ UE valide trouvée:', {
+          id: ueId,
           code: ue.code,
           intitule: ue.intitule,
-          participants: ue.participants?.length || 0
+          participants: ue.participants?.length || 0,
+          structure: Object.keys(ue)
         });
 
-        // ✨ LOGGING DES CHANGEMENTS D'ÉTAT
+        // ✨ NORMALISER LA STRUCTURE DE L'UE
+        const normalizedUe = {
+          _id: ueId,
+          id: ue.id || ueId,
+          code: ue.code,
+          intitule: ue.intitule,
+          description: ue.description,
+          ects: ue.ects,
+          image: ue.image,
+          departementId: ue.departementId,
+          departementNom: ue.departementNom,
+          participants: ue.participants || [],
+          createdAt: ue.createdAt,
+          updatedAt: ue.updatedAt
+        };
+
+        console.log('🔄 UE normalisée:', normalizedUe);
+
+        // ✨ MISE À JOUR DE L'ÉTAT AVEC FORÇAGE DE CHANGEMENT
         console.log('🔄 État AVANT mise à jour:', {
           isEditMode: this.isEditMode,
           editingUe: this.editingUe?._id
         });
 
-        // ✨ FORCER LE CHANGEMENT DE RÉFÉRENCE
-        this.editingUe = null; // ✅ Important : réinitialiser d'abord
+        // Réinitialiser d'abord
+        this.editingUe = null;
         this.isEditMode = false;
 
-        // Puis définir les nouvelles valeurs avec un délai
+        // Puis définir les nouvelles valeurs
         setTimeout(() => {
           this.isEditMode = true;
-          this.editingUe = { ...ue }; // ✅ Créer une nouvelle référence
+          this.editingUe = normalizedUe;
 
           console.log('🔄 État APRÈS mise à jour:', {
             isEditMode: this.isEditMode,
-            editingUe: this.editingUe?._id
+            editingUe: this.editingUe?._id,
+            editingUeCode: this.editingUe?.code
           });
         }, 0);
 
       } else {
-        console.error('❌ UE reçue invalide:', ue);
-        throw new Error('UE non trouvée ou invalide');
+        console.error('❌ UE invalide ou manquante:', {
+          ue: ue,
+          hasId: !!(ue?._id || ue?.id),
+          response: response
+        });
+        throw new Error('UE non trouvée - données invalides');
       }
+
     } catch (error) {
       console.error('❌ Erreur chargement UE:', error);
-      this.error = "Impossible de charger l'UE pour modification.";
+      this.error = `Impossible de charger l'UE pour modification: ${error.message}`;
       this.exitEditMode();
 
       // Rediriger vers la liste sans paramètre
@@ -110,7 +164,6 @@ export class UeRegistrationComponent implements OnInit {
       console.log('🔄 ========== FIN loadUeForEdit ==========');
     }
   }
-
   async loadInitialData() {
     this.loading = true;
     try {
