@@ -20,11 +20,9 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  // NOUVEAU: Flag pour savoir si l'utilisateur a été chargé
   private userLoaded = false;
 
   constructor(private http: HttpClient) {
-    // NOUVEAU: Charger l'utilisateur au démarrage si on a un token
     if (this.isLoggedIn()) {
       this.initializeUser();
     }
