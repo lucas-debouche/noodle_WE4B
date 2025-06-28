@@ -19,6 +19,7 @@ const roleRoutes = require('./routes/roles.routes');
 const departementRoutes = require('./routes/departement.routes');
 const ueRoutes = require('./routes/ue.routes');
 const adminPanelRoutes = require('./routes/admin_panel.routes');
+const dashboardRoutes = require('./routes/admin-dashboard.routes');
 
 const app = express();
 const PORT = 3000;
@@ -74,7 +75,7 @@ app.use('/api/role', roleRoutes);
 app.use('/api/ue', ueRoutes);
 app.use('/api/admin', adminPanelRoutes);
 app.use('/api/departements', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), departementRoutes);
-
+app.use('/api/admin/dashboard', dashboardRoutes);
 // ==========================================
 // FICHIERS STATIQUES
 // ==========================================

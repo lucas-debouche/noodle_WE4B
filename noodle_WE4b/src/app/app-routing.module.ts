@@ -10,6 +10,7 @@ import { ParticipantsListComponent } from './pages/partipants-ue/participants-li
 import { UserRegistrationComponent } from './pages/user-registration/user-registration.component';
 import { UeRegistrationComponent } from './pages/ue-registration/ue-registration/ue-registration.component';
 import { Admin_panelComponent } from './admin/admin_panel/admin_panel.component';
+import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 
 import { AuthGuard } from './guards/auth.guard';
 import { AuthAdminGuard } from './guards/auth-admin.guard';
@@ -33,6 +34,9 @@ const routes: Routes = [
 
   // Panel d'administration
   { path: 'admin_panel', component: Admin_panelComponent, canActivate: [AuthAdminGuard] },
+
+  //Dashboard Admin
+  { path: 'admin/dashboard', component: AdminDashboardComponent, canActivate: [AuthAdminGuard] },
 
   // Redirection par défaut
   { path: '**', redirectTo: '/login' }

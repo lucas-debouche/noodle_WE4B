@@ -1,1 +1,481 @@
-<p>admin-dashboard works!</p>
+<!-- admin-dashboard.component.html -->
+<div class="dashboard-container">
+  <!-- Loader -->
+  <div class="loader" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <span>Chargement des analyses...</span>
+  </div>
+
+  <!-- Header avec contrôles -->
+  <div class="dashboard-header">
+    <div class="header-left">
+      <h1>📊 Dashboard Administrateur</h1>
+      <p class="subtitle">Analyses MongoDB OLAP & Métriques temps réel</p>
+    </div>
+
+    <div class="header-controls">
+      <!-- Sélecteur de période -->
+      <select [(ngModel)]="selectedTimeRange" (change)="onTimeRangeChange($event.target.value)" class="time-range-select">
+        <option value="1day">Dernières 24h</option>
+        <option value="7days">7 derniers jours</option>
+        <option value="30days">30 derniers jours</option>
+        <option value="90days">3 derniers mois</option>
+        <option value="1year">Dernière année</option>
+      </select>
+
+      <!-- Contrôles d'affichage -->
+      <div class="view-controls">
+        <button (click)="toggleAutoRefresh()" [class.active]="autoRefresh" class="refresh-btn">
+          {{ autoRefresh ? '⏸️' : '▶️' }} Auto-refresh
+        </button>
+        <button (click)="toggleCompactView()" [class.active]="compactView" class="compact-btn">
+          📱 Compact
+        </button>
+        <button (click)="refresh()" class="manual-refresh-btn">🔄 Actualiser</button>
+      </div>
+
+      <!-- Export -->
+      <div class="export-controls">
+        <button (click)="exportData('csv')" class="export-btn">📄 CSV</button>
+        <button (click)="exportData('excel')" class="export-btn">📊 Excel</button>
+        <button (click)="exportData('pdf')" class="export-btn">📋 PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation onglets -->
+  <div class="dashboard-tabs">
+    <button
+      *ngFor="let tab of ['overview', 'analytics', 'olap', 'realtime', 'performance']"
+      [class.active]="activeTab === tab"
+      (click)="switchTab(tab)"
+      class="tab-btn">
+      {{ getTabLabel(tab) }}
+    </button>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="dashboard-content" [class.compact]="compactView">
+
+    <!-- ONGLET OVERVIEW -->
+    <div *ngIf="activeTab === 'overview'" class="tab-content overview-tab">
+
+      <!-- Métriques principales -->
+      <div class="metrics-grid">
+        <div class="metric-card users">
+          <div class="metric-icon">👥</div>
+          <div class="metric-content">
+            <h3>{{ formatNumber(dashboardData?.overview?.totalUsers || 0) }}</h3>
+            <p>Utilisateurs Total</p>
+            <span class="metric-sub">
+              {{ dashboardData?.overview?.activeUsers || 0 }} actifs
+            </span>
+          </div>
+          <div class="metric-trend">
+            {{ getGrowthIcon(dashboardData?.overview?.newUsersThisMonth || 0, 0) }}
+            +{{ dashboardData?.overview?.newUsersThisMonth || 0 }} ce mois
+          </div>
+        </div>
+
+        <div class="metric-card ues">
+          <div class="metric-icon">📚</div>
+          <div class="metric-content">
+            <h3>{{ formatNumber(dashboardData?.overview?.totalUes || 0) }}</h3>
+            <p>Unités d'Enseignement</p>
+            <span class="metric-sub">Toutes spécialités</span>
+          </div>
+        </div>
+
+        <div class="metric-card forums">
+          <div class="metric-icon">💬</div>
+          <div class="metric-content">
+            <h3>{{ formatNumber(dashboardData?.overview?.totalForums || 0) }}</h3>
+            <p>Forums Actifs</p>
+            <span class="metric-sub">Discussions en cours</span>
+          </div>
+        </div>
+
+        <div class="metric-card posts">
+          <div class="metric-icon">📝</div>
+          <div class="metric-content">
+            <h3>{{ formatNumber(dashboardData?.overview?.totalPosts || 0) }}</h3>
+            <p>Publications</p>
+            <span class="metric-sub">Contenus pédagogiques</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graphiques de base -->
+      <div class="charts-row">
+        <div class="chart-card half-width">
+          <h3>👥 Répartition par Rôle</h3>
+          <canvas #pieChart></canvas>
+        </div>
+
+        <div class="chart-card half-width">
+          <h3>📈 Tendances d'Activité</h3>
+          <canvas #lineChart></canvas>
+        </div>
+      </div>
+
+      <!-- Activité récente -->
+      <div class="recent-activity-card">
+        <h3>🕐 Activité Récente</h3>
+        <div class="activity-list">
+          <div *ngFor="let activity of dashboardData?.realtime?.recentActivities?.slice(0, 10)" class="activity-item">
+            <div class="activity-icon">{{ getActivityIcon(activity.category) }}</div>
+            <div class="activity-content">
+              <span class="activity-action">{{ formatActivityAction(activity.action) }}</span>
+              <span class="activity-user">par {{ activity.user?.prenom }} {{ activity.user?.nom }}</span>
+              <span class="activity-time">{{ formatRelativeTime(activity.timestamp) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONGLET ANALYTICS -->
+    <div *ngIf="activeTab === 'analytics'" class="tab-content analytics-tab">
+
+      <div class="analytics-filters">
+        <select [(ngModel)]="selectedMetric" (change)="onMetricChange($event.target.value)">
+          <option value="users">Utilisateurs</option>
+          <option value="ues">UEs</option>
+          <option value="forums">Forums</option>
+          <option value="activity">Activité</option>
+        </select>
+      </div>
+
+      <!-- Analyses par département -->
+      <div class="analytics-section">
+        <h3>🏢 Répartition par Département</h3>
+        <div class="department-grid">
+          <div *ngFor="let dept of dashboardData?.analytics?.uesByDepartment" class="department-card">
+            <h4>{{ dept._id || 'Non assigné' }}</h4>
+            <div class="dept-stats">
+              <span class="stat">{{ dept.count }} UEs</span>
+              <span class="stat">{{ dept.totalParticipants }} participants</span>
+              <span class="stat">{{ dept.totalEcts }} ECTS</span>
+              <div class="avg-participation">
+                Moy: {{ (dept.avgParticipants || 0).toFixed(1) }} participants/UE
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analyse des forums -->
+      <div class="analytics-section">
+        <h3>💬 Engagement Forums</h3>
+        <div class="forum-analytics">
+          <div *ngFor="let forum of dashboardData?.analytics?.forumActivity?.slice(0, 8)" class="forum-stat-card">
+            <div class="forum-info">
+              <h4>{{ forum.ue?.[0]?.code || 'UE' }}</h4>
+              <p>{{ forum.ue?.[0]?.intitule || 'Titre non disponible' }}</p>
+            </div>
+            <div class="forum-metrics">
+              <span class="metric">{{ forum.forumCount }} forums</span>
+              <span class="metric">{{ forum.totalMessages }} messages</span>
+              <span class="metric">{{ forum.totalReplies }} réponses</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graphique tendances détaillées -->
+      <div class="analytics-section">
+        <h3>📊 Analyse Temporelle</h3>
+        <div class="trend-chart-container">
+          <canvas #trendChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONGLET OLAP -->
+    <div *ngIf="activeTab === 'olap'" class="tab-content olap-tab">
+
+      <div class="olap-controls">
+        <h3>🧊 Analyses OLAP Multidimensionnelles</h3>
+        <select [(ngModel)]="selectedOlapDimension" (change)="onOlapDimensionChange($event.target.value)">
+          <option value="time_role_activity">Temps × Rôle × Activité</option>
+          <option value="department_level_semester">Département × Niveau × Semestre</option>
+          <option value="geographical_role">Géographie × Rôle</option>
+          <option value="performance_patterns">Patterns de Performance</option>
+        </select>
+      </div>
+
+      <!-- Cube d'activité utilisateur -->
+      <div class="olap-section">
+        <h4>🎯 Cube d'Activité (Temps × Rôle × Action)</h4>
+        <div class="heatmap-container">
+          <canvas #heatmapChart></canvas>
+        </div>
+
+        <!-- Drill-down controls -->
+        <div class="drill-controls">
+          <button class="drill-btn">🔍 Drill Down par Heure</button>
+          <button class="drill-btn">📅 Drill Down par Jour</button>
+          <button class="drill-btn">🎭 Drill Down par Rôle</button>
+        </div>
+      </div>
+
+      <!-- Matrice de participation UE -->
+      <div class="olap-section">
+        <h4>📊 Matrice Participation UE</h4>
+        <div class="participation-matrix">
+          <table class="matrix-table">
+            <thead>
+            <tr>
+              <th>Département</th>
+              <th>Niveau</th>
+              <th>Semestre</th>
+              <th>Nb UEs</th>
+              <th>Total Participants</th>
+              <th>Moy/UE</th>
+              <th>Total ECTS</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let row of dashboardData?.olap?.ueParticipationMatrix" class="matrix-row">
+              <td>{{ row._id.departmentName || 'N/A' }}</td>
+              <td>{{ row._id.niveau || 'N/A' }}</td>
+              <td>{{ row._id.semestre || 'N/A' }}</td>
+              <td class="numeric">{{ row.ueCount }}</td>
+              <td class="numeric">{{ row.totalParticipants }}</td>
+              <td class="numeric">{{ (row.avgParticipantsPerUe || 0).toFixed(1) }}</td>
+              <td class="numeric">{{ row.totalEcts }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Distribution géographique -->
+      <div class="olap-section">
+        <h4>🗺️ Distribution Géographique</h4>
+        <div class="geo-distribution">
+          <div *ngFor="let region of dashboardData?.olap?.geographicalDistribution" class="geo-card">
+            <h5>{{ region._id }}</h5>
+            <div class="geo-stats">
+              <span class="total-users">{{ region.totalUsers }} utilisateurs</span>
+              <span class="active-users">{{ region.totalActive }} actifs</span>
+              <div class="role-breakdown">
+                <span *ngFor="let role of region.roleDistribution" class="role-stat">
+                  {{ formatRoleName(role.role) }}: {{ role.count }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analyse temporelle avec drill-down -->
+      <div class="olap-section">
+        <h4>⏰ Analyse Temporelle Multi-niveaux</h4>
+        <div class="time-series-olap">
+          <div class="time-controls">
+            <button class="time-level-btn active">Année</button>
+            <button class="time-level-btn">Mois</button>
+            <button class="time-level-btn">Semaine</button>
+            <button class="time-level-btn">Jour</button>
+            <button class="time-level-btn">Heure</button>
+          </div>
+
+          <div class="time-series-data">
+            <div *ngFor="let point of dashboardData?.olap?.timeSeriesAnalysis?.slice(0, 20)" class="time-point">
+              <div class="time-label">
+                {{ formatTimePoint(point._id) }}
+              </div>
+              <div class="time-metrics">
+                <span class="metric">{{ point.totalActions }} actions</span>
+                <span class="metric">{{ point.uniqueUserCount }} utilisateurs</span>
+                <span class="metric error-rate" [class.high]="point.errorRate > 5">
+                  {{ (point.errorRate || 0).toFixed(1) }}% erreurs
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONGLET TEMPS RÉEL -->
+    <div *ngIf="activeTab === 'realtime'" class="tab-content realtime-tab">
+
+      <!-- Métriques système temps réel -->
+      <div class="realtime-metrics">
+        <div class="realtime-card system-health">
+          <h3>🏥 Santé du Système</h3>
+          <div class="health-indicators">
+            <div class="health-metric">
+              <span class="label">Taux d'erreur</span>
+              <span class="value" [class.warning]="realtimeMetrics.errorRate > 2">
+                {{ realtimeMetrics.errorRate.toFixed(2) }}%
+              </span>
+            </div>
+            <div class="health-metric">
+              <span class="label">Temps de réponse</span>
+              <span class="value" [class.warning]="realtimeMetrics.averageResponseTime > 1000">
+                {{ realtimeMetrics.averageResponseTime.toFixed(0) }}ms
+              </span>
+            </div>
+            <div class="health-metric">
+              <span class="label">Débit</span>
+              <span class="value">{{ realtimeMetrics.throughput }} req/min</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="realtime-card active-users">
+          <h3>👥 Utilisateurs Actifs</h3>
+          <div class="active-count">
+            {{ dashboardData?.realtime?.activeUsersNow || 0 }}
+          </div>
+          <p>en ligne maintenant</p>
+        </div>
+
+        <div class="realtime-card connections">
+          <h3>🔗 Connexions/sec</h3>
+          <div class="connection-chart">
+            <canvas #connectionChart></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sessions actives -->
+      <div class="realtime-section">
+        <h3>🔴 Sessions Actives</h3>
+        <div class="sessions-list">
+          <div *ngFor="let session of dashboardData?.realtime?.currentSessions?.slice(0, 15)" class="session-item">
+            <div class="session-user">
+              <img [src]="getUserAvatar(session.user)" alt="Avatar" class="user-avatar">
+              <span class="user-name">{{ session.user?.prenom }} {{ session.user?.nom }}</span>
+              <span class="user-role">{{ formatRoleName(session.user?.role?.[0]) }}</span>
+            </div>
+            <div class="session-activity">
+              <span class="last-activity">{{ formatRelativeTime(session.lastActivity) }}</span>
+              <span class="action-count">{{ session.actionCount }} actions</span>
+              <div class="session-categories">
+                <span *ngFor="let cat of session.categories" class="category-tag">{{ cat }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flux d'activité en temps réel -->
+      <div class="realtime-section">
+        <h3>⚡ Flux d'Activité en Temps Réel</h3>
+        <div class="activity-stream">
+          <div *ngFor="let activity of dashboardData?.realtime?.recentActivities?.slice(0, 20)"
+               class="stream-item"
+               [class.error]="activity.action.includes('error')"
+               [class.success]="activity.action.includes('success')">
+            <div class="activity-time">{{ formatTime(activity.timestamp) }}</div>
+            <div class="activity-icon">{{ getActivityIcon(activity.category) }}</div>
+            <div class="activity-description">
+              <strong>{{ formatActivityAction(activity.action) }}</strong>
+              <span>par {{ activity.user?.prenom || 'Utilisateur' }}</span>
+              <span class="activity-category">{{ activity.category }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONGLET PERFORMANCE -->
+    <div *ngIf="activeTab === 'performance'" class="tab-content performance-tab">
+
+      <!-- Métriques de performance -->
+      <div class="performance-overview">
+        <div class="perf-card">
+          <h4>⚡ Performance Moyenne</h4>
+          <div class="perf-value">{{ (dashboardData?.performance?.avgResponseTime || 0).toFixed(0) }}ms</div>
+        </div>
+
+        <div class="perf-card">
+          <h4>🎯 Taux de Succès</h4>
+          <div class="perf-value success">{{ (dashboardData?.performance?.successRate || 0).toFixed(1) }}%</div>
+        </div>
+
+        <div class="perf-card">
+          <h4>📊 Débit Maximum</h4>
+          <div class="perf-value">{{ dashboardData?.performance?.maxThroughput || 0 }} req/min</div>
+        </div>
+      </div>
+
+      <!-- Graphiques de performance -->
+      <div class="performance-charts">
+        <div class="chart-container">
+          <h4>📈 Temps de Réponse par Action</h4>
+          <canvas #responseTimeChart></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h4>🚨 Taux d'Erreur par Heure</h4>
+          <canvas #errorRateChart></canvas>
+        </div>
+      </div>
+
+      <!-- Analyse des goulots d'étranglement -->
+      <div class="bottleneck-analysis">
+        <h4>🚧 Analyse des Goulots d'Étranglement</h4>
+        <div class="bottleneck-list">
+          <div *ngFor="let bottleneck of dashboardData?.performance?.bottlenecks" class="bottleneck-item">
+            <div class="bottleneck-severity" [ngClass]="getSeverityClass(bottleneck.severity)">
+              {{ bottleneck.severity }}
+            </div>
+            <div class="bottleneck-details">
+              <h5>{{ bottleneck.action }}</h5>
+              <p>{{ bottleneck.description }}</p>
+              <span class="bottleneck-impact">Impact: {{ bottleneck.impact }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer avec statut -->
+  <div class="dashboard-footer">
+    <div class="footer-left">
+      <span class="last-update">Dernière MAJ: {{ formatTime(new Date()) }}</span>
+      <span class="data-status" [ngClass]="getHealthStatus()">
+        {{ getHealthStatusText() }}
+      </span>
+    </div>
+
+    <div class="footer-right">
+      <span class="auto-refresh-status">
+        Auto-refresh: {{ autoRefresh ? '✅ Activé' : '❌ Désactivé' }}
+      </span>
+      <span class="connection-status">
+        🔗 Connecté
+      </span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modals pour export et configurations -->
+<div class="modal" *ngIf="showExportModal">
+  <div class="modal-content">
+    <h3>📤 Configuration d'Export</h3>
+    <div class="export-options">
+      <label>
+        <input type="checkbox" [(ngModel)]="exportConfig.includeCharts"> Inclure les graphiques
+      </label>
+      <label>
+        <input type="checkbox" [(ngModel)]="exportConfig.includeRawData"> Inclure les données brutes
+      </label>
+      <label>
+        <input type="checkbox" [(ngModel)]="exportConfig.includeOlap"> Inclure analyses OLAP
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button (click)="confirmExport()" class="export-confirm-btn">Exporter</button>
+      <button (click)="cancelExport()" class="cancel-btn">Annuler</button>
+    </div>
+  </div>
+</div>
