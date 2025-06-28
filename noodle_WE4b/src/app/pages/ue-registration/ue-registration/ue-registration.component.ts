@@ -52,6 +52,8 @@ export class UeRegistrationComponent implements OnInit {
   }
 
   // ✨ NOUVELLE MÉTHODE : Charger UE pour édition
+// Dans ue-registration.component.ts, remplacer loadUeForEdit par :
+
   private async loadUeForEdit(ueId: string) {
     console.log('🔄 ========== DÉBUT loadUeForEdit ==========');
     console.log('🔄 ID reçu:', ueId, 'Type:', typeof ueId);
@@ -61,7 +63,7 @@ export class UeRegistrationComponent implements OnInit {
 
     try {
       console.log('🌐 Appel API getUeById...');
-      const response = await this.uesService.getUeById(ueId).toPromise();
+      const response: any = await this.uesService.getUeById(ueId).toPromise();
 
       console.log('📥 Réponse complète du service:', response);
       console.log('📥 Type de la réponse:', typeof response);
@@ -104,9 +106,8 @@ export class UeRegistrationComponent implements OnInit {
         });
 
         // ✨ NORMALISER LA STRUCTURE DE L'UE
-        const normalizedUe = {
+        const normalizedUe: Ue = {
           _id: ueId,
-          id: ue.id || ueId,
           code: ue.code,
           intitule: ue.intitule,
           description: ue.description,
@@ -152,9 +153,9 @@ export class UeRegistrationComponent implements OnInit {
         throw new Error('UE non trouvée - données invalides');
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erreur chargement UE:', error);
-      this.error = `Impossible de charger l'UE pour modification: ${error.message}`;
+      this.error = `Impossible de charger l'UE pour modification: ${error?.message || 'Erreur inconnue'}`;
       this.exitEditMode();
 
       // Rediriger vers la liste sans paramètre
