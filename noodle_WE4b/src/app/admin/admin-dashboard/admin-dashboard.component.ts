@@ -1,13 +1,40 @@
-// admin-dashboard.component.ts - VERSION CORRIGÉE
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { AdminDashboardService } from '../../services/admin-dashboard.service';
 import { NavbarService } from '../../services/navbar.service';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import { Subscription, interval } from 'rxjs';
 
-// Déclaration Chart.js
-declare var Chart: any;
+// IMPORTS CHART.JS
+import {
+  Chart,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  RadialLinearScale
+} from 'chart.js';
+
+// ENREGISTREMENT DES COMPOSANTS CHART.JS
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  RadialLinearScale
+);
 
 export interface DashboardData {
   overview: {
@@ -17,14 +44,15 @@ export interface DashboardData {
     totalPosts: number;
     activeUsers: number;
     newUsersThisMonth: number;
+    usersByRole?: any;
   };
   analytics: {
     usersByRole: any[];
     uesByDepartment: any[];
     activityTrends: any[];
     forumActivity: any[];
-    postActivity: any[];
-    userEngagement: any[];
+    postActivity?: any[];
+    userEngagement?: any[];
   };
   olap: {
     userActivityCube: any[];
@@ -38,7 +66,7 @@ export interface DashboardData {
     recentActivities: any[];
     systemHealth: any;
   };
-  performance?: {  // Ajout du ? pour rendre optionnel
+  performance?: {
     avgResponseTime: number;
     successRate: number;
     maxThroughput: number;
@@ -51,33 +79,40 @@ export interface DashboardData {
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss']
 })
-export class AdminDashboardComponent implements OnInit, OnDestroy {
+export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
 
+  // RÉFÉRENCES AUX CANVAS
+  @ViewChild('pieChart', { static: false }) pieChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('lineChart', { static: false }) lineChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('heatmapChart', { static: false }) heatmapChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('trendChart', { static: false }) trendChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('connectionChart', { static: false }) connectionChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('responseTimeChart', { static: false }) responseTimeChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('errorRateChart', { static: false }) errorRateChartRef!: ElementRef<HTMLCanvasElement>;
+
+  // DONNÉES PRINCIPALES
   dashboardData: DashboardData | null = null;
   isLoading = true;
   error: string | null = null;
 
-  // Configuration des graphiques
+  // CONFIGURATION
   selectedTimeRange = '7days';
   selectedMetric = 'users';
   selectedOlapDimension = 'time_role_activity';
   autoRefresh = true;
 
-  // Subscriptions
+  // SUBSCRIPTIONS
   private subscriptions: Subscription[] = [];
 
-  // Données pour les graphiques
-  chartOptions: any = {};
-  lineChartData: any[] = [];
-  pieChartData: any[] = [];
-  heatmapData: any[] = [];
+  // STOCKAGE DES INSTANCES CHART
+  private charts: { [key: string]: Chart } = {};
 
-  // États pour les filtres et vues
+  // ÉTATS INTERFACE
   activeTab = 'overview';
   showFilters = true;
   compactView = false;
 
-  // Données temps réel
+  // DONNÉES TEMPS RÉEL
   realtimeMetrics = {
     connectionsPerSecond: 0,
     averageResponseTime: 0,
@@ -85,7 +120,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     throughput: 0
   };
 
-  // Variables pour l'export
+  // EXPORT
   showExportModal = false;
   exportConfig = {
     includeCharts: true,
@@ -93,7 +128,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     includeOlap: true
   };
 
-  // Variable pour la date actuelle
+  // DATE ACTUELLE
   currentDate = new Date();
 
   constructor(
@@ -106,10 +141,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.initializeNavbar();
     this.loadDashboardData();
     this.setupRealTimeUpdates();
-    this.initializeChartOptions();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.initializeCharts();
+    }, 500);
   }
 
   ngOnDestroy(): void {
+    Object.values(this.charts).forEach(chart => {
+      if (chart) chart.destroy();
+    });
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
@@ -133,9 +176,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       includeRealtime: true
     }).subscribe({
       next: (data) => {
+        console.log('✅ Données dashboard reçues:', data);
         this.dashboardData = data;
-        this.updateChartData();
         this.isLoading = false;
+
+        setTimeout(() => {
+          this.updateCharts();
+        }, 100);
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des données du dashboard';
@@ -162,10 +209,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   private refreshRealTimeData(): void {
+    if (!this.dashboardData) return;
+
     const realtimeSub = this.dashboardService.getRealTimeData().subscribe({
       next: (data) => {
         if (this.dashboardData) {
           this.dashboardData.realtime = data;
+          console.log('🔄 Données temps réel mises à jour:', data);
         }
       },
       error: (err) => console.error('Erreur temps réel:', err)
@@ -176,117 +226,499 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private updateRealTimeMetrics(): void {
     const metricsSub = this.dashboardService.getSystemMetrics().subscribe({
       next: (metrics) => {
-        this.realtimeMetrics = metrics;
+        this.realtimeMetrics = {
+          connectionsPerSecond: metrics.connectionsPerSecond || 0,
+          averageResponseTime: metrics.avgResponseTime || 0,
+          errorRate: metrics.errorRate || 0,
+          throughput: metrics.requestsPerHour || 0
+        };
       },
       error: (err) => console.error('Erreur métriques système:', err)
     });
     this.subscriptions.push(metricsSub);
   }
 
-  private initializeChartOptions(): void {
-    this.chartOptions = {
-      line: {
+  private initializeCharts(): void {
+    if (this.activeTab === 'overview') {
+      this.createPieChart();
+      this.createLineChart();
+    }
+  }
+
+  private updateCharts(): void {
+    setTimeout(() => {
+      if (this.activeTab === 'overview') {
+        this.createPieChart();
+        this.createLineChart();
+      } else if (this.activeTab === 'analytics') {
+        this.createTrendChart();
+      } else if (this.activeTab === 'olap') {
+        this.createHeatmapChart();
+      } else if (this.activeTab === 'realtime') {
+        this.createConnectionChart();
+      } else if (this.activeTab === 'performance') {
+        this.createResponseTimeChart();
+        this.createErrorRateChart();
+      }
+    }, 200);
+  }
+
+  private createPieChart(): void {
+    if (!this.pieChartRef?.nativeElement || !this.dashboardData?.analytics?.usersByRole) {
+      console.log('❌ Pie chart: Canvas ou données manquants');
+      return;
+    }
+
+    const canvas = this.pieChartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (this.charts['pie']) {
+      this.charts['pie'].destroy();
+    }
+
+    const data = this.dashboardData.analytics.usersByRole;
+    console.log('📊 Création pie chart avec données:', data);
+
+    this.charts['pie'] = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: data.map((item: any) => this.formatRoleName(item._id)),
+        datasets: [{
+          data: data.map((item: any) => item.count || 0),
+          backgroundColor: ['#f47d42', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
         responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          title: {
+            display: true,
+            text: 'Répartition des utilisateurs',
+            font: { size: 16, weight: 'bold' }
+          }
+        }
+      }
+    });
+  }
+
+  private createLineChart(): void {
+    if (!this.lineChartRef?.nativeElement || !this.dashboardData?.analytics?.activityTrends) {
+      console.log('❌ Line chart: Canvas ou données manquants');
+      return;
+    }
+
+    const canvas = this.lineChartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (this.charts['line']) {
+      this.charts['line'].destroy();
+    }
+
+    const data = this.dashboardData.analytics.activityTrends;
+    console.log('📈 Création line chart avec données:', data);
+
+    this.charts['line'] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.map((item: any) => this.formatDateSimple(item.date)),
+        datasets: [{
+          label: 'Actions Totales',
+          data: data.map((item: any) => item.totalActions || 0),
+          borderColor: '#f47d42',
+          backgroundColor: 'rgba(244, 125, 66, 0.1)',
+          tension: 0.4,
+          fill: true
+        }, {
+          label: 'Utilisateurs Uniques',
+          data: data.map((item: any) => item.uniqueUsers || 0),
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          title: {
+            display: true,
+            text: 'Évolution de l\'activité',
+            font: { size: 16, weight: 'bold' }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9' }
+          },
+          x: {
+            grid: { color: '#f1f5f9' }
+          }
+        }
+      }
+    });
+  }
+
+  private createTrendChart(): void {
+    if (!this.trendChartRef?.nativeElement || !this.dashboardData?.analytics?.activityTrends) {
+      return;
+    }
+
+    const canvas = this.trendChartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (this.charts['trend']) {
+      this.charts['trend'].destroy();
+    }
+
+    const data = this.dashboardData.analytics.activityTrends;
+
+    this.charts['trend'] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map((item: any) => this.formatDateSimple(item.date)),
+        datasets: [{
+          label: 'Taux de Succès (%)',
+          data: data.map((item: any) => item.successRate || 0),
+          backgroundColor: '#10b981',
+          borderColor: '#059669',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: { position: 'top' },
-          title: { display: true, text: 'Tendances d\'activité' }
+          title: { display: true, text: 'Analyse des Tendances' }
+        },
+        scales: {
+          y: { beginAtZero: true, max: 100 }
+        }
+      }
+    });
+  }
+
+  private createHeatmapChart(): void {
+    if (!this.heatmapChartRef?.nativeElement || !this.dashboardData?.olap?.userActivityCube) {
+      return;
+    }
+
+    const canvas = this.heatmapChartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (this.charts['heatmap']) {
+      this.charts['heatmap'].destroy();
+    }
+
+    const activityData = this.dashboardData.olap.userActivityCube;
+    const processedData = this.processHeatmapData(activityData);
+
+    this.charts['heatmap'] = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Activité par heure et rôle',
+          data: processedData,
+          backgroundColor: (context: any) => {
+            const value = context.parsed.v || 0;
+            const intensity = Math.min(value / 10, 1);
+            return `rgba(244, 125, 66, ${intensity})`;
+          },
+          pointRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Heatmap d\'activité (Heure × Rôle)' }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            title: { display: true, text: 'Heure' },
+            min: 0,
+            max: 23
+          },
+          y: {
+            type: 'linear',
+            title: { display: true, text: 'Rôle' }
+          }
+        }
+      }
+    });
+  }
+
+  private createConnectionChart(): void {
+    if (!this.connectionChartRef?.nativeElement) {
+      return;
+    }
+
+    const canvas = this.connectionChartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (this.charts['connection']) {
+      this.charts['connection'].destroy();
+    }
+
+    // Données simulées pour les connexions
+    const connectionData = Array.from({ length: 10 }, (_, i) => ({
+      time: new Date(Date.now() - (9 - i) * 5000).toLocaleTimeString(),
+      connections: Math.floor(Math.random() * 20) + 5
+    }));
+
+    this.charts['connection'] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: connectionData.map(d => d.time),
+        datasets: [{
+          label: 'Connexions/sec',
+          data: connectionData.map(d => d.connections),
+          borderColor: '#f47d42',
+          backgroundColor: 'rgba(244, 125, 66, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
         },
         scales: {
           y: { beginAtZero: true }
         }
+      }
+    });
+  }
+
+  private createResponseTimeChart(): void {
+    if (!this.responseTimeChartRef?.nativeElement) {
+      return;
+    }
+
+    const canvas = this.responseTimeChartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (this.charts['responseTime']) {
+      this.charts['responseTime'].destroy();
+    }
+
+    // Données simulées
+    const responseData = Array.from({ length: 24 }, (_, i) => ({
+      hour: i,
+      avgTime: Math.floor(Math.random() * 500) + 100
+    }));
+
+    this.charts['responseTime'] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: responseData.map(d => `${d.hour}h`),
+        datasets: [{
+          label: 'Temps de réponse (ms)',
+          data: responseData.map(d => d.avgTime),
+          backgroundColor: '#3b82f6',
+          borderColor: '#2563eb',
+          borderWidth: 1
+        }]
       },
-      pie: {
+      options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'right' },
-          title: { display: true, text: 'Répartition' }
-        }
-      },
-      heatmap: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Analyse OLAP - Matrice d\'activité' }
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true }
         }
       }
+    });
+  }
+
+  private createErrorRateChart(): void {
+    if (!this.errorRateChartRef?.nativeElement) {
+      return;
+    }
+
+    const canvas = this.errorRateChartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (this.charts['errorRate']) {
+      this.charts['errorRate'].destroy();
+    }
+
+    // Données simulées
+    const errorData = Array.from({ length: 24 }, (_, i) => ({
+      hour: i,
+      errorRate: Math.random() * 5
+    }));
+
+    this.charts['errorRate'] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: errorData.map(d => `${d.hour}h`),
+        datasets: [{
+          label: 'Taux d\'erreur (%)',
+          data: errorData.map(d => d.errorRate),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true, max: 10 }
+        }
+      }
+    });
+  }
+
+  private processHeatmapData(data: any[]): any[] {
+    const roleMap: { [key: string]: number } = {
+      'ROLE_USER': 0,
+      'ROLE_PROF': 1,
+      'ROLE_ADMIN': 2
     };
+
+    return data.map(item => ({
+      x: item.hour || 0,
+      y: roleMap[item.role] || 0,
+      v: item.activityCount || 0,
+      role: item.role
+    }));
   }
 
-  private updateChartData(): void {
-    if (!this.dashboardData) return;
+  // MÉTHODES D'INTERACTION UTILISATEUR
 
-    // Données pour graphique linéaire (tendances)
-    this.lineChartData = this.dashboardService.formatTimeSeriesData(
-      this.dashboardData.analytics.activityTrends
-    );
-
-    // Données pour graphique circulaire (répartition)
-    this.pieChartData = this.dashboardService.formatPieChartData(
-      this.dashboardData.analytics.usersByRole
-    );
-
-    // Données pour heatmap OLAP
-    this.heatmapData = this.dashboardService.formatHeatmapData(
-      this.dashboardData.olap.userActivityCube
-    );
-  }
-
-  // Méthodes d'interaction utilisateur avec types corrigés
   onTimeRangeChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
+    console.log('📅 Changement période:', target.value);
     this.selectedTimeRange = target.value;
     this.loadDashboardData();
   }
 
   onMetricChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
+    console.log('📊 Changement métrique:', target.value);
     this.selectedMetric = target.value;
     this.updateAnalytics();
   }
 
   onOlapDimensionChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
+    console.log('🧊 Changement dimension OLAP:', target.value);
     this.selectedOlapDimension = target.value;
     this.updateOlapAnalysis();
   }
 
   switchTab(tab: string): void {
+    console.log('🔄 Changement onglet:', tab);
     this.activeTab = tab;
-    if (tab === 'olap') {
-      this.loadOlapData();
-    }
+
+    Object.values(this.charts).forEach(chart => {
+      if (chart) chart.destroy();
+    });
+    this.charts = {};
+
+    setTimeout(() => {
+      this.updateCharts();
+    }, 100);
   }
 
   toggleAutoRefresh(): void {
+    console.log('🔄 Toggle auto-refresh:', !this.autoRefresh);
     this.autoRefresh = !this.autoRefresh;
+
     if (this.autoRefresh) {
       this.setupRealTimeUpdates();
     } else {
-      // Annuler les subscriptions de temps réel
-      this.subscriptions.forEach(sub => sub.unsubscribe());
-      this.subscriptions = [];
+      this.subscriptions = this.subscriptions.filter(sub => {
+        return sub !== this.subscriptions[this.subscriptions.length - 1];
+      });
     }
   }
 
   toggleCompactView(): void {
+    console.log('📱 Toggle vue compacte:', !this.compactView);
     this.compactView = !this.compactView;
   }
 
+  refresh(): void {
+    console.log('🔄 Actualisation dashboard');
+    this.currentDate = new Date();
+    this.loadDashboardData();
+  }
+
   exportData(format: 'csv' | 'excel' | 'pdf'): void {
-    this.dashboardService.exportDashboardData(format, {
+    console.log('📤 Export format:', format);
+    this.showExportModal = true;
+  }
+
+  confirmExport(): void {
+    console.log('✅ Confirmation export avec config:', this.exportConfig);
+    this.showExportModal = false;
+
+    this.dashboardService.exportDashboardData('csv', {
       timeRange: this.selectedTimeRange,
-      includedSections: [this.activeTab]
+      config: this.exportConfig
     }).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `dashboard-data.${format}`;
+        a.download = `dashboard-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+
+        console.log('📥 Export terminé');
       },
-      error: (err) => console.error('Erreur export:', err)
+      error: (err) => {
+        console.error('❌ Erreur export:', err);
+        alert('Erreur lors de l\'export. Vérifiez la console pour plus de détails.');
+      }
     });
+  }
+
+  cancelExport(): void {
+    console.log('❌ Annulation export');
+    this.showExportModal = false;
   }
 
   private updateAnalytics(): void {
@@ -297,7 +729,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       next: (analytics) => {
         if (this.dashboardData) {
           this.dashboardData.analytics = analytics;
-          this.updateChartData();
+          this.updateCharts();
         }
       },
       error: (err) => console.error('Erreur analytics:', err)
@@ -307,13 +739,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   private updateOlapAnalysis(): void {
     const olapSub = this.dashboardService.getOlapAnalysis({
-      dimensions: [this.selectedOlapDimension], // Correction: utiliser dimensions au lieu de dimension
+      dimensions: [this.selectedOlapDimension],
       timeRange: this.selectedTimeRange
     }).subscribe({
       next: (olap) => {
         if (this.dashboardData) {
           this.dashboardData.olap = olap;
-          this.updateChartData();
+          this.updateCharts();
         }
       },
       error: (err) => console.error('Erreur OLAP:', err)
@@ -321,34 +753,29 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.subscriptions.push(olapSub);
   }
 
-  private loadOlapData(): void {
-    if (!this.dashboardData?.olap || Object.keys(this.dashboardData.olap).length === 0) {
-      const olapSub = this.dashboardService.getDetailedOlapAnalysis({
-        dimensions: ['time', 'role', 'activity', 'department'],
-        measures: ['userCount', 'activityCount', 'sessionDuration'],
-        timeRange: this.selectedTimeRange
-      }).subscribe({
-        next: (olap) => {
-          if (this.dashboardData) {
-            this.dashboardData.olap = olap;
-            this.updateChartData();
-          }
-        },
-        error: (err) => console.error('Erreur OLAP détaillé:', err)
-      });
-      this.subscriptions.push(olapSub);
-    }
-  }
+  // MÉTHODES DE FORMATAGE
 
-  // Méthodes utilitaires pour l'affichage
   formatNumber(num: number): string {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
   }
 
-  formatPercentage(value: number, total: number): string {
-    return total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+  formatDateSimple(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', {
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  formatRoleName(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'ROLE_ADMIN': 'Admins',
+      'ROLE_PROF': 'Profs',
+      'ROLE_USER': 'Étudiants'
+    };
+    return roleMap[role] || role;
   }
 
   getGrowthIcon(current: number, previous: number): string {
@@ -357,18 +784,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return '➡️';
   }
 
-  getGrowthClass(current: number, previous: number): string {
-    if (current > previous) return 'growth-positive';
-    if (current < previous) return 'growth-negative';
-    return 'growth-neutral';
-  }
-
-  refresh(): void {
-    this.currentDate = new Date(); // Mettre à jour la date
-    this.loadDashboardData();
-  }
-
-  // Méthodes de formatage
   getTabLabel(tab: string): string {
     const labels: { [key: string]: string } = {
       'overview': '📊 Vue d\'ensemble',
@@ -384,11 +799,17 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const icons: { [key: string]: string } = {
       'auth': '🔐',
       'user': '👤',
+      'utilisateur': '👤',
       'ue': '📚',
       'forum': '💬',
       'post': '📝',
       'admin': '⚙️',
       'system': '🖥️',
+      'admin_panel': '⚙️',
+      'departement': '🏢',
+      'role': '🎭',
+      'priorite': '⭐',
+      'type': '🏷️',
       'error': '❌',
       'warning': '⚠️',
       'success': '✅'
@@ -412,9 +833,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       'create_post': 'Création publication',
       'get_all_users': 'Consultation utilisateurs',
       'get_all_ues': 'Consultation UEs',
-      'dashboard_overview_accessed': 'Accès dashboard'
+      'get_current_user': 'Consultation profil',
+      'dashboard_overview_accessed': 'Accès dashboard',
+      'get_forum_by_id': 'Consultation forum',
+      'get_detail_forum': 'Détails forum',
+      'get_ue_by_id': 'Consultation UE',
+      'get_participants_by_ue': 'Liste participants UE'
     };
-    return actionMap[action] || action.replace(/_/g, ' ');
+
+    return actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
   formatRelativeTime(timestamp: string | Date): string {
@@ -426,10 +853,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'À l\'instant';
-    if (diffMins < 60) return `Il y a ${diffMins}min`;
+    if (diffMins < 60) return `Il y a ${diffMins} min`;
     if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays < 7) return `Il y a ${diffDays}j`;
-    return time.toLocaleDateString('fr-FR');
+    if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+    return time.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   }
 
   formatTime(timestamp: string | Date): string {
@@ -438,15 +865,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       minute: '2-digit',
       second: '2-digit'
     });
-  }
-
-  formatRoleName(role: string): string {
-    const roleMap: { [key: string]: string } = {
-      'ROLE_ADMIN': 'Admin',
-      'ROLE_PROF': 'Prof',
-      'ROLE_USER': 'Étudiant'
-    };
-    return roleMap[role] || role;
   }
 
   formatTimePoint(timePoint: any): string {
@@ -462,11 +880,32 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return JSON.stringify(timePoint);
   }
 
+  getUserDisplayName(user: any): string {
+    if (!user) return 'Utilisateur inconnu';
+
+    if (user.prenom && user.nom) {
+      return `${user.prenom} ${user.nom}`;
+    }
+
+    if (user.email) {
+      return user.email.split('@')[0];
+    }
+
+    return 'Utilisateur';
+  }
+
   getUserAvatar(user: any): string {
     if (user?.photo) {
       return user.photo.startsWith('http') ? user.photo : `http://localhost:3000/uploads/user/${user.photo}`;
     }
     return '/assets/default-avatar.png';
+  }
+
+  isRecentActivity(timestamp: string | Date): boolean {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMins = Math.floor((now.getTime() - time.getTime()) / 60000);
+    return diffMins < 30;
   }
 
   getSeverityClass(severity: string): string {
@@ -494,185 +933,5 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       'unknown': '⚫ Statut inconnu'
     };
     return statusMap[status] || 'Statut inconnu';
-  }
-
-  // Méthodes d'export
-  confirmExport(): void {
-    this.showExportModal = false;
-    console.log('Export avec config:', this.exportConfig);
-  }
-
-  cancelExport(): void {
-    this.showExportModal = false;
-  }
-
-  // Méthodes de gestion des graphiques (version simplifiée)
-  private processChartData(): void {
-    if (!this.dashboardData) return;
-    this.initializeCharts();
-  }
-
-  private initializeCharts(): void {
-    setTimeout(() => {
-      this.createLineChart();
-      this.createPieChart();
-      this.createHeatmapChart();
-    }, 100);
-  }
-
-  private createLineChart(): void {
-    const canvas = document.querySelector('#lineChart') as HTMLCanvasElement;
-    if (!canvas || !this.dashboardData?.analytics?.activityTrends) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if ((canvas as any).chart) {
-      (canvas as any).chart.destroy();
-    }
-
-    const data = this.dashboardData.analytics.activityTrends;
-
-    (canvas as any).chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: data.map((item: any) => this.formatDate(item.date)),
-        datasets: [{
-          label: 'Actions Totales',
-          data: data.map((item: any) => item.totalActions || 0),
-          borderColor: '#f47d42',
-          backgroundColor: 'rgba(244, 125, 66, 0.1)',
-          tension: 0.4,
-          fill: true
-        }, {
-          label: 'Utilisateurs Uniques',
-          data: data.map((item: any) => item.uniqueUsers || 0),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'top' as const },
-          title: { display: true, text: 'Évolution de l\'activité' }
-        },
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
-    });
-  }
-
-  private createPieChart(): void {
-    const canvas = document.querySelector('#pieChart') as HTMLCanvasElement;
-    if (!canvas || !this.dashboardData?.analytics?.usersByRole) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if ((canvas as any).chart) {
-      (canvas as any).chart.destroy();
-    }
-
-    const data = this.dashboardData.analytics.usersByRole;
-
-    (canvas as any).chart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: data.map((item: any) => this.formatRoleName(item._id)),
-        datasets: [{
-          data: data.map((item: any) => item.count || 0),
-          backgroundColor: ['#f47d42', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
-          borderWidth: 2,
-          borderColor: '#ffffff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'right' as const },
-          title: { display: true, text: 'Répartition des utilisateurs' }
-        }
-      }
-    });
-  }
-
-  private createHeatmapChart(): void {
-    const canvas = document.querySelector('#heatmapChart') as HTMLCanvasElement;
-    if (!canvas || !this.dashboardData?.olap?.userActivityCube) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if ((canvas as any).chart) {
-      (canvas as any).chart.destroy();
-    }
-
-    const activityData = this.dashboardData.olap.userActivityCube;
-    const processedData = this.processHeatmapData(activityData);
-
-    (canvas as any).chart = new Chart(ctx, {
-      type: 'scatter',
-      data: {
-        datasets: [{
-          label: 'Activité par heure et rôle',
-          data: processedData,
-          backgroundColor: (context: any) => {
-            const value = context.parsed.v || 0;
-            const intensity = Math.min(value / 10, 1);
-            return `rgba(244, 125, 66, ${intensity})`;
-          },
-          pointRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Heatmap d\'activité (Heure × Rôle)' }
-        },
-        scales: {
-          x: {
-            type: 'linear' as const,
-            position: 'bottom' as const,
-            title: { display: true, text: 'Heure' },
-            min: 0,
-            max: 23
-          },
-          y: {
-            type: 'linear' as const,
-            title: { display: true, text: 'Rôle' }
-          }
-        }
-      }
-    });
-  }
-
-  private processHeatmapData(data: any[]): any[] {
-    const roleMap: { [key: string]: number } = {
-      'ROLE_USER': 0,
-      'ROLE_PROF': 1,
-      'ROLE_ADMIN': 2
-    };
-
-    return data.map(item => ({
-      x: item.hour || 0,
-      y: roleMap[item.role] || 0,
-      v: item.activityCount || 0,
-      role: item.role
-    }));
-  }
-
-  private formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      month: 'short',
-      day: 'numeric'
-    });
   }
 }
