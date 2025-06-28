@@ -158,9 +158,7 @@ export class UeRegistrationComponent implements OnInit {
       this.error = `Impossible de charger l'UE pour modification: ${error?.message || 'Erreur inconnue'}`;
       this.exitEditMode();
 
-      // Rediriger vers la liste sans paramètre
-      this.router.navigate(['/admin/ue-registration'], { replaceUrl: true });
-    } finally {
+   } finally {
       this.loading = false;
       console.log('🔄 ========== FIN loadUeForEdit ==========');
     }
