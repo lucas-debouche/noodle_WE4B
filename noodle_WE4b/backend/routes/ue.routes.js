@@ -49,13 +49,13 @@ router.delete('/:ueId/participants/:utilisateurId',
 );
 
 // Modifier une UE (protégé)
-router.put('/:ueId',
+router.put('/ue/:ueId',
   authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
   ueController.updateUe
 );
 
 // Supprimer une UE (protégé)
-router.delete('/:ueId',
+router.delete('/ue/:ueId',
   authMiddleware(['ROLE_ADMIN']),
   ueController.deleteUe
 );
