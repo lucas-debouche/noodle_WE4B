@@ -62,6 +62,7 @@ import { UserManagementComponent } from './pages/ue-registration/ue-registration
 import { UeCardComponent } from './pages/ue-registration/ue-registration/components/ue-card/ue-card.component';
 import { ImageUploadComponent } from './pages/ue-registration/ue-registration/components/image-upload/image-upload.component';
 import { UeRegistrationComponent } from './pages/ue-registration/ue-registration/ue-registration.component';
+import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 
 @NgModule({
   declarations: [
@@ -112,6 +113,7 @@ import { UeRegistrationComponent } from './pages/ue-registration/ue-registration
     UeCardComponent,
     ImageUploadComponent,
     UeRegistrationComponent,
+    AdminDashboardComponent,
   ],
   imports: [
     BrowserModule,
