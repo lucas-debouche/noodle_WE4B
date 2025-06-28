@@ -4,20 +4,29 @@ import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
+// ===============================================
+// AuthAdminGuard : protège les routes réservées aux ADMIN
+// Vérifie d'abord l'authentification, puis le rôle ROLE_ADMIN
+// ===============================================
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root' // Disponible partout dans l'app
 })
 export class AuthAdminGuard implements CanActivate {
+
+  // Injection du service Auth et du Router pour redirection
   constructor(private authService: AuthService, private router: Router) {}
 
+  // ------------------------------------------------
+  // canActivate : vérifie avant l'accès à une route admin
+  // ------------------------------------------------
   canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
+    route: ActivatedRouteSnapshot,   // Infos route
+    state: RouterStateSnapshot       // URL demandée
   ): Observable<boolean> | boolean {
 
     console.log('🔐 AuthAdminGuard → Vérification auth + admin...');
 
-    // Vérifier le token
+    // 1️⃣ Vérifie la présence d'un token
     if (!this.authService.isLoggedIn()) {
       console.log('❌ AuthAdminGuard → Pas de token');
       this.router.navigate(['/login'], {
@@ -26,13 +35,13 @@ export class AuthAdminGuard implements CanActivate {
       return false;
     }
 
-    // Si utilisateur déjà chargé, vérifier directement
+    // 2️⃣ Si l'utilisateur est déjà chargé en mémoire
     if (this.authService.isUserLoaded()) {
       console.log('✅ AuthAdminGuard → Utilisateur déjà chargé, vérification des droits...');
       return this.checkAdminAccess(state.url);
     }
 
-    // Charger l'utilisateur puis vérifier
+    // 3️⃣ Sinon, charge l'utilisateur depuis le serveur
     console.log('🔄 AuthAdminGuard → Chargement utilisateur...');
     return this.authService.getCurrentUserFromServer().pipe(
       map(user => {
@@ -49,13 +58,16 @@ export class AuthAdminGuard implements CanActivate {
       }),
       catchError(error => {
         console.error('❌ AuthAdminGuard → Erreur:', error);
-        this.authService.logout();
+        this.authService.logout(); // Déconnecte proprement si erreur
         this.router.navigate(['/login']);
         return of(false);
       })
     );
   }
 
+  // ------------------------------------------------
+  // checkAdminAccess : vérifie le rôle ROLE_ADMIN
+  // ------------------------------------------------
   private checkAdminAccess(url: string): boolean {
     const user = this.authService.getCurrentUserValue();
 
@@ -68,6 +80,7 @@ export class AuthAdminGuard implements CanActivate {
     console.log('👤 AuthAdminGuard → Utilisateur:', `${user.nom} ${user.prenom}`);
     console.log('🎭 AuthAdminGuard → Rôles:', user.role);
 
+    // Vérifie si l'utilisateur a le rôle ADMIN
     if (this.authService.hasRole('ROLE_ADMIN')) {
       console.log('✅ AuthAdminGuard → Accès admin autorisé');
       return true;

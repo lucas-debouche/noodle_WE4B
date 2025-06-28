@@ -159,7 +159,7 @@ const uploadFields = upload.fields([
 ]);
 
 router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploadFields, async (req, res) => {
-  let createdPost = null;
+  let createdPost = null; // ✅ Déclarer la variable ici
 
   try {
     let postData = req.body;
@@ -190,7 +190,7 @@ router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploa
     }
 
     const post = new Post(postData);
-    createdPost = await post.save();
+    createdPost = await post.save(); // ✅ Assigner à la variable déclarée
 
     const populatedPost = await Post.findById(createdPost._id)
       .populate('utilisateur_id', 'nom prenom email')
@@ -202,7 +202,7 @@ router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploa
       action: 'create_post',
       category: 'post',
       userId: req.user ? req.user.userId : null,
-      targetId: createdPost._id,
+      targetId: createdPost._id, // ✅ Utiliser la variable déclarée
       details: { post: populatedPost, success: true }
     });
 
@@ -212,7 +212,7 @@ router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploa
       action: 'error_create_post',
       category: 'post',
       userId: req.user ? req.user.userId : null,
-      targetId: createdPost ? createdPost._id : null,
+      targetId: createdPost ? createdPost._id : null, // ✅ Vérifier si createdPost existe
       details: { error: err.message }
     });
     res.status(400).json({ error: err.message });
