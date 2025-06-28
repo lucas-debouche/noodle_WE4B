@@ -83,6 +83,15 @@ export class UesService {
 
   updateUe(id: string, ueData: FormData): Observable<Ue> {
     console.log('🔄 UesService.updateUe appelé pour ID:', id);
+    console.log('📝 Type de l\'ID:', typeof id);
+    console.log('📝 Valeur de l\'ID:', JSON.stringify(id));
+
+    // ✅ VALIDATION CORRECTE DE L'ID
+    if (!id || id === 'undefined' || id === 'null' || id.toString().trim() === '') {
+      console.error('❌ ID invalide dans updateUe:', id);
+      return throwError(() => new Error('ID d\'UE invalide'));
+    }
+
     console.log('📤 Données envoyées:', this.logFormData(ueData));
 
     return this.http.put<UpdateUeResponse>(`${this.apiUrl}/${id}`, ueData)
@@ -142,6 +151,12 @@ export class UesService {
 
   getParticipantsByUe(ueId: string): Observable<any[]> {
     console.log('👥 UesService.getParticipantsByUe appelé pour UE:', ueId);
+
+    // ✨ VALIDATION DE L'ID CÔTÉ SERVICE
+    if (!ueId || ueId === 'undefined' || ueId === 'null' || ueId.toString().trim() === '') {
+      console.error('❌ ID d\'UE invalide dans getParticipantsByUe:', ueId);
+      return throwError(() => new Error('ID d\'UE invalide'));
+    }
 
     return this.http.get<any>(`${this.apiUrl}/${ueId}/participants`)
       .pipe(
