@@ -63,12 +63,6 @@ exports.getForumsByUe = async (req, res) => {
       forums = await Forum.find({ ueId: new ObjectId(ueIdParam) });
     }
 
-    await logAction({
-      action: 'get_forum_by_id',
-      category: 'forum',
-      userId: req.user.id,
-      details: { targetForumId: forums, success: true }
-    });
 
     res.json(forums);
   } catch (err) {
@@ -76,7 +70,7 @@ exports.getForumsByUe = async (req, res) => {
     await logAction({
       action: 'get_forum_by_id_error',
       category: 'forum',
-      userId: req.user.userId,
+      userId: req.user?.userId,
       details: { error: err.message }
     });
     res.status(500).json({ message: 'Erreur serveur' });
@@ -130,22 +124,9 @@ exports.getForumDetail = async (req, res) => {
     if (!forum) {
       return res.status(404).json({ message: 'Forum non trouvé' });
     }
-    await logAction({
-      action: 'get_detail_forum',
-      category: 'forum',
-      userId: req.user.userId,
-      targetId: forumId,
-      details: { title: forum.title, messageCount: forum.messages.length }
-    });
     res.json(forum);
   } catch (err) {
     console.error('Error in getForumDetail:', err);
-    await logAction({
-      action: 'get_detail_forum_error',
-      category: 'forum',
-      userId: req.user.userId,
-      details: { error: err.message }
-    });
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
