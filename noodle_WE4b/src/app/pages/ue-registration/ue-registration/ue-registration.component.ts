@@ -241,7 +241,6 @@ export class UeRegistrationComponent implements OnInit {
 
     // ✨ SORTIR DU MODE ÉDITION ET REDIRIGER
     this.exitEditMode();
-    this.router.navigate(['/admin/ue-registration'], { replaceUrl: true });
 
     // Actualiser la liste
     await this.refreshUesList();
@@ -286,8 +285,6 @@ export class UeRegistrationComponent implements OnInit {
     console.log('❌ Annulation édition');
     this.exitEditMode();
 
-    // ✨ REDIRIGER VERS LA LISTE SANS PARAMÈTRE
-    this.router.navigate(['/admin/ue-registration'], { replaceUrl: true });
   }
 
   private exitEditMode() {
