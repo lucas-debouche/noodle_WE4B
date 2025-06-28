@@ -8,7 +8,6 @@ const fs = require('fs');
 const authMiddleware = require("../security/middleware_auth");
 const { logAction } = require('../utils/logActions');
 
-
 // Multer storage dynamique selon l'UE et la catégorie
 const storage = multer.diskStorage({
   destination: async function (req, file, cb) {
@@ -24,7 +23,7 @@ const storage = multer.diskStorage({
       // Catégorie (TP, TD, etc.)
       const categorie = req.body.categorie || 'TP';
 
-      // Dossier cible : uploads/ue/[codeUe]/posts/[categorie]
+      // Dossier cible : uploads/ue/[codeUe]/posts/[categorie]
       const uploadPath = path.join(__dirname, '..', 'uploads', 'ue', ue.code, 'posts', categorie);
 
       // Crée le dossier si besoin
@@ -160,6 +159,8 @@ const uploadFields = upload.fields([
 ]);
 
 router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploadFields, async (req, res) => {
+  let createdPost = null; // ✅ Déclarer la variable ici
+
   try {
     let postData = req.body;
     // Si certains champs sont des tableaux (cas FormData), prends la première valeur
@@ -189,26 +190,29 @@ router.post('/', authMiddleware(['ROLE_USER', 'ROLE_PROF', 'ROLE_ADMIN']), uploa
     }
 
     const post = new Post(postData);
-    await post.save();
-    const populatedPost = await Post.findById(post._id)
+    createdPost = await post.save(); // ✅ Assigner à la variable déclarée
+
+    const populatedPost = await Post.findById(createdPost._id)
       .populate('utilisateur_id', 'nom prenom email')
       .populate('type_id', 'nom')
       .populate('priorite_id', 'nom')
       .populate('rendus.utilisateur_id', 'nom prenom');
+
     await logAction({
       action: 'create_post',
       category: 'post',
       userId: req.user ? req.user.userId : null,
-      targetId: post._id,
+      targetId: createdPost._id, // ✅ Utiliser la variable déclarée
       details: { post: populatedPost, success: true }
     });
+
     res.status(201).json(populatedPost);
   } catch (err) {
     await logAction({
       action: 'error_create_post',
       category: 'post',
       userId: req.user ? req.user.userId : null,
-      targetId: post._id,
+      targetId: createdPost ? createdPost._id : null, // ✅ Vérifier si createdPost existe
       details: { error: err.message }
     });
     res.status(400).json({ error: err.message });
@@ -303,7 +307,6 @@ router.patch('/:postId/rendu/:userId/note', authMiddleware(['ROLE_USER', 'ROLE_P
     const rendu = post.rendus.find(r => r.utilisateur_id.toString() === req.params.userId);
     if (!rendu) return res.status(404).json({ error: 'Rendu non trouvé' });
     rendu.note = note;
-
     rendu.etat_rendu = 'corrigé';
 
     await post.save();
@@ -346,13 +349,13 @@ router.patch('/:postId/rendu/:userId/commentaire', authMiddleware(['ROLE_USER', 
     });
     res.json({ success: true, rendu });
   } catch (err) {
-  await logAction({
-    action: 'error_update_rendu_commentaire',
-    category: 'post',
-    userId: req.user ? req.user.userId : null,
-    targetId: req.params.postId,
-    details: { error: err.message }
-  });
+    await logAction({
+      action: 'error_update_rendu_commentaire',
+      category: 'post',
+      userId: req.user ? req.user.userId : null,
+      targetId: req.params.postId,
+      details: { error: err.message }
+    });
     res.status(400).json({ error: err.message });
   }
 });

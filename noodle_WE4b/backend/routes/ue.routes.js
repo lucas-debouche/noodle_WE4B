@@ -8,12 +8,13 @@ const fs = require('fs');
 const path = require('path');
 const Ue = require('../models/ue.model'); // nécessaire pour upload-photo
 const { logAction } = require('../utils/logActions');
+const UeUserSyncService = require('../utils/syncUtils'); // ✅ Ajout de l'import manquant
 
 // ===============================
 // ROUTES PUBLIQUES OU SPÉCIFIQUES
 // ===============================
 
-// Recherche d’UE
+// Recherche d'UE
 router.get('/search', ueController.searchUes);
 
 // ===============================
@@ -47,11 +48,17 @@ router.delete('/:ueId/participants/:utilisateurId',
   ueController.removeParticipantFromUe
 );
 
+// Modifier une UE (protégé)
 router.put('/:ueId',
   authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']),
   ueController.updateUe
 );
 
+// Supprimer une UE (protégé)
+router.delete('/:ueId',
+  authMiddleware(['ROLE_ADMIN']),
+  ueController.deleteUe
+);
 
 // Configuration multer pour stocker les images dans un dossier spécifique
 const storage = diskStorage({
@@ -109,6 +116,7 @@ router.post('/:code/upload-photo', authMiddleware(['ROLE_PROF', 'ROLE_ADMIN']), 
   }
 });
 
+// Route d'audit et réparation des synchronisations UE-Utilisateur
 router.get('/audit/ue-user-sync',
   authMiddleware(['ROLE_ADMIN']),
   async (req, res) => {
