@@ -325,6 +325,7 @@ exports.updateUe = [
     console.log(`📝 Valeur ueId:`, JSON.stringify(ueId));
 
     // Vérifier que l'ID n'est pas undefined, null ou vide
+    console.log("Id UE avant vérification:", ueId);
     if (!ueId || ueId === 'undefined' || ueId === 'null' || ueId.trim() === '') {
       console.error(`❌ ID d'UE invalide:`, ueId);
       return res.status(400).json({
